@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Google</title>
+  <title>Google Search</title>
   <link rel="icon" href="https://www.google.com/favicon.ico">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
@@ -16,12 +16,28 @@
       overflow-x: hidden;
     }
 
+    .fake-address-bar {
+      background-color: #f1f3f4;
+      border-bottom: 1px solid #ccc;
+      padding: 12px 24px;
+      font-size: 18px;
+      color: #5f6368;
+      font-family: monospace;
+      box-shadow: inset 0 -1px 0 #e0e0e0;
+      user-select: none;
+    }
+
+    .fake-lock {
+      color: #34a853;
+      margin-right: 8px;
+    }
+
     .centered {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
+      height: calc(100vh - 50px);
       user-select: none;
     }
 
@@ -68,13 +84,21 @@
   </style>
 </head>
 <body>
+
+  <!-- Fake address bar mimicking Google search -->
+  <div class="fake-address-bar">
+    <span class="fake-lock">🔒</span>https://www.google.com/search?q=tes+spoofing
+  </div>
+
+  <!-- Simulated search UI -->
   <div class="centered">
     <div class="google-logo"></div>
     <div class="search-bar">
-      <input type="text" placeholder="Search Google or type a URL">
+      <input type="text" value="tes spoofing">
     </div>
     <div class="btn">Google Search</div>
     <div class="btn">I'm Feeling Lucky</div>
   </div>
+
 </body>
 </html>
