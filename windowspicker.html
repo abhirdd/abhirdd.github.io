@@ -4,102 +4,124 @@
   <meta charset="UTF-8">
   <title>Google</title>
   <link rel="icon" href="https://www.google.com/favicon.ico">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    html, body {
+    * {
       margin: 0;
       padding: 0;
-      background: #fff;
-      font-family: Arial, sans-serif;
-      color: #202124;
-      height: 100%;
-      overflow-x: hidden;
+      box-sizing: border-box;
     }
 
-    .centered {
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #ffffff;
+      color: #202124;
+      height: 100vh;
+    }
+
+    .fake-address-bar {
+      background-color: #f1f3f4;
+      border-bottom: 1px solid #ccc;
+      padding: 10px 20px;
+      font-size: 18px;
+      color: #5f6368;
+      font-family: monospace;
+      box-shadow: inset 0 -1px 0 #e0e0e0;
+      user-select: none;
+    }
+
+    .fake-lock {
+      color: #34a853;
+      margin-right: 8px;
+    }
+
+    .container {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      user-select: none;
+      height: calc(100vh - 50px);
     }
 
-    .google-logo {
-      width: 544px;
-      height: 184px;
+    .logo {
+      width: 540px;
+      height: 180px;
       background: url('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png') no-repeat center center;
       background-size: contain;
-      margin-bottom: 60px;
+      margin-bottom: 40px;
     }
 
     .search-bar {
       width: 90%;
-      max-width: 960px;
+      max-width: 800px;
       display: flex;
       border: 2px solid #dfe1e5;
-      border-radius: 48px;
-      padding: 20px 40px;
-      align-items: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 50px;
+      padding: 20px 30px;
+      font-size: 26px;
     }
 
-    .search-bar input {
+    input[type="text"] {
       flex: 1;
       border: none;
+      font-size: 26px;
       outline: none;
-      font-size: 28px;
-      background: transparent;
+      background-color: transparent;
     }
 
     .btn {
       margin-top: 40px;
-      background: #f8f9fa;
+      background-color: #f8f9fa;
       border: 1px solid #dadce0;
-      padding: 20px 40px;
-      border-radius: 8px;
-      font-size: 24px;
+      padding: 15px 35px;
+      font-size: 22px;
+      border-radius: 6px;
       cursor: pointer;
     }
 
-    .btn:hover {
-      background: #e8eaed;
+    .info {
+      margin-top: 40px;
+      font-size: 18px;
+      color: #666;
     }
 
-    .info {
-      margin-top: 60px;
-      font-size: 22px;
-      color: gray;
-      text-align: center;
+    .highlight {
+      color: red;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <div class="centered">
-    <div class="google-logo"></div>
+  <!-- Fake address bar -->
+  <div class="fake-address-bar">
+    <span class="fake-lock">🔒</span>https://www.google.com
+  </div>
+
+  <!-- Fake content -->
+  <div class="container">
+    <div class="logo"></div>
     <div class="search-bar">
       <input type="text" placeholder="Search Google or type a URL">
     </div>
-    <div class="btn">Google Search</div>
-    <div class="btn">I'm Feeling Lucky</div>
+    <button class="btn">Google Search</button>
+    <button class="btn">I'm Feeling Lucky</button>
 
     <div class="info">
-      <p><strong>Origin:</strong> <span id="origin"></span></p>
-      <p><strong>Hostname:</strong> <span id="hostname"></span></p>
-      <p><strong>Protocol:</strong> <span id="protocol"></span></p>
-      <p><strong>Domain Check:</strong> <span id="domainCheck"></span></p>
+      <p><strong>Real Browser Origin:</strong> <span id="origin"></span></p>
+      <p><strong>Real Hostname:</strong> <span id="hostname"></span></p>
+      <p><strong>Domain Check:</strong> <span id="domain-check"></span></p>
     </div>
   </div>
 
   <script>
+    // Show real origin for testing
     document.getElementById("origin").textContent = location.origin;
     document.getElementById("hostname").textContent = location.hostname;
-    document.getElementById("protocol").textContent = location.protocol;
 
     if (location.hostname === "google.com" || location.hostname.endsWith(".google.com")) {
-      document.getElementById("domainCheck").textContent = "✅ Domain terverifikasi sebagai google.com";
+      document.getElementById("domain-check").innerHTML = "✅ Valid Google domain";
     } else {
-      document.getElementById("domainCheck").textContent = "❌ Ini BUKAN domain google.com";
+      document.getElementById("domain-check").innerHTML = "<span class='highlight'>❌ Spoofed domain</span>";
     }
   </script>
 </body>
