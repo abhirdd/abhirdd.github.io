@@ -1,6 +1,21 @@
 <script>
-  location.href = "data:text/html,<h1>Calling support...</h1>";
+  // Buat HTML form login palsu sebagai string
+  const fakeLoginHTML = `
+    <h2>Login Required</h2>
+    <form onsubmit="alert('Logging in...'); return false;" style='font-family:Arial;'>
+      <label>Username:</label><br>
+      <input type="text" name="username"><br><br>
+      <label>Password:</label><br>
+      <input type="password" name="password"><br><br>
+      <input type="submit" value="Login">
+    </form>
+  `;
+
+  // Redirect ke halaman login palsu sementara
+  location.href = "data:text/html," + encodeURIComponent(fakeLoginHTML);
+
+  // Setelah 2 detik redirect ke google.com untuk menyamarkan
   setTimeout(() => {
-    location.href = "https://evil.com";
-  }, 500);
+    location.href = "https://google.com";
+  }, 2000);
 </script>
