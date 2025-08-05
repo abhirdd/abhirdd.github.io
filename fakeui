@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Google</title>
+  <link rel="icon" href="https://www.google.com/favicon.ico">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      font-family: Arial, sans-serif;
+      color: #202124;
+      height: 100%;
+      overflow-x: hidden;
+    }
+
+    .centered {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      user-select: none;
+    }
+
+    .google-logo {
+      width: 544px;
+      height: 184px;
+      background: url('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png') no-repeat center center;
+      background-size: contain;
+      margin-bottom: 60px;
+    }
+
+    .search-bar {
+      width: 90%;
+      max-width: 960px;
+      display: flex;
+      border: 2px solid #dfe1e5;
+      border-radius: 48px;
+      padding: 20px 40px;
+      align-items: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .search-bar input {
+      flex: 1;
+      border: none;
+      outline: none;
+      font-size: 28px;
+      background: transparent;
+    }
+
+    .btn {
+      margin-top: 40px;
+      background: #f8f9fa;
+      border: 1px solid #dadce0;
+      padding: 20px 40px;
+      border-radius: 8px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .btn:hover {
+      background: #e8eaed;
+    }
+  </style>
+</head>
+<body>
+  <div class="centered">
+    <div class="google-logo"></div>
+    <div class="search-bar">
+      <input type="text" placeholder="Search Google or type a URL">
+    </div>
+    <div class="btn">Google Search</div>
+    <div class="btn">I'm Feeling Lucky</div>
+  </div>
+</body>
+</html>
