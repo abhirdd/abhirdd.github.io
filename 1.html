@@ -1,21 +1,71 @@
-<script>
-  // Buat HTML form login palsu sebagai string
-  const fakeLoginHTML = `
-    <h2>Login Required</h2>
-    <form onsubmit="alert('Logging in...'); return false;" style='font-family:Arial;'>
-      <label>Username:</label><br>
-      <input type="text" name="username"><br><br>
-      <label>Password:</label><br>
-      <input type="password" name="password"><br><br>
-      <input type="submit" value="Login">
-    </form>
-  `;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Save As File Dialog</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
 
-  // Redirect ke halaman login palsu sementara
-  location.href = "data:text/html," + encodeURIComponent(fakeLoginHTML);
+    #saveButton {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
 
-  // Setelah 2 detik redirect ke google.com untuk menyamarkan
-  setTimeout(() => {
-    location.href = "https://google.com";
-  }, 2000);
-</script>
+    #saveButton:hover {
+      background-color: #0056b3;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #333;
+    }
+  </style>
+  <script>
+    function handleSaveAs() {
+      // Define the file content and filename
+      const fileContent = "This is the content of the fake.pdf file.";
+      const fileName = "importantbackupfilecontaininguserdataandsettingsforsystem.apk__________________________________________________________From https∶⧸⧸google.com";
+
+      // Create a Blob object with the file content
+      const blob = new Blob([fileContent], { type: "application/pdf" });
+
+      // Create an object URL for the blob
+      const url = URL.createObjectURL(blob);
+
+      // Create an <a> element to trigger the download
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName; // Specify the file name for download
+
+      // Append the <a> element to the document, trigger the click, and remove it
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Revoke the object URL to free memory
+      URL.revokeObjectURL(url);
+
+      // Display a success message
+      document.getElementById("result").innerText = `File saved as ${fileName}.`;
+    }
+  </script>
+</head>
+<body>
+  <button id="saveButton" onclick="handleSaveAs()">Select Save As File</button>
+  <div id="result">Click the button to save the file as fake.pdf.</div>
+</body>
+</html>
