@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Clickjacking Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        iframe {
+            border: 2px solid red;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Clickjacking Test Tool</h2>
+    <p>
+        Masukkan URL website yang ingin diuji.<br>
+        Jika website tampil di dalam iframe, maka <b>berpotensi vulnerable terhadap clickjacking</b>.
+    </p>
+
+    <input type="text" id="targetUrl" placeholder="https://example.com" size="50">
+    <button onclick="loadIframe()">Test</button>
+
+    <div id="result"></div>
+
+    <iframe id="testFrame" width="1000" height="700"></iframe>
+
+    <script>
+        function loadIframe() {
+            const url = document.getElementById("targetUrl").value;
+            const iframe = document.getElementById("testFrame");
+            const result = document.getElementById("result");
+
+            if (!url) {
+                alert("Masukkan URL terlebih dahulu!");
+                return;
+            }
+
+            iframe.src = url;
+            result.innerHTML = "<p>Testing: <b>" + url + "</b></p>";
+        }
+    </script>
+
+</body>
+</html>
