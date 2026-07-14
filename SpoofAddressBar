@@ -1,0 +1,26 @@
+
+<html>
+
+<h1>Spoof short domain (.cr,.cw,.ci,.run,.io,info=>inf in address bar,etc ) </h1>
+<h2>visible in the address bar .c only so the victim will think it is .com, .io => visible in address bar .i the victimX will think it is .it (italy)</h2>
+<div>
+<a href="https://www.aaaaa.auths.account.google.cr">Open google (.cr)</a><br/><br/>
+<a href="https://www.aaaaa.auths.account.google.cw">Open google (.cw)</a><br/><br/>
+<a href="https://www.aaaaa.auths.account.google.ci">Open google (.ci)</a><br/><br/>
+<a href="https://www.aaaaa.auths.account.google.run">Open google (.run) like google.ru (russia)</a><br/><br/>
+<a href="https://www.aaaaa.auths.account.facebook.cr">Open facebook (.cr)</a><br/><br/>
+<a href="https://www.aaaaa.auths.account.facebook.cw">Open facebook (.cw)</a><br/><br/>
+<a href="https://www.aaaaa.auths.account.facebook.ci">Open facebook (.ci) </a><br/><br/>
+<a href="https://www.aaaaa.auths.account.facebook.io">Open facebook (.io) like (.it)</a><br/><br/>
+
+
+
+</div>
+
+
+
+
+
+
+
+</html>
