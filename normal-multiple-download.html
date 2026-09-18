@@ -1,0 +1,30 @@
+<!-- File 1: control.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Control: Normal Multiple Download</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #d9534f; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Normal Multiple Download</h2>
+    <button onclick="run()">Trigger 2 Downloads</button>
+    <script>
+        function download(name, content) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        function run() {
+            download('normal_1.txt', 'Content 1');
+            setTimeout(() => download('normal_2.txt', 'Content 2'), 100);
+        }
+    </script>
+</body>
+</html>
