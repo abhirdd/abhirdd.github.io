@@ -1,68 +1,37 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Blob URL Fragment Confusion PoC</title>
-    <style>
-        body { font-family: sans-serif; text-align: center; padding: 50px; background: #f5f5f5; }
-        button { padding: 10px 20px; cursor: pointer; font-size: 14px; background: #d32f2f; color: white; border: none; border-radius: 4px; }
-        #log { margin-top: 20px; font-family: monospace; background: #e0e0e0; padding: 15px; display: inline-block; text-align: left; font-size: 13px; border-radius: 4px; }
-        .warning { color: #d32f2f; font-weight: bold; margin-top: 10px; }
-    </style>
+    <title>About:Blank Fragment Test</title>
 </head>
 <body>
-    <h2>Blob URL Fragment Confusion Simulation</h2>
-    <p>Klik tombol di bawah untuk melihat bagaimana browser menangani Blob URL dengan fragment yang menyesatkan.</p>
-    <button onclick="startTest()">Run Simulation</button>
-    <div id="log"></div>
-
+    <h2>Testing About:Blank Spoofing</h2>
+    <button onclick="testAboutBlank()">Open About:Blank with Fake Fragment</button>
+    
     <script>
-        function startTest() {
-            // 1. Buat payload HTML palsu (misalnya, halaman login)
-            const html = `
+        function testAboutBlank() {
+            // 1. Buka window baru dengan about:blank
+            const newWin = window.open('about:blank', '_blank');
+            
+            // 2. Coba manipulasi URL dengan fragment yang menyesatkan
+            // Browser AKAN menampilkan: about:blank#https://google.com
+            const fakeUrl = 'about:blank#https://google.com';
+            
+            // 3. Tulis konten palsu ke dalam window tersebut
+            newWin.document.write(`
                 <style>
-                    body { font-family: 'Roboto', Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
-                    .box { background: white; padding: 48px 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 450px; text-align: left; }
-                    h2 { font-size: 24px; color: #202124; margin: 0 0 8px 0; }
-                    input { width: 100%; padding: 13px 15px; box-sizing: border-box; border: 1px solid #dadce0; border-radius: 4px; font-size: 16px; margin-bottom: 15px; }
-                    .button-primary { width: 100%; padding: 12px 24px; background: #0b57d0; color: white; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+                    body { font-family: Arial; text-align: center; padding: 50px; background: #f0f2f5; }
+                    .box { background: white; padding: 40px; border-radius: 8px; display: inline-block; }
                 </style>
                 <div class="box">
-                    <h2>Sign in</h2>
-                    <p>to continue to <strong>google.com</strong></p>
-                    <input type="text" placeholder="Email or phone" id="email">
-                    <input type="password" placeholder="Password" id="password">
-                    <button class="button-primary" onclick="alert('Data captured (Simulation)')">Sign in</button>
+                    <h2>Sign in to Google</h2>
+                    <p>Perhatikan address bar di atas. Itu akan menampilkan:</p>
+                    <code style="background:#eee; padding:5px; color:red;">about:blank#https://google.com</code>
+                    <p>Bukan <strong>https://google.com</strong>.</p>
                 </div>
-            `;
-
-            // 2. Buat Blob URL. Browser AKAN menempelkan origin saat ini (misal: https://attacker.com)
-            const blob = new Blob([html], { type: 'text/html' });
-            const realOrigin = window.location.origin;
+            `);
             
-            // 3. Tambahkan fragment yang menyesatkan di akhir
-            const deceptiveUrl = URL.createObjectURL(blob) + '#/google.com';
-
-            // 4. Tampilkan hasil aktual kepada penguji
-            const logDiv = document.getElementById('log');
-            logDiv.innerHTML = `
-                <strong>Actual Generated URL:</strong><br>
-                ${deceptiveUrl}<br><br>
-                <strong>Browser Security Behavior:</strong><br>
-                1. Origin terkunci pada: <span style="color:red">${realOrigin}</span><br>
-                2. Skema 'blob:' tetap terlihat jelas di address bar.<br>
-                3. Fragment '#/google.com' TIDAK mengubah konteks keamanan atau origin.
-            `;
-
-            // 5. Eksekusi Meta Refresh untuk simulasi redirect otomatis
-            const meta = document.createElement('meta');
-            meta.httpEquiv = 'refresh';
-            meta.content = '1;url=' + deceptiveUrl;
-            document.head.appendChild(meta);
-
-            setTimeout(() => {
-                if (document.head.contains(meta)) document.head.removeChild(meta);
-            }, 2000);
+            // 4. Coba ubah history (ini juga tidak akan mengubah tampilan dasar address bar)
+            newWin.history.pushState({}, '', fakeUrl);
         }
     </script>
 </body>
