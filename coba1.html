@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tech 10 – Hidden form POST</title>
+<title>Tech 8 – No download attr</title>
 <style>/* same */</style>
 </head>
 <body>
@@ -10,32 +10,26 @@
 <button onclick="run()">Execute Injection</button>
 <pre id="out" style="margin:10px auto;width:100%;text-align:left;"></pre>
 <script>
+function download(name, content){
+  // catat nama tapi TIDAK mengirimkannya ke atribut download
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([content],{type:'application/octet-stream'}));
+  // a.download = name; // DIBUAT KOSONG
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+}
 function run(){
-  // main: submit form tersembunyi ke example.com yang akan merespons dengan file
-  const form=document.createElement('form');
-  form.action='https://example.com/downloader'; // endpoint buatan
-  form.method='POST';
-  form.style.display='none';
-  const payload=document.createElement('input');
-  payload.type='hidden'; payload.name='filename'; payload.value='main_context.txt';
-  const data=document.createElement('input');
-  data.type='hidden'; data.name='data'; data.value='Main content';
-  form.appendChild(payload);form.appendChild(data);
-  document.body.appendChild(form);form.submit();
-  document.getElementById('out').innerText='Main sent via hidden POST';
-
-  // injected di window baru (form juga bisa dikirim dari situ, tapi kita tutup window)
+  download('main_context.txt','Main content');
   setTimeout(()=>{
     const win=window.open('', '_blank');
     if(win){
-      win.document.write(`<script>setTimeout(()=>{const f=document.createElement('form');
-        f.action='https://example.com/downloader'; f.method='POST'; f.style.display='none';
-        const i=document.createElement('input'); i.type='hidden'; i.name='filename'; i.value='injected_context.txt';
-        const d=document.createElement('input'); d.type='hidden'; d.name='data'; d.value='Injected content';
-        f.appendChild(i);f.appendChild(d);document.body.appendChild(f);f.submit();},300);<\/script>`);
+      win.document.write(`<script>setTimeout(()=>{const a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob(['Injected content'],{type:'application/octet-stream'}));
+        // a.download='injected_context.txt'; // juga dihilangkan
+        document.body.appendChild(a);a.click();},300);<\/script>`);
       win.document.close();
     }
   },500);
+  document.getElementById('out').innerText='Downloads saved with generic names (no .txt shown)';
 }
 </script>
 </body>
