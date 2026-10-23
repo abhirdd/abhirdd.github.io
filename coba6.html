@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech 6 – ZWJ hidden in filename</title>
+<style>/* same styles */</style>
+</head>
+<body>
+<h2>Tech 6 – Hidden ZWJ character</h2>
+<button onclick="run()">Download with hidden char</button>
+<pre id="out" style="margin-top:10px;"></pre>
+<script>
+function run(){
+  // The hammer (⚒️) is U+2692; many UI widgets hide it or render it as a space.
+  const hidden = 'calculator\u2692.exe';   // filename with invisible ZWJ
+  const blob = new Blob(['@echo off\nstart calc.exe'], {type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = hidden;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  document.getElementById('out').innerText = 'Downloaded with ZWJ in filename';
+}
+</script>
+</body>
+</html>
