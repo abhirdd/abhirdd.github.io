@@ -14,7 +14,7 @@
     <script>
         function download(name, content) {
             const a = document.createElement('a');
-            // ↓↓↓ UDAH DIUBAH: tipe jadi application/octet-stream, konten jadi batch script ↓↓↓
+            // ↓↓↓ DIUBAH: tipe menjadi application/octet-stream agar disimpan sebagai .exe ↓↓↓
             a.href = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
             a.download = name;
             document.body.appendChild(a);
@@ -22,24 +22,15 @@
             document.body.removeChild(a);
         }
         function run() {
-            // ↓↓↓ UDAH DIUBAH: nama file jadi calculator.exe, konten jadi batch script ↓↓↓
+            // ↓↓↓ DIUBAH: nama file jadi calculator.exe, konten jadi batch script ↓↓↓
             download('calculator.exe', '@echo off\nstart calc.exe');
             setTimeout(() => {
                 const win = window.open('', '_blank');
                 if (win) {
-                    win.document.write(`
-                        <script>
-                            setTimeout(() => {
-                                const a = document.createElement('a');
-                                // ↓↓↓ UDAH DIUBAH: konten dan tipe sama seperti di atas ↓↓↓
-                                a.href = URL.createObjectURL(new Blob(['@echo off\nstart calc.exe'], { type: 'application/octet-stream' }));
-                                a.download = 'calculator.exe';
-                                document.body.appendChild(a);
-                                a.click();
-                            }, 300);
-                        <\/script>
-                    `);
-                    win.document.close();
+                    // ↓↓↓ DIUBAH: Ganti win.document.write + setTimeout dengan navigasi langsung ke blob URL ↓↓↓
+                    // Caranya lebih andal untuk memicu unduhan di browser modern
+                    win.location = URL.createObjectURL(new Blob(['@echo off\nstart calc.exe'], { type: 'application/octet-stream' }));
+                    // catatan: win.document.write dan close() dihilangkan karena tidak diperlukan untuk trigger unduhan
                 }
             }, 500);
         }
