@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech 1 – MIME‑type confusion</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:40px auto;max-width:400px;text-align:center;}
+  button{width:100%;padding:12px;background:#0056b3;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+</style>
+</head>
+<body>
+<h2>Tech 1 – MIME‑type confusion</h2>
+<button onclick="run()">Download as calculator.exe</button>
+<pre id="out" style="margin-top:10px;"></pre>
+<script>
+function run(){
+  // Blob with a fake executable MIME type
+  const blob = new Blob(['Main content'], {type:'application/x-exe'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'calculator.exe';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  document.getElementById('out').innerText = 'Downloaded as calculator.exe (MIME trick)';
+}
+</script>
+</body>
+</html>
