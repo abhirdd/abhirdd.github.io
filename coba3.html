@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech 3 – Fetch + Content‑Disposition</title>
+<style>/* same styles */</style>
+</head>
+<body>
+<h2>Tech 3 – Fetch + Content‑Disposition</h2>
+<button onclick="run()">Download via fetch</button>
+<pre id="out" style="margin-top:10px;"></pre>
+<script>
+function run(){
+  fetch('https://example.com/somefile.exe')          // ← replace with a real endpoint
+    .then(r => r.blob())
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'calculator.exe';                   // we may still force a name
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      document.getElementById('out').innerText = 'Downloaded via fetch + Content‑Disposition';
+    })
+    .catch(e => document.getElementById('out').innerText = 'Error: ' + e);
+}
+</script>
+</body>
+</html>
