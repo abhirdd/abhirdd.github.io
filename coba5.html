@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tech 5 – Data‑URI (Base64)</title>
+<style>/* same styles */</style>
+</head>
+<body>
+<h2>Tech 5 – Data‑URI with Base64</h2>
+<button onclick="run()">Download via data: URI</button>
+<pre id="out" style="margin-top:10px;"></pre>
+<script>
+function run(){
+  // Base64 of “@echo off\r\nstart calc.exe”
+  const b64 = 'QG1lbW9JZzoIc3RyaW5nOnN0cmluZyBzcWx1c3R';
+  const dataUrl = 'data:text/plain;base64,' + b64;
+  const a = document.createElement('a');
+  a.href = dataUrl;
+  a.download = 'calculator.exe';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  document.getElementById('out').innerText = 'Downloaded via data: URI';
+}
+</script>
+</body>
+</html>
