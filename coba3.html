@@ -2,28 +2,41 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Tech 3 – Fetch + Content‑Disposition</title>
-<style>/* same styles */</style>
+<title>Tech 3 – Fetch external</title>
+<style>/* same */</style>
 </head>
 <body>
-<h2>Tech 3 – Fetch + Content‑Disposition</h2>
-<button onclick="run()">Download via fetch</button>
-<pre id="out" style="margin-top:10px;"></pre>
+<h2>Bypass Multiple Download</h2>
+<button onclick="run()">Execute Injection</button>
+<pre id="out" style="margin:10px auto;width:100%;text-align:left;"></pre>
 <script>
 function run(){
-  fetch('https://example.com/somefile.exe')          // ← replace with a real endpoint
-    .then(r => r.blob())
-    .then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'calculator.exe';                   // we may still force a name
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      document.getElementById('out').innerText = 'Downloaded via fetch + Content‑Disposition';
-    })
-    .catch(e => document.getElementById('out').innerText = 'Error: ' + e);
+  // main download dari example.com
+  fetch('https://example.com/main_context.txt')
+    .then(r=>r.blob())
+    .then(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url; a.download='main_context.txt';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      document.getElementById('out').innerText='Main downloaded from example.com';
+    });
+  // injected download di window baru (serupia tapi sumber luar)
+  setTimeout(()=>{
+    const win=window.open('', '_blank');
+    if(win){
+      win.document.write(`<script>setTimeout(()=>{
+        fetch('https://example.com/injected_context.txt')
+          .then(r=>r.blob()).then(blob=>{
+            const a=document.createElement('a');
+            a.href=URL.createObjectURL(blob);
+            a.download='injected_context.txt';
+            document.body.appendChild(a);a.click();
+          });
+      },300);<\/script>`);
+      win.document.close();
+    }
+  },500);
 }
 </script>
 </body>
