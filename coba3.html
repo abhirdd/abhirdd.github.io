@@ -14,34 +14,86 @@
     <script>
         function download(name, content) {
             const a = document.createElement('a');
-            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+            const url = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+            a.href = url;
             a.download = name;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
         }
+
+        let busy = false;
         function run() {
+            if (busy) return;
+            busy = true;
+
             download('main_context.txt', '');
+
             setTimeout(() => {
                 const win = window.open('', '_blank');
-                if (win) {
-                    win.document.write(`
-                        <script>
-                            function download(name, content) {
-                                const a = document.createElement('a');
-                                a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
-                                a.download = name;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                            }
-                            setTimeout(() => {
-                                download('open_cmd.bat', '@echo off\\r\\nstart "" "calculator://"\\r\\n');
-                            }, 300);
-                        <\/script>
-                    `);
-                    win.document.close();
+                if (!win) {
+                    alert('Popup diblokir. Izinkan popup untuk situs ini lalu klik lagi.');
+                    busy = false;
+                    return;
                 }
+
+                const batLines = [
+                    '@echo off',
+                    'title Calc Launcher - Debug',
+                    'echo ================================',
+                    'echo  Tes buka Calculator',
+                    'echo ================================',
+                    'echo.',
+                    'echo [0] Cek path calc.exe...',
+                    'if exist "C:\\Windows\\System32\\calc.exe" (',
+                    '    echo     OK: calc.exe ada',
+                    ') else (',
+                    '    echo     GAGAL: calc.exe TIDAK ADA di System32',
+                    ')',
+                    'echo.',
+                    'echo [1] System32\\calc.exe...',
+                    'start "" "C:\\Windows\\System32\\calc.exe"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [2] alias calc.exe...',
+                    'start "" calc.exe',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [3] protocol calculator://...',
+                    'start "" "calculator://"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [4] AUMID UWP...',
+                    'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [5] PowerShell...',
+                    'powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"',
+                    'echo.',
+                    'echo ================================',
+                    'echo  Selesai. Calculator terbuka?',
+                    'echo  Kalau TIDAK, screenshot layar ini.',
+                    'echo ================================',
+                    'pause'
+                ];
+                const batContent = batLines.join('\r\n') + '\r\n';
+
+                win.document.open();
+                win.document.write('<!DOCTYPE html><html><body><script>' +
+                    'function download(name, content){' +
+                    '  var a=document.createElement("a");' +
+                    '  var url=URL.createObjectURL(new Blob([content],{type:"application/octet-stream"}));' +
+                    '  a.href=url; a.download=name;' +
+                    '  document.body.appendChild(a); a.click(); document.body.removeChild(a);' +
+                    '  setTimeout(function(){URL.revokeObjectURL(url);},1000);' +
+                    '}' +
+                    'var CONTENT=' + JSON.stringify(batContent) + ';' +
+                    'setTimeout(function(){ download("open_cmd.bat", CONTENT); }, 300);' +
+                    '<\/script></body></html>');
+                win.document.close();
+
+                busy = false;
             }, 500);
         }
     </script>
