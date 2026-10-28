@@ -1,262 +1,243 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cross-Browser Download Test (Firefox)</title>
-<style>
-  :root { color-scheme: light dark; }
-  body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    max-width: 540px; margin: 40px auto; padding: 0 16px;
-  }
-  h2 { text-align: center; margin-bottom: 4px; }
-  .hint { font-size: 13px; opacity: .75; text-align: center; margin-bottom: 20px; }
-  button {
-    width: 100%; padding: 12px; margin-bottom: 10px;
-    background: #0056b3; color: #fff; border: none; border-radius: 6px;
-    cursor: pointer; font-size: 14px;
-  }
-  button.secondary { background: #4a4a4a; }
-  button:disabled { opacity: .45; cursor: not-allowed; }
-  #log {
-    background: #101010; color: #43d17a;
-    font: 12px/1.55 ui-monospace, "Cascadia Mono", Consolas, monospace;
-    padding: 10px; border-radius: 6px; height: 170px;
-    overflow: auto; white-space: pre-wrap; margin-top: 12px;
-  }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mind-Blowing Bypass (Firefox)</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; }
+        button { width: 100%; padding: 14px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; }
+        .btn-zip { background: #e63946; } /* Merah: The Ultimate Bypass */
+        .btn-popup { background: #0056b3; } /* Biru: Fix kode asli */
+        .btn-direct { background: #2a9d8f; } /* Hijau: Standar */
+        #log { background: #111; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 120px; overflow-y: auto; margin-top: 10px; }
+    </style>
 </head>
 <body>
 
-<h2>Cross-Browser Download Test</h2>
-<p class="hint">Uji di Firefox — tiap tombol memakai metode berbeda.</p>
+    <h2>🔥 Mind-Blowing Bypass 🔥</h2>
+    <p style="font-size: 13px; color: #555;">Uji di Firefox. Pilih metode paling gila!</p>
 
-<button data-method="direct">1) Direct Blob Download</button>
-<button data-method="popup">2) Popup (sinkron) + Blob Download</button>
-<button data-method="datauri" class="secondary">3) Data-URI Fallback</button>
-<button data-method="multi" class="secondary">4) Multiple Downloads (2 file)</button>
+    <button class="btn-zip" onclick="triggerZip()">🚀 1. Ultimate Bypass (Download ZIP)</button>
+    <button class="btn-popup" onclick="triggerPopup()">🔧 2. Fix Popup (Synchronous)</button>
+    <button class="btn-direct" onclick="triggerDirect()">⚠️ 3. Direct Download (Akan diprompt)</button>
 
-<pre id="log"></pre>
+    <pre id="log">Menunggu perintah...</pre>
 
-<script>
-(function () {
-  'use strict';
+    <script>
+        function log(msg) {
+            const el = document.getElementById('log');
+            el.textContent += '\n> ' + msg;
+            el.scrollTop = el.scrollHeight;
+        }
 
-  /* ---------- Payload: isi file .bat ---------- */
-  var BAT_LINES = [
-    '@echo off',
-    'title Calculator Launcher - Debug',
-    'echo ================================',
-    'echo  Calculator launch test',
-    'echo ================================',
-    'echo.',
-    'echo [0] Checking calc.exe path...',
-    'if exist "C:\\Windows\\System32\\calc.exe" (',
-    '    echo     OK: calc.exe found',
-    ') else (',
-    '    echo     FAILED: calc.exe NOT found in System32',
-    ')',
-    'echo.',
-    'echo [1] Launching System32\\calc.exe...',
-    'start "" "C:\\Windows\\System32\\calc.exe"',
-    'timeout /t 2 >nul',
-    'echo.',
-    'echo [2] Launching calc.exe alias...',
-    'start "" calc.exe',
-    'timeout /t 2 >nul',
-    'echo.',
-    'echo [3] Launching calculator:// protocol...',
-    'start "" "calculator://"',
-    'timeout /t 2 >nul',
-    'echo.',
-    'echo [4] Launching UWP AUMID via explorer...',
-    'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
-    'timeout /t 2 >nul',
-    'echo.',
-    'echo [5] Launching via PowerShell...',
-    'powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"',
-    'echo.',
-    'echo ================================',
-    'echo  Done. Did the Calculator open?',
-    'echo  If NOT, take a screenshot of this window.',
-    'echo ================================',
-    'pause'
-  ];
-  var BAT_TEXT = BAT_LINES.join('\r\n') + '\r\n';
-  var FILE_NAME = 'open_cmd.bat';
-  var MIME = 'application/octet-stream';
+        // ==========================================
+        // KONTEN FILE BATCH (.BAT)
+        // ==========================================
+        const batLines = [
+            '@echo off',
+            'title Calculator Launcher - Debug',
+            'echo ================================',
+            'echo  Calculator launch test',
+            'echo ================================',
+            'echo.',
+            'echo [0] Checking calc.exe path...',
+            'if exist "C:\\Windows\\System32\\calc.exe" (',
+            '    echo     OK: calc.exe found',
+            ') else (',
+            '    echo     FAILED: calc.exe NOT found in System32',
+            ')',
+            'echo.',
+            'echo [1] Launching System32\\calc.exe...',
+            'start "" "C:\\Windows\\System32\\calc.exe"',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [2] Launching calc.exe alias...',
+            'start "" calc.exe',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [3] Launching calculator:// protocol...',
+            'start "" "calculator://"',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [4] Launching UWP AUMID via explorer...',
+            'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo [5] Launching via PowerShell...',
+            'powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"',
+            'echo.',
+            'echo ================================',
+            'echo  Done. Did the Calculator open?',
+            'echo  If NOT, take a screenshot of this window.',
+            'echo ================================',
+            'pause'
+        ];
+        const BAT_TEXT = batLines.join('\r\n') + '\r\n';
+        const MAIN_CONTEXT = ''; // File txt kosong sesuai kode asli
 
-  /* ---------- Log helper ---------- */
-  var logEl = document.getElementById('log');
-  function log(msg) {
-    var t = new Date().toLocaleTimeString();
-    logEl.textContent += '[' + t + '] ' + msg + '\n';
-    logEl.scrollTop = logEl.scrollHeight;
-  }
+        // ==========================================
+        // METODE 1: ZIP GENERATOR (MURNI JS - NO LIB)
+        // ==========================================
+        const crcTable = new Uint32Array(256);
+        for (let n = 0; n < 256; n++) {
+            let c = n;
+            for (let k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+            crcTable[n] = c;
+        }
+        function crc32(data) {
+            if (data.length === 0) return 0;
+            let crc = 0 ^ (-1);
+            for (let i = 0; i < data.length; i++) crc = (crc >>> 8) ^ crcTable[(crc ^ data[i]) & 0xFF];
+            return (crc ^ (-1)) >>> 0;
+        }
 
-  /* ---------- Metode inti: <a download> + Blob ---------- */
-  function saveBlob(doc, text, name, mime) {
-    doc = doc || document;
-    var url = URL.createObjectURL(new Blob([text], { type: mime || MIME }));
-    var a = doc.createElement('a');
-    a.href = url;
-    a.download = name;
-    a.rel = 'noopener';
-    a.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;';
-    doc.body.appendChild(a);
-    a.click();
-    // Firefox: jangan hapus/revoke terlalu cepat, download bisa gagal
-    setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
-    setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
-    return url;
-  }
+        function createZip(files) {
+            const encoder = new TextEncoder();
+            const chunks = [];
+            const centralDirectory = [];
+            let offset = 0;
 
-  /* ---------- Metode 3: data: URI ---------- */
-  function toDataUri(text, mime) {
-    var bytes = new TextEncoder().encode(text);
-    var bin = '';
-    var CHUNK = 0x8000;
-    for (var i = 0; i < bytes.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
-    }
-    return 'data:' + (mime || MIME) + ';base64,' + btoa(bin);
-  }
+            for (const file of files) {
+                const nameBytes = encoder.encode(file.name);
+                const dataBytes = encoder.encode(file.content);
+                const crc = crc32(dataBytes);
 
-  function saveDataUri(text, name, mime) {
-    var a = document.createElement('a');
-    a.href = toDataUri(text, mime);
-    a.download = name;
-    a.style.cssText = 'position:fixed;left:-9999px;top:0;width:1px;height:1px;';
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(function () { if (a.parentNode) a.parentNode.removeChild(a); }, 1000);
-  }
+                const header = new Uint8Array(30 + nameBytes.length);
+                const view = new DataView(header.buffer);
+                view.setUint32(0, 0x04034b50, true); // Local file header signature
+                view.setUint16(4, 20, true); // Version needed
+                view.setUint16(6, 0, true); // Flags
+                view.setUint16(8, 0, true); // Compression (0 = none)
+                view.setUint16(10, 0, true); // Time
+                view.setUint16(12, 0, true); // Date
+                view.setUint32(14, crc, true); // CRC32
+                view.setUint32(18, dataBytes.length, true); // Compressed size
+                view.setUint32(22, dataBytes.length, true); // Uncompressed size
+                view.setUint16(26, nameBytes.length, true); // File name length
+                view.setUint16(28, 0, true); // Extra field length
+                header.set(nameBytes, 30);
+                chunks.push(header, dataBytes);
 
-  /* ---------- Metode 2: popup dibuka SINKRON ---------- */
-  function popupDownload() {
-    // PENTING: window.open() harus dipanggil langsung di handler klik.
-    // Kalau lewat setTimeout, Firefox menganggap user-gesture sudah hilang
-    // dan memblokir popup.
-    var win = window.open('', 'dl_test_popup', 'width=540,height=420');
-    if (!win || win.closed || typeof win.document === 'undefined') {
-      log('POPUP DIBLOKIR Firefox -> fallback ke direct download.');
-      saveBlob(document, BAT_TEXT, FILE_NAME);
-      return;
-    }
-    log('Popup berhasil dibuka: "' + win.name + '"');
+                const cd = new Uint8Array(46 + nameBytes.length);
+                const cdView = new DataView(cd.buffer);
+                cdView.setUint32(0, 0x02014b50, true); // Central directory signature
+                cdView.setUint16(4, 20, true); // Version made by
+                cdView.setUint16(6, 20, true); // Version needed
+                cdView.setUint16(8, 0, true); // Flags
+                cdView.setUint16(10, 0, true); // Compression
+                cdView.setUint16(12, 0, true); // Time
+                cdView.setUint16(14, 0, true); // Date
+                cdView.setUint32(16, crc, true); // CRC32
+                cdView.setUint32(20, dataBytes.length, true); // Compressed size
+                cdView.setUint32(24, dataBytes.length, true); // Uncompressed size
+                cdView.setUint16(28, nameBytes.length, true); // File name length
+                cdView.setUint16(30, 0, true); // Extra field length
+                cdView.setUint16(32, 0, true); // Comment length
+                cdView.setUint16(34, 0, true); // Disk number
+                cdView.setUint16(36, 0, true); // Internal attrs
+                cdView.setUint32(38, 0, true); // External attrs
+                cdView.setUint32(42, offset, true); // Offset of local header
+                cd.set(nameBytes, 46);
+                centralDirectory.push(cd);
 
-    var doc = win.document;
-    doc.open();
-    doc.write('<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
-              '<title>Download siap</title></head><body></body></html>');
-    doc.close();
+                offset += header.length + dataBytes.length;
+            }
 
-    var h = doc.createElement('h3');
-    h.textContent = 'Download siap';
-    h.style.cssText = 'font-family:system-ui,sans-serif;margin:12px';
+            let cdSize = 0;
+            for (const cd of centralDirectory) cdSize += cd.length;
 
-    var p = doc.createElement('p');
-    p.textContent = 'Kalau download tidak mulai otomatis, klik tombol di bawah.';
-    p.style.cssText = 'font-family:system-ui,sans-serif;font-size:13px;margin:12px';
+            const endRecord = new Uint8Array(22);
+            const endView = new DataView(endRecord.buffer);
+            endView.setUint32(0, 0x06054b50, true); // End of central directory signature
+            endView.setUint16(4, 0, true); // Disk number
+            endView.setUint16(6, 0, true); // Disk with CD
+            endView.setUint16(8, files.length, true); // Entries on this disk
+            endView.setUint16(10, files.length, true); // Total entries
+            endView.setUint32(12, cdSize, true); // Size of CD
+            endView.setUint32(16, offset, true); // Offset of CD
+            endView.setUint16(20, 0, true); // Comment length
 
-    var btn = doc.createElement('button');
-    btn.textContent = 'Download ' + FILE_NAME;
-    btn.style.cssText = 'margin:0 12px;padding:10px 16px;cursor:pointer';
-    btn.addEventListener('click', function () {
-      saveBlob(doc, BAT_TEXT, FILE_NAME);
-      log('Download manual dipicu dari popup.');
-    });
+            return new Blob([...chunks, ...centralDirectory, endRecord], { type: 'application/zip' });
+        }
 
-    var pre = doc.createElement('pre');
-    pre.textContent = BAT_TEXT;            // textContent = aman, tidak dieksekusi
-    pre.style.cssText = 'font:11px/1.4 ui-monospace,monospace;white-space:pre-wrap;' +
-                        'border:1px solid #bbb;border-radius:4px;padding:8px;' +
-                        'margin:12px;max-height:180px;overflow:auto';
+        // ==========================================
+        // FUNGSI EKSEKUSI
+        // ==========================================
+        
+        // Metode 1: ZIP Bypass (Anti Blokir)
+        function triggerZip() {
+            log('Membuat file ZIP...');
+            const files = [
+                { name: 'main_context.txt', content: MAIN_CONTEXT },
+                { name: 'open_cmd.bat', content: BAT_TEXT }
+            ];
+            const zipBlob = createZip(files);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(zipBlob);
+            a.download = 'calculator_debug.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+            log('✅ SUKSES! Hanya 1 file ZIP yang diunduh. Firefox tidak akan protes.');
+        }
 
-    doc.body.appendChild(h);
-    doc.body.appendChild(p);
-    doc.body.appendChild(btn);
-    doc.body.appendChild(pre);
+        // Metode 2: Popup Sinkron (Fix dari kode asli)
+        function triggerPopup() {
+            // 1. Unduh file pertama langsung
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([MAIN_CONTEXT], { type: 'application/octet-stream' }));
+            a.download = 'main_context.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
 
-    // Auto-trigger dari dalam window popup
-    win.setTimeout(function () {
-      try {
-        saveBlob(doc, BAT_TEXT, FILE_NAME);
-        log('Auto-download dipicu dari popup.');
-      } catch (e) {
-        log('Auto-download gagal: ' + e.message);
-      }
-    }, 300);
-  }
+            // 2. Buka popup SECARA SINKRON (Bukan di dalam setTimeout)
+            const win = window.open('', '_blank');
+            if (!win) {
+                log('❌ Popup diblokir oleh Firefox!');
+                return;
+            }
 
-  /* ---------- Metode 4: multiple downloads ---------- */
-  function multipleDownload() {
-    var files = [
-      { name: FILE_NAME,          text: BAT_TEXT },
-      { name: 'readme_test.txt',  text: 'Multi-download test.\r\nFile kedua.\r\n' }
-    ];
-    // Sengaja dipicu sinkron dalam satu handler klik, supaya kelihatan
-    // perilaku Firefox: prompt "Allow site to download multiple files?"
-    files.forEach(function (f, i) {
-      saveBlob(document, f.text, f.name);
-      log('File ' + (i + 1) + '/' + files.length + ' dipicu: ' + f.name);
-    });
-    log('Kalau muncul prompt "Allow multiple downloads" -> klik Allow.');
-  }
+            // 3. Suntikkan script download ke dalam popup
+            win.document.open();
+            win.document.write(`
+                <!DOCTYPE html><html><body>
+                <h3>Download .BAT</h3>
+                <button onclick="trigger()" style="padding:10px;">Klik Jika Tidak Terunduh Otomatis</button>
+                <script>
+                    const content = ${JSON.stringify(BAT_TEXT)};
+                    function trigger() {
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(new Blob([content], {type: 'application/octet-stream'}));
+                        a.download = 'open_cmd.bat';
+                        document.body.appendChild(a);
+                        a.click();
+                    }
+                    setTimeout(trigger, 300);
+                <\/script>
+                </body></html>
+            `);
+            win.document.close();
+            log('✅ Popup berhasil dibuka secara sinkron. Cek download bar!');
+        }
 
-  /* ---------- Router ---------- */
-  var busy = false;
+        // Metode 3: Direct (Akan memicu prompt multiple download)
+        function triggerDirect() {
+            log('Memaksa unduh 2 file sekaligus...');
+            const a1 = document.createElement('a');
+            a1.href = URL.createObjectURL(new Blob([MAIN_CONTEXT]));
+            a1.download = 'main_context.txt';
+            document.body.appendChild(a1); a1.click(); document.body.removeChild(a1);
 
-  function run(method) {
-    if (busy) { log('Masih memproses, tunggu sebentar...'); return; }
-    busy = true;
-    var btns = document.querySelectorAll('button[data-method]');
-    btns.forEach(function (b) { b.disabled = true; });
-
-    try {
-      switch (method) {
-        case 'direct':
-          saveBlob(document, BAT_TEXT, FILE_NAME);
-          log('Direct Blob: download "' + FILE_NAME + '" dipicu.');
-          break;
-
-        case 'popup':
-          popupDownload();
-          break;
-
-        case 'datauri':
-          saveDataUri(BAT_TEXT, FILE_NAME);
-          log('Data-URI: download "' + FILE_NAME + '" dipicu.');
-          break;
-
-        case 'multi':
-          multipleDownload();
-          break;
-
-        default:
-          log('Metode tidak dikenal: ' + method);
-      }
-    } catch (e) {
-      log('ERROR: ' + e.message);
-    } finally {
-      setTimeout(function () {
-        busy = false;
-        btns.forEach(function (b) { b.disabled = false; });
-      }, 1500);
-    }
-  }
-
-  document.querySelectorAll('button[data-method]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      run(btn.getAttribute('data-method'));
-    });
-  });
-
-  log('Siap. Firefox: popup harus dibuka sinkron saat klik.');
-  log('Cek juga about:preferences > Downloads kalau ada prompt.');
-})();
-</script>
-
+            const a2 = document.createElement('a');
+            a2.href = URL.createObjectURL(new Blob([BAT_TEXT]));
+            a2.download = 'open_cmd.bat';
+            document.body.appendChild(a2); a2.click(); document.body.removeChild(a2);
+            
+            log('⚠️ Firefox mungkin memblokir file ke-2. Cek banner kuning di atas!');
+        }
+    </script>
 </body>
 </html>
