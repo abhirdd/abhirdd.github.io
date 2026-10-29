@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>URL Juxtaposition Lab — trusted-domain string placement fuzz (internal engine testing)</title>
+<title>B2+ Deep-Dive — complete outcome space of the opaque-mint download</title>
 <style>
  :root{color-scheme:dark}
- body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:1050px}
+ body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:980px}
  h1{font-size:19px;margin:0 0 12px} h1 span{color:#8ab4f8}
  h2{font-size:15px;margin:22px 0 8px;color:#8ab4f8}
  .warn{border:1px solid #5f3b3b;background:#2a1a1a;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.55}
@@ -13,7 +13,6 @@
  .cfg{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;margin:14px 0;font-size:12px}
  .cfg label{display:block;margin:6px 0 3px;color:#8ab4f8;font-weight:600}
  .cfg input{width:100%;background:#0d1013;color:#e8eaed;border:1px solid #3c4043;border-radius:6px;padding:7px;font:12px Consolas,monospace}
- .cfg .row{display:flex;gap:10px} .cfg .row>div{flex:1}
  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin:16px 0}
  .card{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;display:flex;flex-direction:column}
  .card h3{margin:0 0 6px;font-size:12.5px;color:#8ab4f8}
@@ -22,158 +21,170 @@
  .card p code{color:#f2c38c}
  button{width:100%;padding:9px;background:#0b57d0;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
  button:hover{background:#0947a8}
- button.sec{background:#3c4043} button.sec:hover{background:#4a4f55}
- button.red{background:#a50e0e} button.red:hover{background:#7f0a0a}
- #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:340px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
+ #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:320px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
+ iframe.vis{width:100%;height:56px;border:1px dashed #3c4043;border-radius:8px;background:#0d1013;margin-top:8px}
  .note{font-size:11.8px;color:#9aa0a6;line-height:1.55;border:1px solid #2c3038;border-radius:10px;padding:12px;background:#1b1e24}
  .note b{color:#f2c38c}
 </style>
 </head>
 <body>
-<h1>URL <span>juxtaposition lab</span> — trusted-domain string placement fuzz (internal engine testing)</h1>
+<h1>B2+ <span>deep-dive</span> — the complete outcome space of the opaque-mint download</h1>
 <div class="warn">
-<b>Scope:</b> internal download-UI hardening for YOUR engine. Each vector places the TRUSTED string at a different position of the URL syntax (scheme · userinfo · path · query · fragment · control chars) and dispatches a real download attempt. The core measurement is the triple <b>RAW href → WHATWG parse → serialized <code>a.href</code></b>: a hardened engine renders only the re-serialized URL (userinfo stripped, control chars gone, punycode shown) in every security surface; a vulnerable engine renders the raw string or accepts an invalid parse. Payloads are inert .txt probes; server-dependent vectors point at your internal TESTHOST only. On stock Chrome: J1/J5/J9 produce no row at all and J2/J4/J10 attribute correctly — deviations in YOUR engine are the bugs you are hunting.
+<b>Honest framing:</b> your negative results across the B-lab and J-lab are the architecturally-correct answer — a trusted-domain string cannot enter the download pipeline from page code on a conforming engine. What this page does instead is enumerate the <b>entire outcome space of B2</b>: six variants covering every reachable combination of {blob-URL origin segment} × {From line}. The complete space is <b>segment ∈ {null, your-own-origin}</b> × <b>From ∈ {hidden (auto), your-origin (gesture)}</b>. <b>trusteddomain.com is not in either dimension — that is the proof, and it is final.</b> B2a/B2b/B2c establish the 2×2 matrix; B2d (nested opaque) and B2e (your original V4 blob-popup path) prove nesting and popups add nothing; B2f shows the <i>filename</i> is the only page-controlled string in a row (UI-salience test for your engine). Inert .txt probes. For your engine these are CI assertions: <b>any outcome outside this matrix = an engine bug to FIX</b>, not a technique to use.
 </div>
 <div class="cfg">
- <div class="row">
-  <div><label for="trusted">TRUSTED placeholder string</label>
-   <input type="text" id="trusted" value="trusteddomain.com"></div>
-  <div><label for="testhost">TESTHOST (your internal test server, serves attachment for any path)</label>
-   <input type="text" id="testhost" value="https://your-test-host.example"></div>
- </div>
- <div class="row">
-  <div><label for="uuid">UUID carried through the blob:null forms</label>
-   <input type="text" id="uuid" value="6aae7518-aa03-4ad7-994f-b4be93c02059"></div>
-  <div><label>parse-only mode fires no downloads</label>
-   <input type="text" id="basehint" value="see J0 — run this first" disabled></div>
- </div>
+ <label for="trusted">TRUSTED placeholder string (used only in the B2f filename test + log labels)</label>
+ <input type="text" id="trusted" value="trusteddomain.com">
 </div>
 <div class="grid">
-<div class="card"><h3>J0 — PARSE-ALL (no dispatch)</h3>
-<p>Runs every vector string through <code>new URL()</code> only. Shows exactly where the TRUSTED string lands in the parse tree (scheme / userinfo / host / path / query / fragment) before you dispatch anything.</p>
-<button onclick="J0()">Run J0 (parse only)</button></div>
-<div class="card"><h3>J1 — SCHEME-DOT: <code>TRUSTED:blob:null/&lt;uuid&gt;</code></h3>
-<p>Dots are legal scheme characters (WHATWG), so this parses as <b>scheme = trusteddomain.com</b>. Stock: unknown scheme → no DownloadItem. <b>Your engine: if an item is created from the raw href, GetURL() == the juxtaposed string</b> → scheme validation must precede item creation.</p>
-<button class="red" onclick="J1()">Run J1</button></div>
-<div class="card"><h3>J2 — PATH-PREFIX (server): <code>TESTHOST/TRUSTED/blob:null/&lt;uuid&gt;</code></h3>
-<p>TRUSTED string as a path segment; bytes come from TESTHOST. Tests what your URL display renders first and how truncation behaves (front-truncation = bug class).</p>
-<button onclick="J2()">Run J2</button></div>
-<div class="card"><h3>J3 — FRAGMENT-PREFIX: <code>TRUSTED#blob:null/&lt;uuid&gt;</code></h3>
-<p>Relative reference: resolves against your page host with path = TRUSTED and fragment = blob:… Tests fragment rendering and whether fragments bleed into any security surface.</p>
-<button onclick="J3()">Run J3</button></div>
-<div class="card"><h3>J4 — USERINFO (server): <code>https://TRUSTED@TESTHOST/jx.txt</code></h3>
-<p>The classic: bytes from TESTHOST, raw string reads TRUSTED first. Hardened: security surfaces strip userinfo (Chrome does); copy-link may show raw. Any surface that highlights TRUSTED as the host = display bug.</p>
-<button class="red" onclick="J4()">Run J4</button></div>
-<div class="card"><h3>J5 — BLOB INNER-ORIGIN USERINFO: <code>blob:https://TRUSTED@TESTHOST/&lt;uuid&gt;</code></h3>
-<p>Tests whether your blob-URL parser accepts userinfo inside the inner origin. It must not — inner origin has to parse strictly as a serialized origin.</p>
-<button onclick="J5()">Run J5</button></div>
-<div class="card"><h3>J6 — BACKSLASH DIFFERENTIAL: <code>https://TRUSTED\@TESTHOST/…</code></h3>
-<p>WHATWG converts <code>\</code> to <code>/</code> in special URLs → host = TRUSTED, bytes go to the real trusted host. Engines using non-WHATWG parsers can connect elsewhere while displaying TRUSTED — the classic parser-differential class.</p>
-<button class="red" onclick="J6()">Run J6</button></div>
-<div class="card"><h3>J7 — CONTROL-CHARS / BIDI: U+202E + CR/LF injected</h3>
-<p>WHATWG strips tabs/newlines from URL input and percent-encodes the rest; hardened UIs render only the sanitized serialization. Engines that render the raw href get bidi-overwrite and line-wrap display injection.</p>
-<button class="red" onclick="J7()">Run J7</button></div>
-<div class="card"><h3>J8 — FULLWIDTH-SLASH: U+FF0F as separator</h3>
-<p><code>https://TESTHOST／TRUSTED／blob:null／&lt;uuid&gt;</code> — fullwidth solidus is NOT a separator per WHATWG (stays percent-encoded in the path); non-conforming parsers may split the host there.</p>
-<button onclick="J8()">Run J8</button></div>
-<div class="card"><h3>J9 — FORGED BLOB ORIGIN: <code>blob:https://TRUSTED/&lt;uuid&gt;</code></h3>
-<p>Carryover from B3: must fail store lookup in every conforming engine. Any row appearing here = your BlobURLStore is not validating the inner origin.</p>
-<button onclick="J9()">Run J9</button></div>
-<div class="card"><h3>J10 — QUERY-JUXTAPOSE (server)</h3>
-<p><code>TESTHOST/?from=TRUSTED&amp;u=blob:null/&lt;uuid&gt;</code> — bytes from TESTHOST, trusted string embedded in the query; tests whether query components get highlighted/truncated into "host-looking" prominence.</p>
-<button onclick="J10()">Run J10</button></div>
-<div class="card"><h3>J11 — BLOB-FRAGMENT: <code>blob:https://TESTHOST/&lt;uuid&gt;#TRUSTED:blob:…</code></h3>
-<p>Fragment attached to a blob URL carrying the full juxtaposed string. Fragments must never bleed into attribution or the From line — verify every surface.</p>
-<button onclick="J11()">Run J11</button></div>
-<div class="card"><h3>J12 — WHITESPACE PADDING</h3>
-<p>Leading/trailing spaces around the href: the parser trims them; raw-rendering engines display padding tricks. Logs the raw vs serialized diff for the general raw-render check.</p>
-<button onclick="J12()">Run J12</button></div>
+<div class="card"><h3>B2a — OPAQUE · AUTO (your finding, cell 1)</h3>
+<p>Sandboxed iframe without <code>allow-same-origin</code>, postMessage-triggered download. EXPECT: <b>From hidden</b> + copy-link <code>blob:null/&lt;uuid&gt;</code>. The (null, hidden) cell.</p>
+<button onclick="B2a()">Run B2a</button></div>
+<div class="card"><h3>B2b — SAME-ORIGIN SANDBOX · AUTO (the ceiling, cell 2)</h3>
+<p><code>sandbox="allow-scripts allow-same-origin allow-downloads"</code>, auto download. EXPECT: From hidden + copy-link <code>blob:&lt;your-origin&gt;/&lt;uuid&gt;</code>. <b>Your own origin is the CEILING of the segment</b> — the maximum string the browser will ever place there. A foreign domain is unreachable.</p>
+<button onclick="B2b()">Run B2b</button></div>
+<div class="card"><h3>B2c — SAME-ORIGIN SANDBOX · GESTURE (cell 3)</h3>
+<p>Same frame as B2b but you click the button <i>inside</i> it. EXPECT: <b>From = your origin</b> + <code>blob:&lt;your-origin&gt;/&lt;uuid&gt;</code>. The fully-attributed cell. Arm, then click inside the frame.</p>
+<button onclick="B2c()">Arm B2c iframe</button></div>
+<div class="card"><h3>B2d — NESTED OPAQUE (srcdoc in srcdoc, relayed)</h3>
+<p>Opaque sandboxed iframe containing another opaque sandboxed iframe (message-relayed both ways). EXPECT: still <code>blob:null/&lt;uuid&gt;</code> — nesting depth adds nothing to the segment.</p>
+<button onclick="B2d()">Run B2d</button></div>
+<div class="card"><h3>B2e — OPAQUE BLOB-POPUP (your original V4 path)</h3>
+<p>Opaque iframe mints a <code>blob:null/…</code> HTML page and opens it as a popup during an in-frame gesture; the popup self-downloads its own blob. EXPECT: still <code>blob:null/&lt;uuid&gt;</code>, From hidden. Arm, then click inside the frame.</p>
+<button onclick="B2e()">Arm B2e iframe</button></div>
+<div class="card"><h3>B2f — FILENAME CARRIER (UI-salience test)</h3>
+<p>Sets the <code>download</code> attribute to a trusted-looking filename (<code>TRUSTED_report.txt</code>). EXPECT: <b>only the filename changes</b>; From and URL are untouched. Your engine must render the filename as a filename — never prominent enough to be read as provenance.</p>
+<button onclick="B2f()">Run B2f</button></div>
 </div>
 <h2>Probe log</h2>
 <pre id="log"></pre>
 <button class="sec" style="width:auto;padding:8px 18px;margin-top:8px" onclick="document.getElementById('log').textContent=''">Clear log</button>
 <div class="note" style="margin-top:14px">
-<b>Hardening checklist for your engine (fix = pass all vectors):</b><br>
-1. Never render raw href strings in any UI — always re-serialize through the URL parser.<br>
-2. Strip userinfo in every security-relevant display.<br>
-3. Render punycode for non-ASCII hosts; refuse mixed-script confusables.<br>
-4. Truncate URLs from the END only — never front- or middle-truncate.<br>
-5. Strip/refuse control characters (CR/LF/TAB/U+202E-class bidi) in display strings.<br>
-6. Validate blob: inner origin strictly as a serialized origin (no userinfo, no path, no fragment bleed).<br>
-7. Reject unknown/unregistered schemes BEFORE creating a download item (blocks the J1 class).<br>
-8. Attribution ("From") must come from the browser-bound request initiator, never from URL fields.<br>
-<b>Decision rule:</b> any surface where TRUSTED reads as the host/source while bytes actually come from TESTHOST (or no row should exist but one does) = display/validation bug in your engine. Record the RAW → serialized → displayed triple per vector.
+<b>The complete B2 outcome matrix (assert these in your engine's CI):</b><br>
+· B2a → (segment=null, From=hidden) · B2b → (segment=your-origin, From=hidden) · B2c → (segment=your-origin, From=your-origin)<br>
+· the fourth cell (segment=null, From=your-origin) should be UNREACHABLE — if your engine ever shows it, initiator binding is broken<br>
+· B2d/B2e → same as B2a (nesting and popups do not move the segment)<br>
+· B2f → filename-only change; attribution surfaces frozen<br>
+<b>Final statement:</b> trusteddomain.com is not in either dimension of this space. A trusted string can only appear via code executing at that origin (a site-side XSS) or via an engine bug that absorbs a raw href before scheme/blob-store validation — the latter is what your earlier J/B runs just proved your engine rejects. The one real, reportable artifact from this whole line remains <b>B2a: the fully unattributable download</b> (From hidden + blob:null URL) — for stock Chrome file it via crbug; for your engine decide the display policy (e.g. "From: (sandboxed page on &lt;embedder&gt;)") and harden per the checklist shipped with the J-lab.
 </div>
 <script>
 "use strict";
 var $ = function(id){ return document.getElementById(id); };
 function log(m){ var p=$('log'); p.textContent += '['+new Date().toISOString().slice(11,23)+'] '+m+'\n'; p.scrollTop=p.scrollHeight; }
+function originOf(w){ try{ return String(w.origin); }catch(e){ return '<cross-origin-unreadable>'; } }
 function TRUSTED(){ return $('trusted').value.trim() || 'trusteddomain.com'; }
-function TESTHOST(){ return $('testhost').value.trim().replace(/\/+$/,'') || 'https://your-test-host.example'; }
-function HOSTONLY(){ return TESTHOST().replace(/^https?:\/\//,'').replace(/\/.*$/,''); }
-function UUID(){ return $('uuid').value.trim() || '6aae7518-aa03-4ad7-994f-b4be93c02059'; }
 
-function buildRaws(){
-  var T = TRUSTED(), H = TESTHOST(), HO = HOSTONLY(), U = UUID();
-  return {
-    J1:  T+':blob:null/'+U,
-    J2:  H+'/'+T+'/blob:null/'+U,
-    J3:  T+'#blob:null/'+U,
-    J4:  'https://'+T+'@'+HO+'/jx.txt',
-    J5:  'blob:https://'+T+'@'+HO+'/'+U,
-    J6:  'https://'+T+'\\@'+HO+'/jx.txt',
-    J7:  'https://'+HO+'/'+T+'\u202Eblob:null/'+U+'\r\nend',
-    J8:  'https://'+HO+'\uFF0F'+T+'\uFF0Fblob:null\uFF0F'+U,
-    J9:  'blob:https://'+T+'/'+U,
-    J10: H+'/?from='+T+'&u=blob:null/'+U,
-    J11: 'blob:https://'+HO+'/'+U+'#'+T+':blob:null/'+U,
-    J12: '    https://'+HO+'/jx.txt   '
-  };
+var CTX = {};
+function ensureIframe(key, sandbox, html, visible){
+  if (CTX[key]) return CTX[key];
+  var f = document.createElement('iframe');
+  if (visible){ f.className='vis'; } else { f.style.cssText='width:0;height:0;border:0;position:fixed'; }
+  if (sandbox) f.sandbox = sandbox;
+  f.srcdoc = html; f.id = 'if_'+key;
+  document.body.appendChild(f);
+  CTX[key] = f;
+  return f;
 }
 
-function parseTree(label, raw){
-  log('PARSE '+label+' :: RAW      = '+JSON.stringify(raw));
-  try{
-    var u = new URL(raw, location.href);
-    log('      scheme='+JSON.stringify(u.protocol)+'  userinfo='+JSON.stringify((u.username||'')+(u.password?':'+u.password:'')+'@')+'  host='+JSON.stringify(u.host)+'  path='+JSON.stringify(u.pathname)+'  query='+JSON.stringify(u.search)+'  frag='+JSON.stringify(u.hash));
-    log('      serialized = '+u.href);
-    return u;
-  }catch(e){ log('      PARSE ERROR :: '+e.name+' — '+e.message); return null; }
+/* IA: opaque/auto inner — mints blob + self-downloads on msg; acks with the minted URL */
+var IA =
+  '<!DOCTYPE html><html><body><script>' +
+  'window.addEventListener("message",function(ev){var d=ev.data;' +
+  'if(d&&d.cmd==="dl"){var u=URL.createObjectURL(new Blob(["probe "+d.name],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download=d.name;document.body.appendChild(a);a.click();a.remove();' +
+  'parent.postMessage({ack:d.name,url:u,ctxOrigin:String(location.origin),ua:navigator.userActivation?("isActive:"+navigator.userActivation.isActive):"n/a"},"*");}});' +
+  '<\/script></body></html>';
+
+/* IB: same-origin-sandbox gesture inner — button self-downloads minted blob */
+var IB =
+  '<!DOCTYPE html><html><body style="font:12px system-ui;background:#0d1013;color:#e8eaed;margin:0;padding:6px">' +
+  '<button id="b" style="padding:6px 12px">CLICK ME (B2c)</button><script>' +
+  'document.getElementById("b").onclick=function(){' +
+  'var u=URL.createObjectURL(new Blob(["probe b2c gesture"],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download="b2c_gesture.txt";' +
+  'document.body.appendChild(a);a.click();a.remove();' +
+  'parent.postMessage({ack:"b2c",url:u,ctxOrigin:String(location.origin),ua:navigator.userActivation?("isActive:"+navigator.userActivation.isActive):"n/a"},"*");};' +
+  '<\/script></body></html>';
+
+window.addEventListener('message', function(ev){
+  var d = ev.data;
+  if (!d) return;
+  if (d.ack) log('ACK '+d.ack+' :: minted url='+d.url+' :: ctxOrigin='+JSON.stringify(d.ctxOrigin)+(d.ua?(' ua='+d.ua):'')+(d.m?(' m='+d.m):'')+' :: OBSERVE row: From hidden? copy-link segment?');
+});
+
+function B2a(){
+  var f = ensureIframe('b2a', 'allow-scripts allow-downloads', IA);
+  setTimeout(function(){
+    f.contentWindow.postMessage({cmd:'dl', name:'b2a_opaque_auto.txt'}, '*');
+    log('B2a: opaque auto — EXPECT (segment=null, From=hidden) :: your finding, cell 1');
+  }, 150);
 }
-function dispatch(label, raw){
+
+function B2b(){
+  var f = ensureIframe('b2b', 'allow-scripts allow-same-origin allow-downloads', IA);
+  setTimeout(function(){
+    f.contentWindow.postMessage({cmd:'dl', name:'b2b_samsite_auto.txt'}, '*');
+    log('B2b: same-origin-sandbox auto — EXPECT (segment='+originOf(window)+', From=hidden) :: the CEILING — your own origin is the max the segment can carry');
+  }, 150);
+}
+
+function B2c(){
+  var f = ensureIframe('b2c', 'allow-scripts allow-same-origin allow-downloads', IB, true);
+  log('B2c: armed visible same-origin-sandbox frame — click the button INSIDE it :: EXPECT (segment='+originOf(window)+', From='+originOf(window)+') :: fully attributed cell 3');
+}
+
+/* NEST: outer opaque iframe embedding IA (quote-escaped) + two-way relay */
+var NEST =
+  '<!DOCTYPE html><html><body>' +
+  '<iframe id="in" sandbox="allow-scripts allow-downloads" srcdoc="' + IA.replace(/"/g,'&quot;') + '"></iframe>' +
+  '<script>window.addEventListener("message",function(ev){var f=document.getElementById("in");' +
+  'if(f&&ev.source===parent){f.contentWindow.postMessage(ev.data,"*");}else{parent.postMessage(ev.data,"*");}});<\/script></body></html>';
+
+function B2d(){
+  var f = ensureIframe('b2d', 'allow-scripts allow-downloads', NEST);
+  setTimeout(function(){
+    try { f.contentWindow.postMessage({cmd:'dl', name:'b2d_nested.txt'}, '*'); }
+    catch(e){ log('B2d: relay unreachable: '+e.name); }
+    log('B2d: nested opaque (srcdoc in srcdoc, relayed) — EXPECT still (segment=null, From=hidden) :: depth adds nothing');
+  }, 300);
+}
+
+/* POP: self-downloading page opened as a blob:null popup by the opaque frame (your V4 path) */
+var POP =
+  '<!DOCTYPE html><html><body><script>' +
+  'setTimeout(function(){var u=URL.createObjectURL(new Blob(["probe b2e popup"],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download="b2e_popup.txt";' +
+  'document.body.appendChild(a);a.click();a.remove();' +
+  'try{opener.report("b2e popup fired url="+u+" origin="+String(location.origin));}catch(e){}},300);' +
+  '<\/script></body></html>';
+var IE =
+  '<!DOCTYPE html><html><body style="font:12px system-ui;background:#0d1013;color:#e8eaed;margin:0;padding:6px">' +
+  '<button id="b" style="padding:6px 12px">CLICK ME (B2e)</button><script>' +
+  'var POPUPHTML=' + JSON.stringify(POP).split('<\/script>').join('<\\/script>') + ';' +
+  'window.report=function(m){parent.postMessage({ack:"b2e",m:m,ctxOrigin:String(location.origin)},"*");};' +
+  'document.getElementById("b").onclick=function(){' +
+  'var u=URL.createObjectURL(new Blob([POPUPHTML],{type:"text/html"}));' +
+  'var p=window.open(u,"_blank");' +
+  'parent.postMessage({ack:"b2e-open",m:"blob popup="+(p?"OPEN":"BLOCKED")+" minted="+u,ctxOrigin:String(location.origin)},"*");};' +
+  '<\/script></body></html>';
+
+function B2e(){
+  var f = ensureIframe('b2e', 'allow-scripts allow-downloads allow-popups', IE, true);
+  log('B2e: armed opaque frame (blob-popup mode) — click the button INSIDE it :: EXPECT popup download still (segment=null, From=hidden) :: your original V4 path');
+}
+
+function B2f(){
+  var u = window.URL.createObjectURL(new window.Blob(['filename carrier probe\r\n'], {type:'text/plain'}));
   var a = document.createElement('a');
-  a.download = 'jx_'+label.toLowerCase()+'.txt';
-  try { a.href = raw; } catch(e){ log('DISPATCH '+label+' :: href assignment threw '+e.name); return; }
-  log('DISPATCH '+label+' :: a.href (post-parse serialization) = '+a.href);
+  a.href = u;
+  a.download = TRUSTED() + '_report.txt';
   document.body.appendChild(a); a.click(); a.remove();
-  log('   -> OBSERVE: row appears? URL field / copy-link string? does TRUSTED read as host while bytes come from TESTHOST?');
-}
-function runV(label){
-  var raw = buildRaws()[label];
-  parseTree(label, raw);
-  dispatch(label, raw);
+  setTimeout(function(){ try{ window.URL.revokeObjectURL(u); }catch(e){} }, 8000);
+  log('B2f: filename="'+TRUSTED()+'_report.txt" — EXPECT only the filename changes; From + URL frozen :: engine must never let a filename read as provenance');
 }
 
-function J0(){
-  var r = buildRaws();
-  Object.keys(r).forEach(function(k){ parseTree(k, r[k]); });
-  log('J0: parse-only complete — no downloads dispatched. Compare each scheme/host/userinfo column against where TRUSTED lands.');
-}
-function J1(){ runV('J1'); }
-function J2(){ runV('J2'); }
-function J3(){ runV('J3'); }
-function J4(){ runV('J4'); }
-function J5(){ runV('J5'); }
-function J6(){ runV('J6'); }
-function J7(){ runV('J7'); }
-function J8(){ runV('J8'); }
-function J9(){ runV('J9'); }
-function J10(){ runV('J10'); }
-function J11(){ runV('J11'); }
-function J12(){ runV('J12'); }
-
-log('juxtaposition lab ready :: page origin='+location.origin+' :: TRUSTED='+TRUSTED()+' TESTHOST='+TESTHOST());
-log('order: J0 first (parse tree only) → then J1..J12 one per pass; record the RAW -> serialized -> displayed triple per vector');
+log('B2+ deep-dive ready :: top origin='+originOf(window)+' :: TRUSTED='+TRUSTED());
+log('order: B2a → B2b → B2c (click inside frame) → B2d → B2e (click inside frame) → B2f :: fill the outcome matrix below; any cell outside the matrix = engine bug to fix');
 </script>
 </body>
 </html>
