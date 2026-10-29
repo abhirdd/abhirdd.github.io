@@ -9,7 +9,7 @@
     margin: 0;
     padding: 0;
     background: #f8f9fa;
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     color: #1a1a1a;
     overflow: hidden;
   }
@@ -91,75 +91,100 @@
 
   .fake-content {
     display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
     height: 100vh;
     background: #ffffff;
+    overflow-x: hidden;
   }
   
   .fake-content.active {
+    display: block;
+  }
+
+  /* --- GOOGLE SEARCH UI STYLES --- */
+  .fake-address-bar {
+    background-color: #f1f3f4;
+    border-bottom: 1px solid #ccc;
+    padding: 12px 24px;
+    font-size: 16px;
+    color: #5f6368;
+    font-family: monospace;
+    box-shadow: inset 0 -1px 0 #e0e0e0;
+    user-select: none;
+  }
+
+  .fake-lock {
+    color: #34a853;
+    margin-right: 8px;
+  }
+
+  .centered {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: calc(100vh - 50px);
+    user-select: none;
   }
 
-  /* --- REVISED UPDATE BOX TO MATCH SCREENSHOT --- */
-  .update-box {
-    background: #ffffff;
-    padding: 64px 56px;
-    border-radius: 8px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.1);
-    max-width: 440px;
+  .google-logo {
+    width: 272px;
+    height: 92px;
+    background: url('https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png') no-repeat center center;
+    background-size: contain;
+    margin-bottom: 40px;
+  }
+
+  .search-bar {
     width: 90%;
-    text-align: center;
+    max-width: 584px;
+    display: flex;
+    border: 1px solid #dfe1e5;
+    border-radius: 24px;
+    padding: 12px 20px;
+    align-items: center;
+    box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+    transition: box-shadow 0.2s;
+  }
+
+  .search-bar:hover,
+  .search-bar:focus-within {
+    box-shadow: 0 1px 6px rgba(32,33,36,0.28);
+  }
+
+  .search-bar input {
+    flex: 1;
     border: none;
+    outline: none;
+    font-size: 16px;
+    background: transparent;
+    color: #202124;
   }
 
-  .update-title {
-    color: #1a73e8;
-    font-size: 2rem;
-    font-weight: 400;
-    margin: 0 0 16px 0;
-    letter-spacing: -0.5px;
+  .btn-container {
+    margin-top: 30px;
+    display: flex;
+    gap: 12px;
   }
 
-  .update-subtitle {
-    color: #5f6368;
-    font-size: 1rem;
-    margin: 0 0 24px 0;
-    font-weight: 400;
-  }
-
-  .progress-bar {
-    width: 100%;
-    height: 4px;
-    background: #dadce0;
-    border-radius: 2px;
-    margin: 0 0 24px 0;
-    overflow: hidden;
-  }
-
-  .progress-fill {
-    height: 100%;
-    background: #1a73e8;
-    width: 0%;
-    transition: width 0.3s ease-out;
-    border-radius: 2px;
-  }
-
-  .update-message {
-    color: #5f6368;
-    font-size: 0.9rem;
-    margin: 0 0 20px 0;
-    font-weight: 400;
-  }
-
-  .update-footer {
+  .btn {
+    background: #f8f9fa;
+    border: 1px solid #f8f9fa;
+    padding: 0 16px;
+    height: 36px;
+    border-radius: 4px;
+    font-size: 14px;
     color: #3c4043;
-    font-size: 0.85rem;
-    margin: 0;
-    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.2s;
   }
-  /* ---------------------------------------------- */
+
+  .btn:hover {
+    box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    background: #f8f9fa;
+    border: 1px solid #dadce0;
+    color: #202124;
+  }
+  /* ------------------------------ */
 </style>
 </head>
 <body>
@@ -179,18 +204,23 @@
     </button>
   </div>
 
-  <!-- Fake Content View (Shown after fullscreen) -->
+  <!-- Fake Content View (Shown after fullscreen) - GOOGLE SEARCH UI -->
   <div class="fake-content" id="fake-view">
-    <div class="update-box">
-      <h1 class="update-title">Chrome Update</h1>
-      <p class="update-subtitle">Installing critical security patches...</p>
-      
-      <div class="progress-bar">
-        <div class="progress-fill" id="progress"></div>
+    <!-- Fake address bar mimicking Google search -->
+    <div class="fake-address-bar">
+      <span class="fake-lock">🔒</span>https://www.google.com/
+    </div>
+
+    <!-- Simulated search UI -->
+    <div class="centered">
+      <div class="google-logo"></div>
+      <div class="search-bar">
+        <input type="text" value="tes spoofing" readonly>
       </div>
-      
-      <p class="update-message">Please do not close this window</p>
-      <p class="update-footer">google.com - Secure System Portal</p>
+      <div class="btn-container">
+        <button class="btn">Google Search</button>
+        <button class="btn">I'm Feeling Lucky</button>
+      </div>
     </div>
   </div>
 
@@ -217,14 +247,6 @@
       setTimeout(() => {
         document.getElementById('initial-view').style.display = 'none';
         document.getElementById('fake-view').classList.add('active');
-        
-        // Simulate progress bar
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += 10;
-          document.getElementById('progress').style.width = progress + '%';
-          if (progress >= 100) clearInterval(interval);
-        }, 300);
         
         // Show fake toast after real browser toast fades
         setTimeout(() => {
