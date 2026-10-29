@@ -2,126 +2,213 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>S5 — Adopted-Realm Anchor: "From" Omission PoC (isolated)</title>
+<title>Initiator-Binding Deep Fuzz — hunting "From google.com" without redirects</title>
 <style>
  :root{color-scheme:dark}
- body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:900px}
+ body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:1000px}
  h1{font-size:19px;margin:0 0 12px} h1 span{color:#f28b82}
+ h2{font-size:15px;margin:22px 0 8px;color:#8ab4f8}
  .warn{border:1px solid #5f3b3b;background:#2a1a1a;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.55}
  .warn code{color:#f2c38c}
- .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px;margin:16px 0}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin:16px 0}
  .card{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;display:flex;flex-direction:column}
- .card h3{margin:0 0 6px;font-size:13px;color:#8ab4f8}
- .card p{margin:0 0 10px;font-size:11.8px;color:#9aa0a6;line-height:1.5;flex:1}
+ .card h3{margin:0 0 6px;font-size:12.5px;color:#8ab4f8}
+ .card p{margin:0 0 10px;font-size:11.5px;color:#9aa0a6;line-height:1.5;flex:1}
  .card p b{color:#c7cbd1}
  button{width:100%;padding:9px;background:#0b57d0;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
  button:hover{background:#0947a8}
+ button.sec{background:#3c4043} button.sec:hover{background:#4a4f55}
  button.red{background:#a50e0e} button.red:hover{background:#7f0a0a}
- #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:300px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
+ #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:320px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
  .note{font-size:11.8px;color:#9aa0a6;line-height:1.55;border:1px solid #2c3038;border-radius:10px;padding:12px;background:#1b1e24}
  .note b{color:#f2c38c}
 </style>
 </head>
 <body>
-<h1>S5 <span>adopted-realm anchor</span> — isolated "From" omission PoC</h1>
+<h1>Initiator-binding <span>deep fuzz</span> — hunting "From google.com" WITHOUT redirects</h1>
 <div class="warn">
-<b>Isolated from chrome_from_spoof_lab.html vector S5.</b> Research use only, your own Chrome builds. The 2×2 below separates <b>documented omission</b> (post-fix CL <code>ae2cc7a</code> omits the "From" line when <code>DownloadItem::HasUserGesture()</code> is false) from a <b>real bug</b> (gesture/initiator binding lost across <code>document.adoptNode()</code> / cross-realm click dispatch). Inert .txt probes only. Disclose via crbug.com before publishing.
+<b>Honest threat model first:</b> post-patch (Chromium CL <code>ae2cc7a</code>, feature <code>kDownloadsDisplayInitiatorOrigin</code>, default ON) the "From" line renders <code>FormatOriginForSecurityDisplay(GetRequestInitiator())</code>, and that initiator origin is bound <b>browser-side</b> to the committed origin of the frame that dispatched the download. <b>No page-side function can write "google.com" into that field on a default patched Chrome.</b> The only non-redirect routes that can ever produce a google.com attribution are: <b>(R3)</b> a NEW mis-attribution bug in the initiator binding — which is exactly what this page attacks with context-manipulation primitives, including two deep ones (<b>X7 opener-chain laundering</b>, <b>X8 named-window resurrection</b>) that put a <b>real google.com-committed window</b> into your download's auxiliary/creator chain via <i>direct navigation</i>, zero redirects; or <b>(R2)</b> serving from an origin you own whose formatting reads like google.com (homograph) — requires domain registration and surviving Chrome's IDN anti-spoofing, which this page deliberately does not operationalize. Expected on current Chrome: every row holds = patch-robustness evidence. A google string in ANY row = initiator mis-attribution jackpot → crbug FIRST, publish later. Inert .txt probes only.
 </div>
 <div class="grid">
-<div class="card"><h3>C0 — CONTROL: gesture download, top document</h3>
-<p>Trusted button click → synthetic anchor click in the same task, top document, blob from top realm. Expectation: "From" <b>present</b> = your true origin. Baseline for the matrix.</p>
-<button onclick="C0()">Run C0</button></div>
-<div class="card"><h3>A — ADOPTED AUTO (your observation, verbatim S5)</h3>
-<p>Anchor+blob created in popup realm, <code>adoptNode()</code> into top, clicked at <b>+600ms (no activation anywhere)</b>. Expectation: "From" <b>empty</b> — this is the documented no-gesture omission (condition b) and matches what you observed.</p>
-<button onclick="A()">Run A</button></div>
-<div class="card"><h3>G — ADOPTED GESTURE SYNC (the differentiator)</h3>
-<p>Same adoption, but the adopted anchor is clicked <b>synchronously inside your button click</b> (top doc has transient activation). Expectation: "From" <b>present</b>. If it is <b>empty</b> ⇒ BUG: gesture/initiator binding dropped across realm adoption ⇒ file it.</p>
-<button class="red" onclick="G()">Run G</button></div>
-<div class="card"><h3>P — POPUP-REALM SYNC, NO ADOPTION (activation-inheritance control)</h3>
-<p>Synthetic click inside the about:blank popup document during your gesture (node never adopted). Auxiliary contexts may not inherit transient activation ⇒ "From" empty here is informative about WHERE the gesture flag is read (dispatching doc vs creator realm).</p>
-<button onclick="P()">Run P</button></div>
+<div class="card"><h3>X0 — DEAD-LEVER LEDGER (no button)</h3>
+<p>Already-dead page levers, kept here so you don't waste runs: <code>referrerpolicy</code>/<code>rel</code> (not fed to initiator) · <code>Referrer</code> header via fetch (forbidden header) · <code>pushState/replaceState</code> to google.com (cross-origin, blocked) · <code>&lt;base href="https://google.com/…"&gt;</code> (resolves URLs, never changes origin) · <code>document.domain</code> (X2 probes it; github.io is a public suffix) · blob minting (origin baked at creation, X5 probes it).</p>
+<button class="sec" disabled>reference card</button></div>
+<div class="card"><h3>X1 — CONTROL: gesture download, top document</h3>
+<p>Baseline. Expectation: "From" = your true origin string. Every other row diffs against this.</p>
+<button onclick="X1()">Run X1</button></div>
+<div class="card"><h3>X2 — document.domain ORIGIN-SETTER ATTEMPT</h3>
+<p>The only page-side API that ever mutated an origin. Attempts <code>document.domain = parentSuffix</code> then gesture-downloads. Expectation: setter blocked (deprecated + public suffix) and From unchanged even if the setter lands.</p>
+<button onclick="X2()">Run X2</button></div>
+<div class="card"><h3>X3 — SANDBOX allow-same-origin (control for X4)</h3>
+<p><code>sandbox="allow-scripts allow-same-origin allow-downloads"</code> srcdoc iframe, sync fire while reachable. Expectation: From = your origin (origin preserved through sandbox).</p>
+<button onclick="X3()">Run X3</button></div>
+<div class="card"><h3>X4 — OPAQUE SANDBOX (origin=null) via postMessage</h3>
+<p>Sandboxed iframe without <code>allow-same-origin</code>: opaque initiator, auto download. Expectation: From empty. <b>From = top origin = launder bug.</b> From = anything else = mis-attribution.</p>
+<button onclick="X4()">Run X4</button></div>
+<div class="card"><h3>X5 — FOREIGN blob:null MINT (creator≠dispatcher)</h3>
+<p>Opaque iframe mints a <code>blob:null/…</code> URL; the TOP document clicks an anchor whose href is that foreign blob (creator realm = opaque, dispatcher = top). Probes whether initiator resolves from blob creator vs dispatching document — and whether the foreign blob resolves at all.</p>
+<button onclick="X5()">Run X5</button></div>
+<div class="card"><h3>X6 — ADOPTED ANCHOR, SYNCHRONOUS GESTURE</h3>
+<p>Node+blob created in popup realm, <code>adoptNode()</code> into top, clicked <b>inside the gesture task</b>. From present = patch holds; <b>From empty = gesture/initiator binding lost across realm adoption</b> (the differentiator from the S5 auto variant).</p>
+<button onclick="X6()">Run X6</button></div>
+<div class="card"><h3>X7 — OPENER-CHAIN LAUNDERING (google commits into your chain)</h3>
+<p>Builds W1(self)→W2→W3 all attacker-scriptable; then <b>W2 direct-navigates to https://www.google.com/</b> (navigation, not a redirect). Downloads fire from W3 pre-commit (x7a), from a W2-minted blob (x7b), and post-commit (x7c/x7d). If any initiator resolution walks the opener/creator chain, it now literally sees google.com. From = google anywhere = jackpot.</p>
+<button class="red" onclick="X7()">Run X7</button></div>
+<div class="card"><h3>X8 — NAMED-WINDOW RESURRECTION</h3>
+<p>Opens google.com <b>directly</b> in a NAMED window; after commit, re-targets that same named window to about:blank (opener may navigate its own auxiliary) and fires a download from the resurrected document. Any code path reading "previous committed origin" would see google. Log + read From.</p>
+<button class="red" onclick="X8()">Run X8</button></div>
 </div>
 <h2>Probe log</h2>
 <pre id="log"></pre>
+<button class="sec" style="width:auto;padding:8px 18px;margin-top:8px" onclick="document.getElementById('log').textContent=''">Clear log</button>
 <div class="note" style="margin-top:14px">
-<b>Decision rule:</b> C0 present + A empty + G present ⇒ documented omission only (your S5 "From hilang" = condition b, by design). C0 present + <b>G empty</b> ⇒ cross-realm adoption drops gesture/initiator binding = reportable bug (security-UI attribution loss). P empty while G present ⇒ gesture flag is read from the click-dispatching document's activation (spec-consistent). P empty AND G empty ⇒ activation lookup broken for adopted nodes = stronger bug. Record exact strings per row in bubble / chrome://downloads.
+<b>Decision rule:</b> run X1→X8 in order, one pass each, allow popups. Record the exact From string per filename in the bubble / chrome://downloads. X1/X3/X6 (gesture) should read your origin; X2/X4/X5/X7/X8 rows are the attack surface — empty From is the documented no-gesture/opaque omission, <b>any other origin — especially google.com — is a mis-attribution bug</b>: save the probe log, file via crbug.com (component: UI&gt;Downloads), then publish. If everything reads your-origin-or-empty, you have a clean patch-robustness matrix — also reportable as research.
 </div>
 <script>
 "use strict";
 var $ = function(id){ return document.getElementById(id); };
 function log(m){ var p=$('log'); p.textContent += '['+new Date().toISOString().slice(11,23)+'] '+m+'\n'; p.scrollTop=p.scrollHeight; }
-function uaStr(w){
-  try{ var u=w.navigator.userActivation;
-    return u ? ('ua=isActive:'+u.isActive+',hasBeenActive:'+u.hasBeenActive) : 'ua=unsupported';
-  }catch(e){ return 'ua=blocked'; }
-}
-function mkBlob(win, content){ return win.URL.createObjectURL(new win.Blob([content], {type:'text/plain'})); }
-function attachClickRemove(doc, a){ (doc.body||doc.documentElement).appendChild(a); a.click(); a.remove(); }
-
-/* C0 — control: gesture download from top document, top realm blob */
-function C0(){
-  var u = mkBlob(window, 'probe c0 gesture top '+Date.now()+'\r\n');
-  var a = document.createElement('a');
-  a.href = u; a.download = 's5x_c0_gesture_top.txt';
-  attachClickRemove(document, a);
-  log('C0: gesture top download fired '+uaStr(window)+' :: EXPECT From present = true origin');
-  setTimeout(function(){ try{ window.URL.revokeObjectURL(u); }catch(e){} }, 8000);
-}
-
-/* shared setup: popup realm blob + anchor, adopted into top document */
-function adoptedSetup(name){
-  var win = window.open('', '_blank');
-  if(!win){ log('SETUP: popup BLOCKED — allow popups and retry'); return null; }
-  win.document.open();
-  win.document.write('<!DOCTYPE html><html><body></body></html>');
-  win.document.close();
-  var u = mkBlob(win, 'probe adopted '+name+' '+Date.now()+'\r\n');
+function uaStr(w){ try{ var u=w.navigator.userActivation; return u ? ('ua=isActive:'+u.isActive+',hasBeenActive:'+u.hasBeenActive) : 'ua=unsupported'; }catch(e){ return 'ua=blocked'; } }
+function originOf(w){ try{ return String(w.origin); }catch(e){ return '<cross-origin-unreadable>'; } }
+function mkBlob(win, txt){ return win.URL.createObjectURL(new win.Blob([txt], {type:'text/plain'})); }
+function dlIn(win, name, url){
   var a = win.document.createElement('a');
-  a.href = u; a.download = name;
-  var adopted = document.adoptNode(a);
-  log('setup: anchor created in popup realm, adopted into top (ownerDocument===top: '+(adopted.ownerDocument===document)+') popup ua='+uaStr(win)+' top ua='+uaStr(window));
-  return { win:win, u:u, adopted:adopted };
+  a.href = url; a.download = name;
+  (win.document.body || win.document.documentElement).appendChild(a);
+  a.click(); a.remove();
+}
+function fire(win, name){
+  var u = mkBlob(win, 'probe '+name+' @ '+Date.now()+'\r\n');
+  dlIn(win, name, u);
+  setTimeout(function(){ try{ win.URL.revokeObjectURL(u); }catch(e){} }, 8000);
+  log(name+' fired :: ctx origin='+originOf(win)+' '+uaStr(win));
+}
+function minimalDoc(win){ win.document.open(); win.document.write('<!DOCTYPE html><html><body></body></html>'); win.document.close(); }
+
+var INNER_DL =
+  '<!DOCTYPE html><html><body><script>' +
+  'window.addEventListener("message",function(ev){var d=ev.data;' +
+  'if(d&&d.cmd==="dl"){var u=URL.createObjectURL(new Blob(["probe "+d.name],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download=d.name;document.body.appendChild(a);a.click();a.remove();' +
+  'parent.postMessage({ack:d.name,ctxOrigin:String(location.origin)},"*");}' +
+  'if(d&&d.cmd==="mint"){var b=URL.createObjectURL(new Blob(["foreign mint"],{type:"text/plain"}));' +
+  'parent.postMessage({minted:b,ctxOrigin:String(location.origin)},"*");}});' +
+  '<\/script></body></html>';
+var CTX = {};
+function ensureIframe(key, sandbox, html){
+  if (CTX[key]) return CTX[key];
+  var f = document.createElement('iframe');
+  f.style.cssText = 'width:0;height:0;border:0;position:fixed';
+  if (sandbox) f.sandbox = sandbox;
+  f.srcdoc = html;
+  document.body.appendChild(f);
+  CTX[key] = f;
+  return f;
+}
+window.addEventListener('message', function(ev){
+  var d = ev.data;
+  if (!d) return;
+  if (d.ack) log('ACK '+d.ack+' ctxOrigin='+JSON.stringify(d.ctxOrigin)+' ev.origin='+JSON.stringify(ev.origin));
+  if (d.minted){ window.__x5blob = d.minted; log('X5 mint ack ctxOrigin='+JSON.stringify(d.ctxOrigin)+' url='+d.minted); }
+});
+
+function X1(){ fire(window, 'ih_x1_gesture_top.txt'); log('X1: control — EXPECT From = '+originOf(window)); }
+
+function X2(){
+  var host = location.hostname || '';
+  if (!host){ log('X2: no hostname (file://) — host on https to run this probe properly'); }
+  var guess = host.split('.').slice(-2).join('.');
+  var res;
+  try { document.domain = guess; res = 'SET OK, document.domain='+document.domain; }
+  catch(e){ res = 'BLOCKED ('+e.name+'): '+e.message; }
+  fire(window, 'ih_x2_doctype.txt');
+  log('X2: document.domain="'+guess+'" :: '+res+' :: location.origin='+originOf(window)+' — EXPECT From unchanged either way');
 }
 
-/* A — verbatim S5 behavior: adopted anchor clicked AUTOMATICALLY (+600ms) */
-function A(){
-  var s = adoptedSetup('s5x_a_adopted_auto.txt');
-  if(!s) return;
-  log('A: AUTO click scheduled at +600ms (no activation in any context) :: EXPECT From empty = documented no-gesture omission (condition b) — this reproduces your observation');
+function X3(){
+  var f = ensureIframe('x3', 'allow-scripts allow-same-origin allow-downloads', '<!DOCTYPE html><html><body></body></html>');
   setTimeout(function(){
-    attachClickRemove(document, s.adopted);
-    log('A: adopted anchor clicked (auto) '+uaStr(window));
-    setTimeout(function(){ try{ s.win.URL.revokeObjectURL(s.u); }catch(e){} }, 8000);
-  }, 600);
+    try { fire(f.contentWindow, 'ih_x3_sandbox_samsite.txt'); }
+    catch(e){ log('X3: context unreachable: '+e.name); }
+  }, 150);
 }
 
-/* G — differentiator: adopted anchor clicked SYNCHRONOUSLY inside the gesture */
-function G(){
-  var s = adoptedSetup('s5x_g_adopted_gesture.txt');
-  if(!s) return;
-  attachClickRemove(document, s.adopted);
-  log('G: SYNCHRONOUS gesture click of adopted anchor, top has transient activation '+uaStr(window));
-  log('G: READ RESULT :: From PRESENT = patch holds (A-empty was documented). From EMPTY = BUG: gesture/initiator binding lost across document.adoptNode()/cross-realm dispatch');
-  setTimeout(function(){ try{ s.win.URL.revokeObjectURL(s.u); }catch(e){} }, 8000);
+function X4(){
+  var f = ensureIframe('x4', 'allow-scripts allow-downloads', INNER_DL);
+  setTimeout(function(){
+    f.contentWindow.postMessage({cmd:'dl', name:'ih_x4_opaque_auto.txt'}, '*');
+    log('X4: msg fired into opaque iframe — EXPECT From empty; top-origin = launder bug');
+  }, 150);
 }
 
-/* P — activation-inheritance control: synthetic click inside popup, no adoption */
-function P(){
+function X5(){
+  var f = ensureIframe('x5', 'allow-scripts allow-downloads', INNER_DL);
+  window.__x5blob = null;
+  setTimeout(function(){ f.contentWindow.postMessage({cmd:'mint'}, '*'); }, 150);
+  setTimeout(function(){
+    var u = window.__x5blob;
+    if (!u){ log('X5: opaque iframe silent — no mint ack, abort'); return; }
+    log('X5: firing anchor href=FOREIGN blob (creator=opaque realm, dispatcher=top)');
+    try { dlIn(window, 'ih_x5_foreign_blob.txt', u); log('X5: dispatched — check whether the file lands at all + its From'); }
+    catch(e){ log('X5: dispatch failed: '+e.name+' '+e.message); }
+  }, 700);
+}
+
+function X6(){
   var win = window.open('', '_blank');
-  if(!win){ log('P: popup BLOCKED'); return; }
-  win.document.open();
-  win.document.write('<!DOCTYPE html><html><body></body></html>');
-  win.document.close();
-  var u = mkBlob(win, 'probe popup realm sync '+Date.now()+'\r\n');
+  if (!win){ log('X6: popup BLOCKED'); return; }
+  minimalDoc(win);
+  var u = mkBlob(win, 'probe adopted gesture '+Date.now()+'\r\n');
   var a = win.document.createElement('a');
-  a.href = u; a.download = 's5x_p_popup_sync.txt';
-  attachClickRemove(win.document, a);
-  log('P: sync synthetic click INSIDE about:blank popup during gesture; popup ua='+uaStr(win)+' top ua='+uaStr(window)+' :: empty From here (while G present) = gesture flag read from dispatching-doc activation (spec-consistent)');
+  a.href = u; a.download = 'ih_x6_adopted_gesture.txt';
+  var adopted = document.adoptNode(a);
+  document.body.appendChild(adopted); adopted.click(); adopted.remove();
+  log('X6: ADOPTED anchor clicked synchronously in gesture task '+uaStr(window)+' — From present=patch holds; EMPTY=gesture lost across realm adoption');
   setTimeout(function(){ try{ win.URL.revokeObjectURL(u); }catch(e){} }, 8000);
 }
 
-log('S5 isolated PoC ready :: top origin='+location.origin+' '+uaStr(window));
-log('run order: C0 → A → G → P, one download-set per pass; compare From strings in bubble / chrome://downloads against the decision rule below the grid');
+function X7(){
+  log('X7: OPENER-CHAIN LAUNDERING — W2 direct-navigates to https://www.google.com/ (no redirect); W3 (attacker doc) fires downloads around the commit');
+  var w2 = window.open('', '_blank');
+  if (!w2){ log('X7: W2 BLOCKED (popup)'); return; }
+  minimalDoc(w2);
+  var w3 = null;
+  try { w3 = w2.open('', '_blank'); } catch(e){ log('X7: w2.open threw: '+e.name); }
+  if (!w3){ log('X7: W3 BLOCKED (nested popup) — allow popups and retry'); return; }
+  minimalDoc(w3);
+  log('X7: chain W1(self)→W2→W3 built; W2 origin='+originOf(w2)+' W3 origin='+originOf(w3));
+  fire(w3, 'ih_x7a_prec.txt');
+  var foreignBlob = mkBlob(w2, 'probe foreign creator '+Date.now()+'\r\n');
+  setTimeout(function(){
+    log('X7b: anchor href = blob MINTED IN W2 (creator realm), clicked from W3');
+    try { dlIn(w3, 'ih_x7b_creator_realm.txt', foreignBlob); log('X7b: dispatched'); }
+    catch(e){ log('X7b: dispatch failed: '+e.name); }
+  }, 800);
+  w2.location.assign('https://www.google.com/');
+  log('X7: W2 navigating DIRECTLY to https://www.google.com/ …');
+  setTimeout(function(){ log('X7: +1.5s :: originOf(W2)='+originOf(w2)+' (unreadable ⇒ committed at google)'); }, 1500);
+  setTimeout(function(){ fire(w3, 'ih_x7c_postcommit.txt'); log('X7c: fired from W3 AFTER W2 commit — creator-chain resolution would see google here'); }, 2000);
+  setTimeout(function(){ fire(w3, 'ih_x7d_late.txt'); }, 4000);
+  setTimeout(function(){ log('X7: done — EXPECT all From = your origin or empty(auto); GOOGLE IN ANY ROW = mis-attribution jackpot'); }, 5500);
+}
+
+function X8(){
+  log('X8: NAMED-WINDOW RESURRECTION — direct-navigate named window to google, then re-target it to about:blank and fire from the resurrected doc');
+  var wg = window.open('https://www.google.com/', 'gx_probe');
+  if (!wg){ log('X8: named google window BLOCKED'); return; }
+  setTimeout(function(){
+    log('X8: +2s :: named window originOf='+originOf(wg)+' (unreadable ⇒ committed at google)');
+    var wres = null;
+    try { wres = window.open('about:blank', 'gx_probe'); } catch(e){ log('X8: re-target threw: '+e.name); }
+    if (!wres){ log('X8: re-target returned null'); return; }
+    log('X8: resurrected ref origin='+originOf(wres)+' — firing download from it');
+    try { fire(wres, 'ih_x8_resurrected.txt'); }
+    catch(e){ log('X8: fire failed (resurrection stayed cross-origin): '+e.name); }
+  }, 2000);
+}
+
+log('initiator-binding fuzz ready :: top origin='+originOf(window)+' '+uaStr(window));
+log('run order: X1 → X2 → X3 → X4 → X5 → X6 → X7 → X8; allow popups; read From string per filename; decision rule in the note below');
 </script>
 </body>
 </html>
