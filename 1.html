@@ -1,71 +1,179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Save As File Dialog</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #saveButton {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-
-    #saveButton:hover {
-      background-color: #0056b3;
-    }
-
-    #result {
-      margin-top: 20px;
-      font-size: 14px;
-      color: #333;
-    }
-  </style>
-  <script>
-    function handleSaveAs() {
-      // Define the file content and filename
-      const fileContent = "This is the content of the fake.pdf file.";
-      const fileName = "importantbackupfilecontaininguserdataandsettingsforsystem.apk__________________________________________________________From https∶⧸⧸google.com";
-
-      // Create a Blob object with the file content
-      const blob = new Blob([fileContent], { type: "application/pdf" });
-
-      // Create an object URL for the blob
-      const url = URL.createObjectURL(blob);
-
-      // Create an <a> element to trigger the download
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileName; // Specify the file name for download
-
-      // Append the <a> element to the document, trigger the click, and remove it
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      // Revoke the object URL to free memory
-      URL.revokeObjectURL(url);
-
-      // Display a success message
-      document.getElementById("result").innerText = `File saved as ${fileName}.`;
-    }
-  </script>
+<meta charset="UTF-8">
+<title>URL Juxtaposition Lab — trusted-domain string placement fuzz (internal engine testing)</title>
+<style>
+ :root{color-scheme:dark}
+ body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:1050px}
+ h1{font-size:19px;margin:0 0 12px} h1 span{color:#8ab4f8}
+ h2{font-size:15px;margin:22px 0 8px;color:#8ab4f8}
+ .warn{border:1px solid #5f3b3b;background:#2a1a1a;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.55}
+ .warn code{color:#f2c38c}
+ .cfg{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;margin:14px 0;font-size:12px}
+ .cfg label{display:block;margin:6px 0 3px;color:#8ab4f8;font-weight:600}
+ .cfg input{width:100%;background:#0d1013;color:#e8eaed;border:1px solid #3c4043;border-radius:6px;padding:7px;font:12px Consolas,monospace}
+ .cfg .row{display:flex;gap:10px} .cfg .row>div{flex:1}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:10px;margin:16px 0}
+ .card{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;display:flex;flex-direction:column}
+ .card h3{margin:0 0 6px;font-size:12.5px;color:#8ab4f8}
+ .card p{margin:0 0 10px;font-size:11.5px;color:#9aa0a6;line-height:1.5;flex:1}
+ .card p b{color:#c7cbd1}
+ .card p code{color:#f2c38c}
+ button{width:100%;padding:9px;background:#0b57d0;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+ button:hover{background:#0947a8}
+ button.sec{background:#3c4043} button.sec:hover{background:#4a4f55}
+ button.red{background:#a50e0e} button.red:hover{background:#7f0a0a}
+ #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:340px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
+ .note{font-size:11.8px;color:#9aa0a6;line-height:1.55;border:1px solid #2c3038;border-radius:10px;padding:12px;background:#1b1e24}
+ .note b{color:#f2c38c}
+</style>
 </head>
 <body>
-  <button id="saveButton" onclick="handleSaveAs()">Select Save As File</button>
-  <div id="result">Click the button to save the file as fake.pdf.</div>
+<h1>URL <span>juxtaposition lab</span> — trusted-domain string placement fuzz (internal engine testing)</h1>
+<div class="warn">
+<b>Scope:</b> internal download-UI hardening for YOUR engine. Each vector places the TRUSTED string at a different position of the URL syntax (scheme · userinfo · path · query · fragment · control chars) and dispatches a real download attempt. The core measurement is the triple <b>RAW href → WHATWG parse → serialized <code>a.href</code></b>: a hardened engine renders only the re-serialized URL (userinfo stripped, control chars gone, punycode shown) in every security surface; a vulnerable engine renders the raw string or accepts an invalid parse. Payloads are inert .txt probes; server-dependent vectors point at your internal TESTHOST only. On stock Chrome: J1/J5/J9 produce no row at all and J2/J4/J10 attribute correctly — deviations in YOUR engine are the bugs you are hunting.
+</div>
+<div class="cfg">
+ <div class="row">
+  <div><label for="trusted">TRUSTED placeholder string</label>
+   <input type="text" id="trusted" value="trusteddomain.com"></div>
+  <div><label for="testhost">TESTHOST (your internal test server, serves attachment for any path)</label>
+   <input type="text" id="testhost" value="https://your-test-host.example"></div>
+ </div>
+ <div class="row">
+  <div><label for="uuid">UUID carried through the blob:null forms</label>
+   <input type="text" id="uuid" value="6aae7518-aa03-4ad7-994f-b4be93c02059"></div>
+  <div><label>parse-only mode fires no downloads</label>
+   <input type="text" id="basehint" value="see J0 — run this first" disabled></div>
+ </div>
+</div>
+<div class="grid">
+<div class="card"><h3>J0 — PARSE-ALL (no dispatch)</h3>
+<p>Runs every vector string through <code>new URL()</code> only. Shows exactly where the TRUSTED string lands in the parse tree (scheme / userinfo / host / path / query / fragment) before you dispatch anything.</p>
+<button onclick="J0()">Run J0 (parse only)</button></div>
+<div class="card"><h3>J1 — SCHEME-DOT: <code>TRUSTED:blob:null/&lt;uuid&gt;</code></h3>
+<p>Dots are legal scheme characters (WHATWG), so this parses as <b>scheme = trusteddomain.com</b>. Stock: unknown scheme → no DownloadItem. <b>Your engine: if an item is created from the raw href, GetURL() == the juxtaposed string</b> → scheme validation must precede item creation.</p>
+<button class="red" onclick="J1()">Run J1</button></div>
+<div class="card"><h3>J2 — PATH-PREFIX (server): <code>TESTHOST/TRUSTED/blob:null/&lt;uuid&gt;</code></h3>
+<p>TRUSTED string as a path segment; bytes come from TESTHOST. Tests what your URL display renders first and how truncation behaves (front-truncation = bug class).</p>
+<button onclick="J2()">Run J2</button></div>
+<div class="card"><h3>J3 — FRAGMENT-PREFIX: <code>TRUSTED#blob:null/&lt;uuid&gt;</code></h3>
+<p>Relative reference: resolves against your page host with path = TRUSTED and fragment = blob:… Tests fragment rendering and whether fragments bleed into any security surface.</p>
+<button onclick="J3()">Run J3</button></div>
+<div class="card"><h3>J4 — USERINFO (server): <code>https://TRUSTED@TESTHOST/jx.txt</code></h3>
+<p>The classic: bytes from TESTHOST, raw string reads TRUSTED first. Hardened: security surfaces strip userinfo (Chrome does); copy-link may show raw. Any surface that highlights TRUSTED as the host = display bug.</p>
+<button class="red" onclick="J4()">Run J4</button></div>
+<div class="card"><h3>J5 — BLOB INNER-ORIGIN USERINFO: <code>blob:https://TRUSTED@TESTHOST/&lt;uuid&gt;</code></h3>
+<p>Tests whether your blob-URL parser accepts userinfo inside the inner origin. It must not — inner origin has to parse strictly as a serialized origin.</p>
+<button onclick="J5()">Run J5</button></div>
+<div class="card"><h3>J6 — BACKSLASH DIFFERENTIAL: <code>https://TRUSTED\@TESTHOST/…</code></h3>
+<p>WHATWG converts <code>\</code> to <code>/</code> in special URLs → host = TRUSTED, bytes go to the real trusted host. Engines using non-WHATWG parsers can connect elsewhere while displaying TRUSTED — the classic parser-differential class.</p>
+<button class="red" onclick="J6()">Run J6</button></div>
+<div class="card"><h3>J7 — CONTROL-CHARS / BIDI: U+202E + CR/LF injected</h3>
+<p>WHATWG strips tabs/newlines from URL input and percent-encodes the rest; hardened UIs render only the sanitized serialization. Engines that render the raw href get bidi-overwrite and line-wrap display injection.</p>
+<button class="red" onclick="J7()">Run J7</button></div>
+<div class="card"><h3>J8 — FULLWIDTH-SLASH: U+FF0F as separator</h3>
+<p><code>https://TESTHOST／TRUSTED／blob:null／&lt;uuid&gt;</code> — fullwidth solidus is NOT a separator per WHATWG (stays percent-encoded in the path); non-conforming parsers may split the host there.</p>
+<button onclick="J8()">Run J8</button></div>
+<div class="card"><h3>J9 — FORGED BLOB ORIGIN: <code>blob:https://TRUSTED/&lt;uuid&gt;</code></h3>
+<p>Carryover from B3: must fail store lookup in every conforming engine. Any row appearing here = your BlobURLStore is not validating the inner origin.</p>
+<button onclick="J9()">Run J9</button></div>
+<div class="card"><h3>J10 — QUERY-JUXTAPOSE (server)</h3>
+<p><code>TESTHOST/?from=TRUSTED&amp;u=blob:null/&lt;uuid&gt;</code> — bytes from TESTHOST, trusted string embedded in the query; tests whether query components get highlighted/truncated into "host-looking" prominence.</p>
+<button onclick="J10()">Run J10</button></div>
+<div class="card"><h3>J11 — BLOB-FRAGMENT: <code>blob:https://TESTHOST/&lt;uuid&gt;#TRUSTED:blob:…</code></h3>
+<p>Fragment attached to a blob URL carrying the full juxtaposed string. Fragments must never bleed into attribution or the From line — verify every surface.</p>
+<button onclick="J11()">Run J11</button></div>
+<div class="card"><h3>J12 — WHITESPACE PADDING</h3>
+<p>Leading/trailing spaces around the href: the parser trims them; raw-rendering engines display padding tricks. Logs the raw vs serialized diff for the general raw-render check.</p>
+<button onclick="J12()">Run J12</button></div>
+</div>
+<h2>Probe log</h2>
+<pre id="log"></pre>
+<button class="sec" style="width:auto;padding:8px 18px;margin-top:8px" onclick="document.getElementById('log').textContent=''">Clear log</button>
+<div class="note" style="margin-top:14px">
+<b>Hardening checklist for your engine (fix = pass all vectors):</b><br>
+1. Never render raw href strings in any UI — always re-serialize through the URL parser.<br>
+2. Strip userinfo in every security-relevant display.<br>
+3. Render punycode for non-ASCII hosts; refuse mixed-script confusables.<br>
+4. Truncate URLs from the END only — never front- or middle-truncate.<br>
+5. Strip/refuse control characters (CR/LF/TAB/U+202E-class bidi) in display strings.<br>
+6. Validate blob: inner origin strictly as a serialized origin (no userinfo, no path, no fragment bleed).<br>
+7. Reject unknown/unregistered schemes BEFORE creating a download item (blocks the J1 class).<br>
+8. Attribution ("From") must come from the browser-bound request initiator, never from URL fields.<br>
+<b>Decision rule:</b> any surface where TRUSTED reads as the host/source while bytes actually come from TESTHOST (or no row should exist but one does) = display/validation bug in your engine. Record the RAW → serialized → displayed triple per vector.
+</div>
+<script>
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+function log(m){ var p=$('log'); p.textContent += '['+new Date().toISOString().slice(11,23)+'] '+m+'\n'; p.scrollTop=p.scrollHeight; }
+function TRUSTED(){ return $('trusted').value.trim() || 'trusteddomain.com'; }
+function TESTHOST(){ return $('testhost').value.trim().replace(/\/+$/,'') || 'https://your-test-host.example'; }
+function HOSTONLY(){ return TESTHOST().replace(/^https?:\/\//,'').replace(/\/.*$/,''); }
+function UUID(){ return $('uuid').value.trim() || '6aae7518-aa03-4ad7-994f-b4be93c02059'; }
+
+function buildRaws(){
+  var T = TRUSTED(), H = TESTHOST(), HO = HOSTONLY(), U = UUID();
+  return {
+    J1:  T+':blob:null/'+U,
+    J2:  H+'/'+T+'/blob:null/'+U,
+    J3:  T+'#blob:null/'+U,
+    J4:  'https://'+T+'@'+HO+'/jx.txt',
+    J5:  'blob:https://'+T+'@'+HO+'/'+U,
+    J6:  'https://'+T+'\\@'+HO+'/jx.txt',
+    J7:  'https://'+HO+'/'+T+'\u202Eblob:null/'+U+'\r\nend',
+    J8:  'https://'+HO+'\uFF0F'+T+'\uFF0Fblob:null\uFF0F'+U,
+    J9:  'blob:https://'+T+'/'+U,
+    J10: H+'/?from='+T+'&u=blob:null/'+U,
+    J11: 'blob:https://'+HO+'/'+U+'#'+T+':blob:null/'+U,
+    J12: '    https://'+HO+'/jx.txt   '
+  };
+}
+
+function parseTree(label, raw){
+  log('PARSE '+label+' :: RAW      = '+JSON.stringify(raw));
+  try{
+    var u = new URL(raw, location.href);
+    log('      scheme='+JSON.stringify(u.protocol)+'  userinfo='+JSON.stringify((u.username||'')+(u.password?':'+u.password:'')+'@')+'  host='+JSON.stringify(u.host)+'  path='+JSON.stringify(u.pathname)+'  query='+JSON.stringify(u.search)+'  frag='+JSON.stringify(u.hash));
+    log('      serialized = '+u.href);
+    return u;
+  }catch(e){ log('      PARSE ERROR :: '+e.name+' — '+e.message); return null; }
+}
+function dispatch(label, raw){
+  var a = document.createElement('a');
+  a.download = 'jx_'+label.toLowerCase()+'.txt';
+  try { a.href = raw; } catch(e){ log('DISPATCH '+label+' :: href assignment threw '+e.name); return; }
+  log('DISPATCH '+label+' :: a.href (post-parse serialization) = '+a.href);
+  document.body.appendChild(a); a.click(); a.remove();
+  log('   -> OBSERVE: row appears? URL field / copy-link string? does TRUSTED read as host while bytes come from TESTHOST?');
+}
+function runV(label){
+  var raw = buildRaws()[label];
+  parseTree(label, raw);
+  dispatch(label, raw);
+}
+
+function J0(){
+  var r = buildRaws();
+  Object.keys(r).forEach(function(k){ parseTree(k, r[k]); });
+  log('J0: parse-only complete — no downloads dispatched. Compare each scheme/host/userinfo column against where TRUSTED lands.');
+}
+function J1(){ runV('J1'); }
+function J2(){ runV('J2'); }
+function J3(){ runV('J3'); }
+function J4(){ runV('J4'); }
+function J5(){ runV('J5'); }
+function J6(){ runV('J6'); }
+function J7(){ runV('J7'); }
+function J8(){ runV('J8'); }
+function J9(){ runV('J9'); }
+function J10(){ runV('J10'); }
+function J11(){ runV('J11'); }
+function J12(){ runV('J12'); }
+
+log('juxtaposition lab ready :: page origin='+location.origin+' :: TRUSTED='+TRUSTED()+' TESTHOST='+TESTHOST());
+log('order: J0 first (parse tree only) → then J1..J12 one per pass; record the RAW -> serialized -> displayed triple per vector');
+</script>
 </body>
 </html>
