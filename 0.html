@@ -2,149 +2,176 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Clickjacking Test Tool</title>
-
+<title>Blob-URL Origin-Segment Forgery Probe — blob:google.com hunt</title>
 <style>
-    body {
-        margin: 0;
-        font-family: "Segoe UI", Arial, sans-serif;
-        background-color: #0f172a;
-        color: #e5e7eb;
-    }
-
-    .container {
-        max-width: 1200px;
-        margin: 40px auto;
-        padding: 30px;
-        background: #020617;
-        border-radius: 10px;
-        box-shadow: 0 0 30px rgba(0,0,0,0.6);
-    }
-
-    h1 {
-        margin-top: 0;
-        color: #38bdf8;
-        font-size: 28px;
-    }
-
-    p {
-        color: #cbd5f5;
-        line-height: 1.6;
-    }
-
-    .input-group {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-    }
-
-    input {
-        flex: 1;
-        padding: 12px;
-        border-radius: 6px;
-        border: none;
-        font-size: 15px;
-        outline: none;
-    }
-
-    button {
-        padding: 12px 25px;
-        background: #38bdf8;
-        border: none;
-        border-radius: 6px;
-        font-weight: bold;
-        cursor: pointer;
-    }
-
-    button:hover {
-        background: #0ea5e9;
-    }
-
-    .status {
-        margin-top: 15px;
-        font-size: 14px;
-    }
-
-    .iframe-wrapper {
-        margin-top: 30px;
-        border: 3px solid #ef4444;
-        border-radius: 8px;
-        overflow: hidden;
-        background: #000;
-    }
-
-    iframe {
-        width: 100%;
-        height: 700px;
-        border: none;
-    }
-
-    .footer {
-        margin-top: 20px;
-        font-size: 12px;
-        color: #94a3b8;
-    }
-
-    .tag {
-        display: inline-block;
-        padding: 4px 10px;
-        border-radius: 20px;
-        background: #ef4444;
-        color: #fff;
-        font-size: 12px;
-        margin-left: 10px;
-    }
+ :root{color-scheme:dark}
+ body{font-family:system-ui,"Segoe UI",sans-serif;background:#14161a;color:#e8eaed;margin:0;padding:28px;max-width:980px}
+ h1{font-size:19px;margin:0 0 12px} h1 span{color:#f28b82}
+ h2{font-size:15px;margin:22px 0 8px;color:#8ab4f8}
+ .warn{border:1px solid #5f3b3b;background:#2a1a1a;padding:10px 14px;border-radius:8px;font-size:12.5px;line-height:1.55}
+ .warn code{color:#f2c38c}
+ .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:10px;margin:16px 0}
+ .card{border:1px solid #2c3038;background:#1b1e24;border-radius:10px;padding:12px;display:flex;flex-direction:column}
+ .card h3{margin:0 0 6px;font-size:12.5px;color:#8ab4f8}
+ .card p{margin:0 0 10px;font-size:11.5px;color:#9aa0a6;line-height:1.5;flex:1}
+ .card p b{color:#c7cbd1}
+ button{width:100%;padding:9px;background:#0b57d0;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px}
+ button:hover{background:#0947a8}
+ button.red{background:#a50e0e} button.red:hover{background:#7f0a0a}
+ #log{background:#0d1013;border:1px solid #2c3038;border-radius:10px;padding:12px;height:320px;overflow:auto;font:11.8px/1.55 Consolas,monospace;white-space:pre-wrap}
+ .note{font-size:11.8px;color:#9aa0a6;line-height:1.55;border:1px solid #2c3038;border-radius:10px;padding:12px;background:#1b1e24}
+ .note b{color:#f2c38c}
 </style>
 </head>
-
 <body>
-
-<div class="container">
-    <h1>
-        Clickjacking Test Tool
-        <span class="tag">Pentest</span>
-    </h1>
-
-    <p>
-        Tool ini digunakan untuk menguji apakah sebuah website dapat dimuat di dalam
-        <code>&lt;iframe&gt;</code>.  
-        Jika website tampil, maka **berpotensi vulnerable terhadap Clickjacking**.
-    </p>
-
-    <div class="input-group">
-        <input type="text" id="targetUrl" placeholder="https://target-website.com">
-        <button onclick="testClickjacking()">Test</button>
-    </div>
-
-    <div class="status" id="status"></div>
-
-    <div class="iframe-wrapper">
-        <iframe id="testFrame"></iframe>
-    </div>
-
-    <div class="footer">
-        ⚠️ Gunakan hanya untuk pengujian keamanan yang sah dan memiliki izin.
-    </div>
+<h1>blob: URL origin-segment <span>forgery probe</span> — can "null" become "google.com"?</h1>
+<div class="warn">
+<b>Anatomy first:</b> a blob URL is <code>blob:&lt;SERIALIZED ORIGIN OF THE CREATING REALM&gt;/&lt;UUID&gt;</code>. The origin segment is generated <b>browser-side</b> inside <code>URL.createObjectURL()</code> from the origin of the realm that called it — it is not a page-controlled string, there is no parameter for it. The BlobURLStore also resolves lookups keyed by <b>(origin, UUID)</b>, so a hand-forged <code>blob:https://www.google.com/…</code> that was never registered by a google.com realm simply <b>fails to resolve</b>. Conclusion being proven below: <b>blob:google.com/… can only be minted by code running at google.com</b> — impossible without an XSS there. Also remember the two UI fields are independent: the "From" line reads the initiator origin; the copy-link URL reads <code>GetURL()</code> = the blob URL itself. Forging one never moves the other. Inert .txt probes; your V4 observation (From hidden + <code>blob:null/&lt;uuid&gt;</code> copy-URL) is the reportable artifact — packaging at the bottom.
 </div>
-
+<div class="grid">
+<div class="card"><h3>B1 — CONTROL: own-realm mint, gesture</h3>
+<p>Top document mints and downloads. Expectation: copy-link reads <code>blob:&lt;your-origin&gt;/&lt;uuid&gt;</code>, From line present. Baseline.</p>
+<button onclick="B1()">Run B1</button></div>
+<div class="card"><h3>B2 — OPAQUE MINT (isolated repro of your V4 finding)</h3>
+<p>Sandboxed iframe (opaque origin) mints a <code>blob:null/&lt;uuid&gt;</code> and self-downloads. Expectation: <b>From hidden</b> + copy-link <code>blob:null/&lt;uuid&gt;</code> — the fully unattributable download. This is your finding, minimized.</p>
+<button onclick="B2()">Run B2</button></div>
+<div class="card"><h3>B3 — FORGED SEGMENT: blob:google.com handcraft</h3>
+<p>Dispatches anchors with hand-forged hrefs <code>blob:https://www.google.com/&lt;uuid&gt;</code>, <code>blob:google.com/&lt;uuid&gt;</code>, <code>blob:https://google.com/&lt;uuid&gt;</code>. Expectation: <b>zero rows appear</b> (store lookup fails). A row appearing with a google segment = BlobURLStore validation bug → crbug immediately.</p>
+<button class="red" onclick="B3()">Run B3</button></div>
+<div class="card"><h3>B4 — REAL foreign blob:null, dispatched by top</h3>
+<p>The opaque iframe mints a <i>real</i> registered <code>blob:null/…</code>; the TOP document clicks an anchor with that href. Expectation: no row — cross-origin blob URLs cannot be resolved by a different origin (store partition).</p>
+<button onclick="B4()">Run B4</button></div>
+<div class="card"><h3>B5 — CREATOR-REALM SWEEP (segment ≡ creator origin)</h3>
+<p>Mints the identical payload from: top · plain srcdoc iframe · <code>sandbox allow-same-origin</code> · sandbox opaque · <code>data:</code> iframe. Logs every URL string. Expectation: the origin segment always equals the minting realm's origin serialization — proving the segment is derived, never typeable.</p>
+<button onclick="B5()">Run B5</button></div>
+</div>
+<h2>Probe log</h2>
+<pre id="log"></pre>
+<div class="note" style="margin-top:14px">
+<b>crbug packaging for your V4 finding (file before publishing):</b><br>
+Title: <i>Downloads initiated from opaque-origin (sandboxed) contexts render with no source attribution and blob:null/… URL — provenance fully unattributable in security UI</i><br>
+Component: <b>UI&gt;Downloads</b> · Severity rationale: security-UI / attribution loss.<br>
+Repro: 1) open this page (hosted or local); 2) run <b>B2</b>; 3) observe: bubble row with <b>no "From" line</b>; chrome://downloads → Copy link address → <code>blob:null/&lt;uuid&gt;</code>.<br>
+Expected: source line present, URL attributable to the embedding site. Observed: <i>paste your exact strings + screenshot</i>.<br>
+Root-cause hypothesis: initiator origin is opaque ⇒ <code>FormatOriginForSecurityDisplay()</code> omits the line (CL ae2cc7a omission case), and <code>GetURL()</code> returns the blob URL minted by the opaque realm ⇒ <code>null</code> segment. Attach B1/B2/B5 logs showing the segment always tracks the creator realm.
+</div>
 <script>
-    function testClickjacking() {
-        const url = document.getElementById("targetUrl").value;
-        const frame = document.getElementById("testFrame");
-        const status = document.getElementById("status");
+"use strict";
+var $ = function(id){ return document.getElementById(id); };
+function log(m){ var p=$('log'); p.textContent += '['+new Date().toISOString().slice(11,23)+'] '+m+'\n'; p.scrollTop=p.scrollHeight; }
+function originOf(w){ try{ return String(w.origin); }catch(e){ return '<cross-origin-unreadable>'; } }
+function mkBlob(win, txt){ return win.URL.createObjectURL(new win.Blob([txt], {type:'text/plain'})); }
+function dlIn(win, name, url){
+  var a = win.document.createElement('a');
+  a.href = url; a.download = name;
+  (win.document.body || win.document.documentElement).appendChild(a);
+  a.click(); a.remove();
+}
+function fire(win, name){
+  var u = mkBlob(win, 'probe '+name+' @ '+Date.now()+'\r\n');
+  dlIn(win, name, u);
+  setTimeout(function(){ try{ win.URL.revokeObjectURL(u); }catch(e){} }, 8000);
+}
 
-        if (!url) {
-            alert("Masukkan URL target terlebih dahulu.");
-            return;
-        }
+var INNER =
+  '<!DOCTYPE html><html><body><script>' +
+  'window.addEventListener("message",function(ev){var d=ev.data;' +
+  'if(d&&d.cmd==="dl"){var u=URL.createObjectURL(new Blob(["probe "+d.name],{type:"text/plain"}));' +
+  'var a=document.createElement("a");a.href=u;a.download=d.name;document.body.appendChild(a);a.click();a.remove();' +
+  'parent.postMessage({ack:d.name,url:u,ctxOrigin:String(location.origin)},"*");}' +
+  'if(d&&d.cmd==="mint"){var b=URL.createObjectURL(new Blob(["foreign mint"],{type:"text/plain"}));' +
+  'parent.postMessage({minted:b,ctxOrigin:String(location.origin)},"*");}' +
+  'if(d&&d.cmd==="sweep"){var w=URL.createObjectURL(new Blob(["sweep"],{type:"text/plain"}));' +
+  'parent.postMessage({sweep:w,ctxOrigin:String(location.origin)},"*");}});' +
+  '<\/script></body></html>';
+var CTX = {};
+function ensureIframe(key, sandbox, html){
+  if (CTX[key]) return CTX[key];
+  var f = document.createElement('iframe');
+  f.style.cssText = 'width:0;height:0;border:0;position:fixed';
+  if (sandbox) f.sandbox = sandbox;
+  if (html) f.srcdoc = html;
+  document.body.appendChild(f);
+  CTX[key] = f;
+  return f;
+}
+function ensureDataIframe(key){
+  if (CTX[key]) return CTX[key];
+  var f = document.createElement('iframe');
+  f.style.cssText = 'width:0;height:0;border:0;position:fixed';
+  f.src = 'data:text/html,' + encodeURIComponent(INNER);
+  document.body.appendChild(f);
+  CTX[key] = f;
+  return f;
+}
+window.addEventListener('message', function(ev){
+  var d = ev.data;
+  if (!d) return;
+  if (d.ack) log('ACK '+d.ack+' :: minted url='+d.url+' :: ctxOrigin='+JSON.stringify(d.ctxOrigin)+' :: check row: From hidden? copy-link = '+d.url+'  (B2 = YOUR V4 FINDING)');
+  if (d.minted){ window.__b4 = d.minted; log('B4 mint ack :: url='+d.minted+' ctxOrigin='+JSON.stringify(d.ctxOrigin)); }
+  if (d.sweep){ log('B5 sweep ack :: url='+d.sweep+' :: ctxOrigin='+JSON.stringify(d.ctxOrigin)+' — segment == creator origin serialization'); }
+});
 
-        frame.src = url;
-        status.innerHTML = `
-            <strong>Testing Target:</strong> ${url}<br>
-            Jika halaman tampil di bawah, maka <b style="color:#ef4444;">berpotensi vulnerable</b>.
-        `;
-    }
+function B1(){
+  fire(window, 'bl_b1_own.txt');
+  log('B1: own-realm gesture download :: EXPECT copy-link = blob:'+originOf(window)+'/… and From PRESENT');
+}
+
+function B2(){
+  var f = ensureIframe('b2', 'allow-scripts allow-downloads', INNER);
+  setTimeout(function(){
+    f.contentWindow.postMessage({cmd:'dl', name:'bl_b2_opaque.txt'}, '*');
+    log('B2: opaque iframe self-downloading its own blob:null/… — watch for From-hidden row + blob:null copy-link (your V4 finding, minimized)');
+  }, 150);
+}
+
+function B3(){
+  var uuid = '6aae7518-aa03-4ad7-994f-b4be93c02059';
+  var forged = [
+    'blob:https://www.google.com/'+uuid,
+    'blob:google.com/'+uuid,
+    'blob:https://google.com/'+uuid
+  ];
+  forged.forEach(function(u){
+    var a = document.createElement('a');
+    a.href = u; a.download = 'bl_b3_forged.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    log('B3: dispatched FORGED href = '+u);
+  });
+  log('B3: EXPECT zero new rows — BlobURLStore lookup fails for URLs never registered by that origin. IF a row appears with a google.com segment, that is a store-validation bug → crbug immediately');
+}
+
+function B4(){
+  var f = ensureIframe('b4', 'allow-scripts allow-downloads', INNER);
+  window.__b4 = null;
+  setTimeout(function(){ f.contentWindow.postMessage({cmd:'mint'}, '*'); }, 150);
+  setTimeout(function(){
+    var u = window.__b4;
+    if (!u){ log('B4: no mint ack — abort'); return; }
+    log('B4: dispatching REAL registered foreign blob (minted by opaque iframe) from TOP doc: '+u);
+    var a = document.createElement('a');
+    a.href = u; a.download = 'bl_b4_foreign.txt';
+    document.body.appendChild(a); a.click(); a.remove();
+    log('B4: EXPECT no row — blob URLs are partitioned by origin in the store; a different origin cannot resolve them');
+  }, 700);
+}
+
+function B5(){
+  log('B5: minting the identical payload from every realm — the origin segment must always equal the minting realm origin');
+  log('B5 top realm        -> '+mkBlob(window, 'sweep'));
+  var f1 = ensureIframe('b5a', null, '<!DOCTYPE html><html><body></body></html>');
+  setTimeout(function(){ try{ log('B5 plain srcdoc     -> '+mkBlob(f1.contentWindow, 'sweep')); }catch(e){ log('B5 plain iframe unreachable: '+e.name); } }, 150);
+  var f2 = ensureIframe('b5b', 'allow-scripts allow-same-origin allow-downloads', '<!DOCTYPE html><html><body></body></html>');
+  setTimeout(function(){ try{ log('B5 sandbox+samsite  -> '+mkBlob(f2.contentWindow, 'sweep')); }catch(e){ log('B5 samsite iframe unreachable: '+e.name); } }, 150);
+  var f3 = ensureIframe('b5c', 'allow-scripts allow-downloads', INNER);
+  setTimeout(function(){ try{ f3.contentWindow.postMessage({cmd:'sweep'}, '*'); }catch(e){ log('B5 opaque unreachable: '+e.name); } }, 200);
+  var fd = ensureDataIframe('b5d');
+  setTimeout(function(){ try{ fd.contentWindow.postMessage({cmd:'sweep'}, '*'); }catch(e){ log('B5 data iframe unreachable: '+e.name); } }, 250);
+  log('B5: compare the logged segments — every one is the browser-derived origin of its creator realm; none is typeable by the page');
+}
+
+log('blob-origin forgery probe ready :: top origin='+originOf(window));
+log('run order: B1 → B2 → B3 → B4 → B5; record rows + copy-link strings; decision rule: any google.com segment appearing anywhere = store-validation bug → crbug');
 </script>
-
 </body>
 </html>
