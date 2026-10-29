@@ -101,28 +101,12 @@
   }
 
   /* --- GOOGLE SEARCH UI STYLES --- */
-  .fake-address-bar {
-    background-color: #f1f3f4;
-    border-bottom: 1px solid #ccc;
-    padding: 12px 24px;
-    font-size: 16px;
-    color: #5f6368;
-    font-family: monospace;
-    box-shadow: inset 0 -1px 0 #e0e0e0;
-    user-select: none;
-  }
-
-  .fake-lock {
-    color: #34a853;
-    margin-right: 8px;
-  }
-
   .centered {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: calc(100vh - 50px);
+    height: 100vh;
     user-select: none;
   }
 
@@ -206,11 +190,6 @@
 
   <!-- Fake Content View (Shown after fullscreen) - GOOGLE SEARCH UI -->
   <div class="fake-content" id="fake-view">
-    <!-- Fake address bar mimicking Google search -->
-    <div class="fake-address-bar">
-      <span class="fake-lock">🔒</span>https://www.google.com/
-    </div>
-
     <!-- Simulated search UI -->
     <div class="centered">
       <div class="google-logo"></div>
