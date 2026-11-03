@@ -135,6 +135,17 @@
       // ---------- JALUR https:// : MULTI-VEKTOR (Firefox focus) ----------
       log('[main] UA: ' + navigator.userAgent.slice(0, 90));
 
+      var ua = navigator.userAgent;
+      var isChromium = /Chrome\//.test(ua) || /Edg\//.test(ua);
+      if (isChromium) {
+        log('[main] >>> CHROMIUM terdeteksi: top-level nav ke blob:null DIBLOK BY DESIGN');
+        log('[main] >>> (security fix Chromium - "Not allowed to load local resource", WontFix).');
+        log('[main] >>> Demo blob:null di address bar CHROME: download file ini lalu buka');
+        log('[main] >>> via file:// (double-click) - jalur file:// di file ini otomatis');
+        log('[main] >>> direct-nav ke blob:null/... karena origin file:// = null.');
+        log('[main] >>> Atau tes di Firefox desktop: vektor V1-V3 aktif di sana.');
+      }
+
       var iframeFallback = false;
       var spawned = [];
 
