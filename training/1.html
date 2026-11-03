@@ -1,1 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoC: Blob Null Stability (Revised)</title>
+<style>
+  body { margin:0; min-height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:12px; }
+  h1 { font-size:1.2rem; font-weight:500; opacity:0.8; margin:0; }
+  pre { text-align:left; font-size:0.7rem; color:#0f0; max-width:90vw; white-space:pre-wrap; }
+  #container { width: 100vw; height: 100vh; position: fixed; top:0; left:0; display: none; }
+  #container iframe { width: 100%; height: 100%; border: 0; }
+</style>
+</head>
+<body>
 
+  <h1>Blob URL Demo (Revised for HTTPS)</h1>
+  <pre id="log"></pre>
+
+  <div id="container"></div>
+
+  <script>
+    (function () {
+      const logEl = document.getElementById('log');
+      const log = (m) => { logEl.textContent += m + '\n'; console.log(m); };
+
+      // Konten yang akan ditampilkan
+      const innerHTML = `<!DOCTYPE html>
+        <html><head><meta charset="utf-8"><title>Demo Content</title></head>
+        <body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:system-ui,sans-serif;gap:24px;">
+          <h1 style="margin:0;font-size:2rem;font-weight:500;color:#fff;">Konten dari Blob URL</h1>
+          <p style="font-size:1rem;color:#aaa;">Halaman ini dimuat dari Blob URL yang valid.</p>
+          <img id="cat-img" src="https://cataas.com/cat?width=400&height=300&t=${Date.now()}" alt="cute cat"
+               style="max-width:400px;width:80vw;border-radius:12px;"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <div style="display:none;font-size:6rem;">🐱</div>
+        </body></html>`;
+
+      // =====================================================================
+      // LOGIKA NAVIGASI (REVISED)
+      // =====================================================================
+      function makeBlobUrl() {
+        return URL.createObjectURL(new Blob([innerHTML], { type: 'text/html' }));
+      }
+
+      const isNullOrigin =
+        location.protocol === 'file:' || location.origin === 'null';
+
+      if (isNullOrigin) {
+        // Mode file://: navigasi langsung ke blob:null diizinkan
+        const url = makeBlobUrl();
+        log('[main] Mode file:// terdeteksi -> navigasi langsung ke blob:null');
+        log('[main] URL: ' + url);
+        location.replace(url);
+        return;
+      }
+
+      // Mode https://: tampilkan konten di dalam iframe menggunakan Blob URL yang valid
+      log('[main] Mode https:// terdeteksi.');
+      log('[main] Navigasi top-level ke blob:null diblokir oleh Chromium (by design).');
+      log('[main] Menggunakan metode yang diizinkan: menampilkan konten di dalam iframe.');
+
+      const blobUrl = makeBlobUrl();
+      log('[main] Blob URL yang dibuat: ' + blobUrl);
+
+      // Tampilkan di iframe full-screen
+      const container = document.getElementById('container');
+      const iframe = document.createElement('iframe');
+      iframe.src = blobUrl;
+      container.appendChild(iframe);
+      container.style.display = 'block';
+
+      // Sembunyikan elemen UI lainnya
+      document.querySelector('h1').style.display = 'none';
+      logEl.style.display = 'none';
+
+      log('[main] Konten berhasil dimuat di dalam iframe.');
+    })();
+  </script>
+
+</body>
+</html>
