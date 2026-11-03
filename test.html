@@ -147,24 +147,18 @@
                             '| launcher origin =', location.origin); } catch(e) {}
 
           // VEKTOR A: top-level nav dari sandbox iframe.
-          // Firefox: umumnya lolos. Chrome: diblok SENYAP (tanpa exception).
+          // Firefox desktop: lolos (lihat bugzilla 1976497 / dup of 1419501).
+          // Chrome: diblok SENYAP (tanpa exception).
           // Kalau navigasi sukses, script ini mati & timer di bawah gak jalan.
           top.location.replace(url + ${JSON.stringify(TARGET)});
 
           setTimeout(function () {
-            // masih hidup = vektor A gagal => VEKTOR B: popup opaque-origin
+            // masih hidup = vektor A gagal => VEKTOR B: popup opaque-origin.
+            // Di Firefox, window.open dari sandboxed iframe menghasilkan
+            // window dengan origin null -> tab baru berisi blob:null/...
             try { console.warn('[launcher] A gagal -> coba popup'); } catch(_) {}
-            var w = null;
-            try { w = window.open('about:blank'); } catch(e) {}
-            if (w) {
-              try {
-                var u2 = makeUrl();
-                w.document.write(
-                  '<script>try { location.replace("' + u2 + ${JSON.stringify(TARGET)} + '"); }' +
-                  ' catch(e) { document.body.textContent = "BLOCKED: " + e; }<\\/script>'
-                );
-                w.document.close();
-              } catch (e) { try { console.warn('[launcher] B error:', e); } catch(_) {} }
+            try { window.open(url + ${JSON.stringify(TARGET)}); } catch (e) {
+              try { console.warn('[launcher] B error:', e); } catch(_) {}
             }
 
             setTimeout(function () {
