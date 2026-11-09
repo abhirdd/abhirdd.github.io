@@ -4,10 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>google.com</title>
-<style>
-  /* Style ini hanya akan terlihat sepersekian detik sebelum redirect */
-  body { margin:0; min-height:100vh; background:#fff; color:#000; font-family:Arial,Helvetica,sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center; }
-</style>
 </head>
 <body>
 
@@ -35,11 +31,13 @@
         
         '<h1 style="font-weight:normal;font-size:3rem;">pwned by abhirdd</h1></body></html>';
 
-      // 3. Eksekusi langsung tanpa perlu klik
-      var u = URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
-      
-      // Ganti URL saat ini dengan Blob URL + Fragment
-      location.replace(u + FRAGMENT);
+      // 3. Ubah URL di address bar tanpa me-reload halaman
+      history.replaceState(null, '', FRAGMENT);
+
+      // 4. Timpa isi halaman saat ini dengan payload HTML palsu
+      document.open();
+      document.write(payload);
+      document.close();
     })();
   </script>
 
