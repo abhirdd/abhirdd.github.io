@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RTLO URL Display Lab</title>
+<style>
+  body { margin:0; min-height:100vh; background:#fff; color:#111; font-family:Arial,Helvetica,sans-serif; }
+  main { max-width:900px; margin:0 auto; padding:32px 20px; }
+  h1 { font-size:1.7rem; } h2 { font-size:1rem; margin-top:24px; }
+  .notice { padding:12px; border:1px solid #999; background:#f5f5f5; line-height:1.5; }
+  #tests { display:flex; flex-wrap:wrap; gap:10px; margin:20px 0; }
+  button { padding:10px 14px; cursor:pointer; border:1px solid #777; border-radius:6px; background:#eee; color:#111; }
+  pre { padding:12px; background:#f7f7f7; border:1px solid #ddd; white-space:pre-wrap; overflow-wrap:anywhere; font-size:.78rem; }
+  li { margin:8px 0; line-height:1.4; }
+</style>
+</head>
+<body>
+<main>
+  <h1>RTLO / bidi URL display lab</h1>
+  <p class="notice"><strong>PoC defensif:</strong> memakai domain cadangan <code>example.com</code>, tanpa download, persistence, atau navigasi otomatis. RTLO tidak mengubah origin aktual. Tampilan fragment saja tidak membuktikan bug critical.</p>
+  <div id="tests"></div>
+  <h2>Yang harus dicatat dari address bar</h2>
+  <ol>
+    <li>Apakah origin creator <code>blob:https://...</code> masih terlihat lengkap?</li>
+    <li>Apakah kontrol bidi ditampilkan, dihilangkan, atau tetap percent-encoded?</li>
+    <li>Apakah perubahan posisi hanya terjadi di dalam fragment setelah <code>#</code>?</li>
+    <li>Copy string address bar ke editor pemeriksa Unicode; jangan mengandalkan screenshot saja.</li>
+  </ol>
+  <p>Jika origin asli tetap terlihat dan perubahan hanya terjadi dalam fragment, hasilnya adalah kandidat <em>display hardening</em>, bukan bukti origin spoof critical.</p>
+  <pre id="log"></pre>
+</main>
+<script>
+(function () {
+  'use strict';
+
+  var TESTS = [
+    {
+      id: 'control',
+      label: '1. Control fullwidth slash',
+      fragment: '#%EF%BC%8Fexample.com%EF%BC%8FCONTROL'
+    },
+    {
+      id: 'rlo-before-domain',
+      label: '2. RLO sebelum domain + PDF',
+      fragment: '#%EF%BC%8F%E2%80%AEexample.com%E2%80%AC%EF%BC%8FRLO-BEFORE-DOMAIN'
+    },
+    {
+      id: 'rlo-at-start',
+      label: '3. RLO di awal fragment',
+      fragment: '#%E2%80%AE%EF%BC%8Fexample.com%E2%80%AC%EF%BC%8FRLO-AT-START'
+    },
+    {
+      id: 'rli-isolate',
+      label: '4. RLI domain + PDI',
+      fragment: '#%EF%BC%8F%E2%81%A7example.com%E2%81%A9%EF%BC%8FRLI-ISOLATE'
+    },
+    {
+      id: 'rli-rlo-isolate',
+      label: '5. RLI + RLO + PDF + PDI',
+      fragment: '#%EF%BC%8F%E2%81%A7%E2%80%AEexample.com%E2%80%AC%E2%81%A9%EF%BC%8FRLI-RLO'
+    }
+  ];
+
+  var logEl = document.getElementById('log');
+  function log(message) {
+    logEl.textContent += message + '\n';
+    console.log(message);
+  }
+
+  function escapeHtml(value) {
+    return String(value).replace(/[&<>"']/g, function (ch) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];
+    });
+  }
+
+  function describeFragment(fragment) {
+    var decoded = decodeURIComponent(fragment);
+    var points = Array.from(decoded).map(function (ch) {
+      return 'U+' + ch.codePointAt(0).toString(16).toUpperCase().padStart(4, '0');
+    });
+    return { decoded: decoded, codePoints: points.join(' ') };
+  }
+
+  function buildPayload(test, info) {
+    return '<!DOCTYPE html><html lang="id"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+      '<title>RTLO display test</title></head>' +
+      '<body style="font-family:Arial;max-width:900px;margin:40px auto;padding:0 20px;color:#111">' +
+      '<h1>RTLO display test</h1>' +
+      '<p><strong>Ini dokumen sintetis untuk riset, bukan example.com.</strong></p>' +
+      '<p>Tekan Alt+Left atau tombol Back browser untuk kembali.</p>' +
+      '<pre style="white-space:pre-wrap;overflow-wrap:anywhere;background:#f5f5f5;padding:16px">' +
+      'Test ID: ' + escapeHtml(test.id) + '\n' +
+      'Creator origin: ' + escapeHtml(location.origin) + '\n' +
+      'Encoded fragment: ' + escapeHtml(test.fragment) + '\n' +
+      'Decoded fragment: ' + escapeHtml(info.decoded) + '\n' +
+      'Code points: ' + escapeHtml(info.codePoints) + '\n\n' +
+      'Periksa address bar dan bandingkan dengan string logis di atas.\n' +
+      'Origin creator yang tetap terlihat = tidak ada origin spoof critical.' +
+      '</pre></body></html>';
+  }
+
+  function runTest(test) {
+    var info = describeFragment(test.fragment);
+    var payload = buildPayload(test, info);
+    var finalBlobUrl = URL.createObjectURL(new Blob([payload], {type:'text/html'}));
+    var target = finalBlobUrl + test.fragment;
+    log('\n[' + test.id + ']\nTarget: ' + target + '\nCode points: ' + info.codePoints);
+    location.replace(target);
+  }
+
+  var container = document.getElementById('tests');
+  TESTS.forEach(function (test) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = test.label;
+    button.addEventListener('click', function () { runTest(test); });
+    container.appendChild(button);
+  });
+
+  log('Protocol: ' + location.protocol + ' | origin: ' + location.origin);
+  log('Pilih satu test. Navigasi hanya terjadi setelah tombol diklik.');
+})();
+</script>
+</body>
+</html>
