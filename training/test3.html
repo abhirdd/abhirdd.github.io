@@ -3,280 +3,255 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>T4 Deep Race — Multi-Strategy Spoof Verifier</title>
+<title>SPOOF//LAB — Modern Surfaces Verifier</title>
 <style>
 :root{
   --bg:#08111f;--card:#101b2e;--panel:#0b1525;--line:#25344e;
   --text:#e8eef8;--muted:#95a5bd;--accent:#4f8cff;--cyan:#22d3ee;
-  --ok:#34d399;--warn:#fbbf24;--bad:#fb7185;
+  --ok:#34d399;--warn:#fbbf24;--bad:#fb7185;--violet:#a78bfa;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-body{
-  margin:0;min-height:100vh;padding:24px;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(700px 400px at 10% 0%,rgba(79,140,255,.14),transparent 60%),
-             radial-gradient(600px 400px at 95% 100%,rgba(34,211,238,.10),transparent 60%),var(--bg);
-  color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-}
-.card{width:min(860px,100%);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.45)}
-header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.badge{width:46px;height:46px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--cyan));color:#06111f;font:800 13px var(--mono)}
+body{margin:0;min-height:100vh;padding:24px;background:
+  radial-gradient(700px 400px at 10% 0%,rgba(79,140,255,.14),transparent 60%),
+  radial-gradient(600px 400px at 95% 100%,rgba(34,211,238,.10),transparent 60%),var(--bg);
+  color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{width:min(960px,100%);margin:0 auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.45)}
+header{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
+.badge{width:46px;height:46px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--cyan));color:#06111f;font:800 12px var(--mono)}
 h1{margin:0;font-size:21px}
 .sub{margin:0;color:var(--muted);font-size:12.5px}
-.status{margin-left:auto;padding:6px 12px;border-radius:999px;font:700 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
-.status.running{color:var(--accent);border-color:rgba(79,140,255,.5)}
-.status.review{color:var(--warn);border-color:rgba(251,191,36,.5)}
-.status.secure{color:var(--ok);border-color:rgba(52,211,153,.5)}
-.status.bad{color:var(--bad);border-color:rgba(251,113,133,.5)}
-.notice{border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.07);border-radius:12px;padding:12px 14px;margin-bottom:18px;color:#fde68a;font-size:13px}
+.chip{margin-left:auto;padding:6px 12px;border-radius:999px;font:700 11px var(--mono);border:1px solid var(--line);color:var(--cyan)}
+.notice{border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.07);border-radius:12px;padding:12px 14px;margin-bottom:16px;color:#fde68a;font-size:13px}
 .notice b{color:var(--warn)}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
-.grid3{display:grid;grid-template-columns:1fr 110px 110px;gap:12px;margin-bottom:14px}
-label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px;font-weight:600}
-input,select,textarea{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font:13px var(--mono)}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.18)}
-.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.markerrow{display:flex;gap:12px;align-items:end;margin-bottom:16px;flex-wrap:wrap}
+.markerrow label{flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px;font-weight:600}
+input,select{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font:13px var(--mono)}
+input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.18)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:8px 14px;font:600 12.5px system-ui;cursor:pointer}
+.tab.active{background:linear-gradient(120deg,var(--accent),var(--cyan));color:#06111f;border-color:transparent}
+.panel{display:none}
+.panel.active{display:block}
+.phead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.phead h2{margin:0;font-size:16px}
+.vtag{font:700 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.vtag.ok{color:var(--ok);border-color:rgba(52,211,153,.4)}
+.vtag.warn{color:var(--warn);border-color:rgba(251,191,36,.4)}
+.vtag.sim{color:var(--violet);border-color:rgba(167,139,250,.4)}
+.desc{color:var(--muted);font-size:13.5px;margin:0 0 12px}
+.expect{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.expect div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted)}
+.expect b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.expect .a b{color:var(--ok)}.expect .f b{color:var(--warn)}
+.ctrls{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
+.ctrls label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:11.5px;font-weight:600}
+.ctrls input[type=range]{width:160px}
 button{border:1px solid var(--line);background:#17233a;color:var(--text);border-radius:9px;padding:10px 16px;font:600 13px system-ui;cursor:pointer}
 button:hover{border-color:var(--accent)}
 button.primary{background:var(--accent);border-color:transparent;color:#fff}
-button:disabled{opacity:.45;cursor:not-allowed}
-.counter{margin-left:auto;color:var(--muted);font:12px var(--mono)}
-.verdict{border-radius:12px;padding:14px 16px;margin-bottom:16px;border:1px solid var(--line);background:var(--panel);font-size:13.5px}
-.verdict .t{font:800 12px var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px}
-.verdict.ok{border-color:rgba(52,211,153,.4)}.verdict.ok .t{color:var(--ok)}
-.verdict.warn{border-color:rgba(251,191,36,.4)}.verdict.warn .t{color:var(--warn)}
-.verdict.bad{border-color:rgba(251,113,133,.4)}.verdict.bad .t{color:var(--bad)}
-.verdict.info{border-color:rgba(79,140,255,.4)}.verdict.info .t{color:var(--accent)}
-.log{background:#060d18;border:1px solid var(--line);border-radius:10px;padding:14px;min-height:150px;max-height:260px;overflow:auto;margin:0 0 16px;color:var(--muted);font:12.5px/1.7 var(--mono)}
-.log .ok{color:var(--ok)}.log .warn{color:var(--warn)}.log .bad{color:var(--bad)}.log .info{color:var(--cyan)}
-.log::-webkit-scrollbar{width:8px}
-.log::-webkit-scrollbar-track{background:#060d18}
+.log{background:#060d18;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:110px;max-height:200px;overflow:auto;margin:12px 0;color:var(--muted);font:12.5px/1.7 var(--mono)}
+.log .ok{color:var(--ok)}.log .warn{color:var(--warn)}.log .sim{color:var(--violet)}.log .info{color:var(--cyan)}
+.log::-webkit-scrollbar{width:8px}.log::-webkit-scrollbar-track{background:#060d18}
 .log::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-.log::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-h2{font-size:13px;margin:0 0 8px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
-.explain{color:var(--muted);font-size:13px;margin:0 0 16px}
-.check{margin:0 0 16px;padding-left:18px;color:var(--muted);font-size:13px}
-.check li{margin:4px 0}
-textarea{width:100%;min-height:120px;resize:vertical;margin-bottom:12px}
-footer{color:#64748b;font-size:11.5px}
-@media(max-width:680px){.card{padding:20px}.grid,.grid3{grid-template-columns:1fr}.counter{width:100%;margin-left:0}}
+.verdict{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px;font-size:13px;margin-bottom:8px}
+.verdict .t{font:800 11px var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
+footer{color:#64748b;font-size:11.5px;margin-top:16px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+#fakebar{position:fixed;top:0;left:0;right:0;height:52px;z-index:2147483647;background:#dee1e6;color:#202124;display:flex;align-items:center;gap:10px;padding:0 16px;font:14px system-ui}
+#fakebar .url{background:#fff;border-radius:20px;padding:7px 15px;flex:1;max-width:640px}
+#fakebar .tag{font:800 11px var(--mono);color:#c5221f;background:rgba(197,34,31,.12);padding:4px 9px;border-radius:6px}
+@media(max-width:680px){.expect{grid-template-columns:1fr}.card{padding:20px}}
 </style>
 </head>
 <body>
+<div class="wrap">
 <main class="card">
   <header>
-    <div class="badge">T4</div>
-    <div>
-      <h1>T4 Deep Race</h1>
-      <p class="sub">multi-strategy document.write race · honest verifier</p>
-    </div>
-    <span id="status" class="status">Idle</span>
+    <div class="badge">S//L</div>
+    <div><h1>Modern Surfaces Verifier</h1><p class="sub">cara unik di luar race kuno · jujur & terverifikasi</p></div>
+    <span class="chip" id="ua">browser</span>
   </header>
 
   <div class="notice">
-    <b>Realita teknis:</b> pada browser yang sudah dipatch, race ini <b>tidak</b> membuat toolbar asli
-    menampilkan <code>example.com</code> di atas konten opener. Hasil akhirnya <code>about:blank</code>
-    (navigasi dibatalkan) atau konten target (navigasi commit). “Omnibox” yang digambar di dalam halaman
-    adalah <b>simulasi</b>, bukan temuan. Temuan nyata hanya mungkin pada build yang belum dipatch.
+    <b>Realita:</b> tidak ada trik universal yang membuat <b>toolbar asli</b> menampilkan
+    <code>example.com</code> di atas konten attacker pada browser terpatch. Surface modern di bawah
+    (picker geometry, top-layer, view-transition, fullscreen) adalah <b>kelas bug versi-spesifik</b>.
+    Hasil “simulasi / by-design” <b>bukan temuan</b>; hanya anomali pada toolbar asli di build belum-patch yang valid.
   </div>
 
-  <div class="grid">
-    <label>Target URL
-      <input id="url" type="url" value="https://example.com/" spellcheck="false">
-    </label>
+  <div class="markerrow">
     <label>Marker text (lab)
       <input id="marker" type="text" value="INJECTION SUCCESS" spellcheck="false">
     </label>
+    <button id="copyReport">Copy Report</button>
   </div>
 
-  <div class="grid3">
-    <label>Strategi
-      <select id="strategy">
-        <option value="classic">Classic race (interval)</option>
-        <option value="delayed">Delayed single write</option>
-        <option value="replace">Replace-navigation race</option>
-        <option value="blanknav">Blank write then navigate</option>
-      </select>
-    </label>
-    <label>Interval / delay (ms)
-      <input id="interval" type="number" value="25" min="5" max="1000">
-    </label>
-    <label>Percobaan
-      <input id="attempts" type="number" value="120" min="1" max="500">
-    </label>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-s="select">Select Picker</button>
+    <button class="tab" data-s="popover">Popover / Anchor</button>
+    <button class="tab" data-s="dialog">Dialog Top-layer</button>
+    <button class="tab" data-s="vt">View Transition</button>
+    <button class="tab" data-s="fs">Fullscreen (simulasi)</button>
   </div>
+
+  <section class="panel active" id="p-select">
+    <div class="phead"><h2>Native Select Picker Geometry</h2><span class="vtag" id="v-select">idle</span></div>
+    <p class="desc">Kelas CVE-2026-14077: anchor rect picker tidak di-clip ke viewport sehingga popup native bisa menutupi toolbar. Di browser terpatch, popup terpotong di area halaman.</p>
+    <div class="expect"><div class="a"><b>Aman / patched</b>Popup picker ter-clip di viewport, tidak menutupi toolbar asli.</div><div class="f"><b>Finding (build lama)</b>Popup native muncul di atas toolbar asli dan menutupi omnibox.</div></div>
+    <div class="ctrls">
+      <label>Top offset <input type="range" id="sel-top" min="-200" max="100" value="-35"></label>
+      <label>Height <input type="range" id="sel-h" min="200" max="12000" step="100" value="10000"></label>
+      <button class="primary" id="run-select">Run picker</button>
+    </div>
+    <div class="log" id="log-select"></div>
+    <div class="verdict" id="ver-select"><div class="t">Menunggu</div>Jalankan dan amati popup terhadap toolbar asli.</div>
+  </section>
+
+  <section class="panel" id="p-popover">
+    <div class="phead"><h2>Popover + Anchor Negative Offset</h2><span class="vtag" id="v-popover">idle</span></div>
+    <p class="desc">Top-layer (Popover API + CSS anchor) dengan margin negatif. Elemen top-layer tetap di dalam viewport halaman; ia tidak bisa menutupi toolbar asli. Bila terlihat “di atas halaman”, itu hanya menggambar dalam halaman = simulasi.</p>
+    <div class="expect"><div class="a"><b>Aman / by-design</b>Popover ter-clip di viewport; chrome browser tak tersentuh.</div><div class="f"><b>Finding</b>Hanya bila elemen benar-benar menutupi toolbar asli (tidak mungkin in-page pada browser sehat).</div></div>
+    <div class="ctrls">
+      <label>Negative margin <input type="range" id="pop-m" min="-160" max="0" value="-80"></label>
+      <button class="primary" id="run-popover">Show popover</button>
+    </div>
+    <div class="log" id="log-popover"></div>
+    <div class="verdict" id="ver-popover"><div class="t">Menunggu</div>Jalankan untuk melihat batas top-layer.</div>
+  </section>
+
+  <section class="panel" id="p-dialog">
+    <div class="phead"><h2>Dialog showModal Negative Inset</h2><span class="vtag" id="v-dialog">idle</span></div>
+    <p class="desc">&lt;dialog&gt; modal + backdrop berada di top-layer.Inset/transform negatif menguji apakah dialog bisa lolos ke chrome. Pada browser sehat, dialog tetap di viewport.</p>
+    <div class="expect"><div class="a"><b>Aman / by-design</b>Dialog + backdrop hanya menutup halaman.</div><div class="f"><b>Finding</b>Dialog/backdrop menelan toolbar asli (versi-spesifik).</div></div>
+    <div class="ctrls"><button class="primary" id="run-dialog">showModal escape</button></div>
+    <div class="log" id="log-dialog"></div>
+    <div class="verdict" id="ver-dialog"><div class="t">Menunggu</div>Jalankan untuk menguji inset negatif.</div>
+  </section>
+
+  <section class="panel" id="p-vt">
+    <div class="phead"><h2>View Transition Snapshot vs URL</h2><span class="vtag" id="v-vt">idle</span></div>
+    <p class="desc">Ubah URL (hash) lalu tahan callback transisi agar snapshot lama tampil lebih lama. Ini jendela animasi by-design yang singkat, bukan spoof toolbar asli. Di file:// pakai hash; di http(s) bisa path.</p>
+    <div class="expect"><div class="a"><b>Aman / by-design</b>Jendela snapshot singkat dan konsisten dengan commit URL.</div><div class="f"><b>Finding</b>Mismatch URL vs konten yang bisa diperpanjang sewenang-wenang di toolbar asli.</div></div>
+    <div class="ctrls"><button class="primary" id="run-vt">Run transition</button></div>
+    <div class="log" id="log-vt"></div>
+    <div class="verdict" id="ver-vt"><div class="t">Menunggu</div>Jalankan untuk mengamati jendela snapshot.</div>
+  </section>
+
+  <section class="panel" id="p-fs">
+    <div class="phead"><h2>Fullscreen Fake Chrome</h2><span class="vtag sim" id="v-fs">simulasi</span></div>
+    <p class="desc">Halaman bebas menggambar “browser frame” palsu. Ini <b>simulasi</b> dan bukan temuan — browser sehat menampilkan indikator fullscreen sendiri. Ini menjelaskan kenapa screenshot “omnibox example.com + marker” yang digambar halaman tidak valid.</p>
+    <div class="expect"><div class="a"><b>Aman</b>Browser menampilkan indikator fullscreen sendiri; fake bar jelas berlabel LAB.</div><div class="f"><b>Bukan finding</b>Fake chrome in-page tidak pernah menjadi temuan spoof toolbar asli.</div></div>
+    <div class="ctrls"><button class="primary" id="run-fs">Masuk fullscreen</button><button id="exit-fs">Keluar</button></div>
+    <div class="log" id="log-fs"></div>
+    <div class="verdict" id="ver-fs"><div class="t">Simulasi</div>Fake chrome in-page = by-design, bukan temuan.</div>
+  </section>
 
   <div class="actions">
-    <button id="run" class="primary">Jalankan</button>
-    <button id="stop" disabled>Stop</button>
-    <button id="clear">Bersihkan Log</button>
-    <button id="copy">Copy Report</button>
-    <span id="counter" class="counter"></span>
+    <button id="resetAll">Reset semua verdict</button>
   </div>
-
-  <div id="verdict" class="verdict info">
-    <div class="t">Menunggu</div>
-    Pilih strategi, jalankan, lalu baca verdict jujur di bawah. Verifikasi selalu terhadap toolbar asli browser.
-  </div>
-
-  <div id="log" class="log" aria-live="polite"></div>
-
-  <h2>Kenapa “gagal” di browser modern</h2>
-  <p class="explain">
-    Saat <code>window.open(target)</code> dibuat, tab baru mulai sebagai <code>about:blank</code> yang
-    same-origin dengan opener, sehingga <code>document.write()</code> bisa menang <i>sebelum</i> navigasi
-    commit. Namun setelah itu hanya ada dua结局: (1) <code>document.open()</code> membatalkan navigasi →
-    URL tetap <code>about:blank</code>; atau (2) navigasi commit → konten marker diganti dokumen target.
-    Tidak ada jalur di mana toolbar asli menunjukkan <code>example.com</code> sementara marker opener tetap
-    tampil. Itu invariant yang sudah diperbaiki; “logika deep” pada race ini tidak mengubahnya.
-  </p>
-
-  <h2>Cara mendapatkan temuan nyata</h2>
-  <ul class="check">
-    <li>Jalankan pada build yang belum dipatch / fork lama (bukan Chrome/Firefox stable terbaru).</li>
-    <li>Rekam layar penuh yang memperlihatkan <b>toolbar asli browser</b>, bukan frame buatan halaman.</li>
-    <li>Catat versi browser + OS + channel, strategi, interval, dan attempt yang menang.</li>
-    <li>Bandingkan dengan stable terbaru sebagai baseline (harusnya aman).</li>
-    <li>Jangan meniru halaman login atau mengumpulkan kredensial; marker lab sudah cukup untuk bukti.</li>
-  </ul>
-
-  <h2>Report snippet (auto)</h2>
-  <textarea id="report" readonly></textarea>
 
   <footer>
-    Gunakan hanya pada browser/lab milik sendiri. Marker diberi label LAB agar jelas bukan halaman target.
+    Gunakan hanya pada browser/lab milik sendiri. Untuk temuan nyata: uji build belum-patch/fork lama,
+    rekam layar penuh termasuk toolbar asli, catat versi + timing, dan bandingkan dengan stable terbaru.
+    Jangan meniru halaman login atau mengumpulkan kredensial.
   </footer>
 </main>
+</div>
 
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
-const logEl=$("log"),statusEl=$("status"),verdictEl=$("verdict"),reportEl=$("report");
-const runBtn=$("run"),stopBtn=$("stop"),counter=$("counter");
-let timer=null,recheck=null,child=null;
-let last={verdict:"idle",detail:"",attempt:null,target:"",strategy:"",interval:null,max:null};
-
-function time(){return new Date().toLocaleTimeString("id-ID",{hour12:false});}
+const UA=(()=>{const u=navigator.userAgent;let m;if(m=u.match(/Edg\/(\d+)/))return"Edge "+m[1];if(m=u.match(/Firefox\/(\d+)/))return"Firefox "+m[1];if(m=u.match(/Chrome\/(\d+)/))return"Chrome "+m[1];if(m=u.match(/Version\/(\d+).*Safari/))return"Safari "+m[1];return"Browser";})();
+$("ua").textContent=UA;
+const verdicts={};
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function log(m,t){const d=document.createElement("div");if(t)d.className=t;d.textContent="["+time()+"] "+m;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;}
-function setStatus(c,l){statusEl.className="status "+c;statusEl.textContent=l;}
-function setVerdict(c,t,b){verdictEl.className="verdict "+c;verdictEl.innerHTML="<div class='t'>"+t+"</div>"+b;last.verdict=t;last.detail=b.replace(/<[^>]*>/g,"");buildReport();}
-function resetButtons(){runBtn.disabled=false;stopBtn.disabled=true;}
-function stopAll(){if(timer){clearInterval(timer);timer=null;}if(recheck){clearTimeout(recheck);recheck=null;}}
+function marker(){return esc($("marker").value.trim()||"INJECTION SUCCESS");}
+function log(s,m,t){const el=$("log-"+s);const d=document.createElement("div");if(t)d.className=t;d.textContent="["+new Date().toLocaleTimeString("id-ID",{hour12:false})+"] "+m;el.appendChild(d);el.scrollTop=el.scrollHeight;}
+function setV(s,cls,title,body){verdicts[s]={cls,title,body};const tag=$("v-"+s);tag.className="vtag "+cls;tag.textContent=title;const v=$("ver-"+s);v.innerHTML="<div class='t'>"+title+"</div>"+body;}
+$("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="p-"+b.dataset.s));});
 
-function buildMarker(){
-  const txt=esc($("marker").value.trim()||"INJECTION SUCCESS");
-  return "<!doctype html><meta charset='utf-8'><title>T4 Lab Marker</title>"+
-    "<body style='font-family:system-ui;max-width:640px;margin:60px auto;padding:0 20px;color:#111'>"+
-    "<h1 style='font-size:40px;margin:0 0 8px'>"+txt+"</h1>"+
-    "<p style='color:#666'>LAB MARKER — ditulis oleh opener via document.write(). Bukan halaman target.</p>"+
-    "<p style='color:#666;font-size:13px'>Jika toolbar ASLI browser menampilkan URL target sementara teks ini terlihat, rekam layar penuh dan verifikasi.</p>"+
-    "</body>";
-}
-function childState(){
-  if(!child||child.closed)return{state:"closed",href:""};
-  try{return{state:"readable",href:child.location.href};}
-  catch(e){return{state:"cross-origin",href:""};}
-}
-function evaluate(){
-  const s=childState();
-  if(s.state==="closed"){log("Tab target ditutup.","warn");setVerdict("warn","Ditutup","Tab ditutup sebelum verifikasi selesai.");setStatus("review","Closed");return;}
-  if(s.state==="readable"){
-    if(/^about:blank/i.test(s.href)){
-      log("child.location = about:blank → URL jujur, bukan spoof.","ok");
-      setVerdict("ok","Bukan Spoof","Write menang sebelum commit, tetapi tab tetap <code>about:blank</code>. Toolbar asli menunjukkan about:blank, bukan target. Bukan temuan.");
-      setStatus("secure","About:blank");
-    }else{
-      log("child.location = "+s.href,"info");
-      setVerdict("info","Readable","child.location readable: <code>"+esc(s.href)+"</code>. Cocokkan dengan toolbar asli.");
-      setStatus("review","Verify");
-    }
-  }else{
-    log("child.location cross-origin (committed ke target).","warn");
-    setVerdict("warn","Committed","child.location cross-origin = navigasi commit; marker seharusnya sudah diganti dokumen target. Jika toolbar ASLI = target dan marker masih terlihat, itu anomali nyata — rekam layar penuh. Jika yang terlihat hanya frame buatan halaman, itu simulasi.");
-    setStatus("review","Verify");
-  }
-}
-function afterWrite(i){
-  stopAll();last.attempt=i;
-  log("document.write berhasil (attempt "+i+").","warn");
-  setStatus("review","Verify");evaluate();
-  recheck=setTimeout(()=>{log("Re-check 1.5s…","info");evaluate();},1500);
-}
-function buildReport(){
-  reportEl.value=[
-    "# T4 Deep Race Verification","",
-    "Tanggal: "+new Date().toLocaleString("id-ID"),
-    "Browser: "+navigator.userAgent,
-    "Platform: "+navigator.platform,
-    "Target: "+(last.target||"-"),
-    "Strategi: "+(last.strategy||"-"),
-    "Interval/delay: "+(last.interval??"-")+" ms",
-    "Max attempts: "+(last.max??"-"),
-    "Winning attempt: "+(last.attempt??"-"),
-    "Verdict: "+last.verdict,
-    "Detail: "+last.detail,"",
-    "Checklist:",
-    "- [ ] Rekaman layar penuh termasuk toolbar asli",
-    "- [ ] Versi browser + OS + channel",
-    "- [ ] Strategi / interval / attempt menang",
-    "- [ ] Baseline stable terbaru",
-    "- [ ] Konfirmasi bukan fake chrome buatan halaman","",
-    "Catatan: pada browser terpatch, race berakhir di about:blank atau committed (bukan spoof)."
-  ].join("\n");
-}
-
-function startClassic(target,interval,max){
-  let i=0;
-  timer=setInterval(()=>{
-    i++;counter.textContent=i+" / "+max;
-    if(child.closed){stopAll();log("Tab ditutup.","warn");setVerdict("warn","Ditutup","Tab ditutup.");setStatus("review","Closed");resetButtons();return;}
-    try{child.document.open();child.document.write(buildMarker());child.document.close();afterWrite(i);}
-    catch(e){if(i>=max){stopAll();log("Semua "+max+" ditolak ("+e.name+").","ok");setVerdict("ok","Secure","Semua write cross-origin ditolak.");setStatus("secure","Secure");resetButtons();}}
-  },interval);
-}
-function startDelayed(target,delay){
-  log("Delayed write dalam "+delay+"ms…","info");
-  recheck=setTimeout(()=>{
-    if(!child||child.closed){log("Tab ditutup.","warn");setVerdict("warn","Ditutup","Tab ditutup.");resetButtons();return;}
-    try{child.document.open();child.document.write(buildMarker());child.document.close();afterWrite(1);}
-    catch(e){log("Write ditolak ("+e.name+").","ok");setVerdict("ok","Secure","Write ditolak pada delay "+delay+"ms.");setStatus("secure","Secure");resetButtons();}
-  },delay);
-}
-function startReplace(target,interval,max){
-  try{child.location.replace(target);}catch(e){}
-  startClassic(target,interval,max);
-}
-function startBlankNav(target,delay){
-  try{child.document.open();child.document.write(buildMarker());child.document.close();log("Marker ditulis di about:blank.","info");}catch(e){}
-  recheck=setTimeout(()=>{
-    try{child.location.href=target;log("Navigasi ke target dipicu; marker akan diganti bila commit.","info");}catch(e){}
-    setTimeout(()=>{evaluate();resetButtons();},1200);
-  },delay);
-}
-
-$("run").addEventListener("click",()=>{
-  const target=$("url").value.trim();
-  if(!/^https?:\/\//i.test(target)){log("URL harus http(s)://","bad");return;}
-  const strategy=$("strategy").value;
-  const interval=Math.min(1000,Math.max(5,Number($("interval").value)||25));
-  const max=Math.min(500,Math.max(1,Number($("attempts").value)||120));
-  stopAll();
-  last={verdict:"running",detail:"",attempt:null,target,strategy,interval,max};buildReport();
-  setStatus("running","Running");setVerdict("info","Running","Strategi: "+strategy);
-  runBtn.disabled=true;stopBtn.disabled=false;counter.textContent="0 / "+max;
-  log("Strategi "+strategy+" → "+target);
-  child=window.open(strategy==="replace"||strategy==="blanknav"?"about:blank":target,"_blank");
-  if(!child){log("Popup diblokir.","bad");setVerdict("bad","Blocked","Izinkan popup lalu ulangi.");setStatus("bad","Blocked");resetButtons();return;}
-  if(strategy==="classic")startClassic(target,interval,max);
-  else if(strategy==="delayed")startDelayed(target,interval);
-  else if(strategy==="replace")startReplace(target,interval,max);
-  else startBlankNav(target,interval);
+$("run-select").addEventListener("click",()=>{
+  const old=$("t4sel");if(old)old.remove();
+  const s=document.createElement("select");s.id="t4sel";
+  s.style.cssText="position:fixed;left:120px;top:"+$("sel-top").value+"px;width:1500px;height:"+$("sel-h").value+"px;opacity:.01;pointer-events:none;z-index:9990";
+  s.innerHTML="<option>&nbsp;&nbsp;&nbsp;LAB · "+marker()+" · fake marker</option>";
+  document.body.appendChild(s);
+  log("select","Membuka picker (top="+$("sel-top").value+", h="+$("sel-h").value+").","info");
+  if(typeof s.showPicker!=="function"){log("select","showPicker tidak didukung.","warn");setV("select","warn","Unsupported","Browser ini tidak mendukung showPicker().");s.remove();return;}
+  try{s.selectedIndex=-1;s.focus();s.showPicker();
+    log("select","Picker terbuka. Amati: apakah popup menutupi TOOLBAR ASLI?","warn");
+    setV("select","warn","Verify","Pada browser terpatch popup ter-clip di viewport (aman). Hanya bila popup native menutupi toolbar asli di build lama = finding. Esc untuk menutup.");
+  }catch(e){log("select","showPicker ditolak: "+e.name,"ok");setV("select","ok","Patched","showPicker ditolak/di-clip; perilaku aman.");}
+  setTimeout(()=>s.remove(),4000);
 });
-$("stop").addEventListener("click",()=>{stopAll();log("Dihentikan manual.");setVerdict("info","Stopped","Dihentikan sebelum verdict final.");setStatus("","Idle");counter.textContent="";resetButtons();});
-$("clear").addEventListener("click",()=>{logEl.innerHTML="";counter.textContent="";log("Log dibersihkan.");});
-$("copy").addEventListener("click",async()=>{buildReport();try{await navigator.clipboard.writeText(reportEl.value);log("Report disalin.","ok");}catch(e){reportEl.select();document.execCommand("copy");log("Report disalin (fallback).","ok");}});
-buildReport();log("Siap. Izinkan popup, lalu Jalankan.");
+
+$("run-popover").addEventListener("click",()=>{
+  const old=$("t4pop");if(old)old.remove();
+  const p=document.createElement("div");p.id="t4pop";p.setAttribute("popover","manual");
+  p.style.cssText="position:fixed;top:0;left:0;right:0;margin:0;margin-top:"+$("pop-m").value+"px;background:#dee1e6;color:#202124;padding:10px 16px;font:14px system-ui;z-index:2147483646;border:0";
+  p.textContent="LAB · "+marker()+" · top-layer (in-page)";
+  document.body.appendChild(p);
+  if(!("showPopover" in p)){log("popover","Popover API tidak didukung.","warn");setV("popover","warn","Unsupported","Popover API tidak tersedia.");p.remove();return;}
+  try{p.showPopover();log("popover","Popover tampil dengan margin "+$("pop-m").value+"px. Ia tetap di dalam viewport halaman.","sim");
+    setV("popover","sim","By-design","Top-layer in-page tidak bisa menutupi toolbar asli. Bila terlihat 'di atas halaman', itu simulasi, bukan finding.");
+  }catch(e){log("popover","showPopover gagal: "+e.message,"warn");}
+  setTimeout(()=>{try{p.hidePopover()}catch(e){}p.remove();},2500);
+});
+
+$("run-dialog").addEventListener("click",()=>{
+  const old=$("t4dlg");if(old)old.remove();
+  const d=document.createElement("dialog");d.id="t4dlg";
+  d.style.cssText="position:fixed;top:-60px;margin-top:-120px;transform:translateY(-80px);background:#dee1e6;color:#202124;border:0;border-radius:12px;padding:14px 18px;font:14px system-ui";
+  d.innerHTML="LAB · "+marker()+" · dialog top-layer <form method='dialog' style='margin-top:8px'><button>Tutup</button></form>";
+  document.body.appendChild(d);
+  if(typeof d.showModal!=="function"){log("dialog","showModal tidak didukung.","warn");setV("dialog","warn","Unsupported","showModal tidak tersedia.");d.remove();return;}
+  try{d.showModal();log("dialog","Dialog modal inset-negatif tampil; tetap di viewport halaman.","sim");
+    setV("dialog","sim","By-design","Dialog + backdrop hanya menutup halaman. Tidak menutupi toolbar asli pada browser sehat.");
+  }catch(e){log("dialog","showModal gagal: "+e.message,"warn");}
+  setTimeout(()=>{try{d.close()}catch(e){}d.remove();},2500);
+});
+
+$("run-vt").addEventListener("click",()=>{
+  if(!document.startViewTransition){log("vt","View Transitions tidak didukung.","warn");setV("vt","warn","Unsupported","View Transitions API tidak tersedia.");return;}
+  const saved=location.hash;
+  try{history.pushState({},"",location.pathname+"#/example.com/"+marker().replace(/\s+/g,"-"));}catch(e){location.hash="#/example.com";}
+  log("vt","URL diubah; menahan callback 1.5s agar snapshot lama tampil.","info");
+  const vt=document.startViewTransition(()=>{const end=performance.now()+1500;while(performance.now()<end){}});
+  vt.finished.then(()=>{log("vt","Transisi selesai. Jendela snapshot singkat = by-design, bukan spoof toolbar asli.","sim");
+    setV("vt","sim","By-design","Jendela snapshot view-transition singkat dan konsisten dengan commit URL; bukan temuan spoof toolbar asli.");
+    try{history.pushState({},"",location.pathname+saved);}catch(e){location.hash=saved;}
+  }).catch(()=>{setV("vt","warn","Skipped","Transisi dilewati/tidak selesai.");});
+});
+
+function removeFake(){const f=$("fakebar");if(f)f.remove();}
+$("run-fs").addEventListener("click",()=>{
+  if(!document.documentElement.requestFullscreen){log("fs","Fullscreen tidak didukung.","warn");return;}
+  document.documentElement.requestFullscreen().then(()=>{
+    removeFake();const b=document.createElement("div");b.id="fakebar";
+    b.innerHTML="<div class='url'>https://example.com/ · "+marker()+"</div><span class='tag'>SIMULASI — BUKAN TEMUAN</span>";
+    document.body.appendChild(b);
+    log("fs","Fullscreen + fake bar berlabel SIMULASI. Browser sehat menampilkan indikator fullscreen sendiri.","sim");
+    setV("fs","sim","Simulasi","Fake chrome in-page = by-design. Ini menjelaskan kenapa screenshot 'omnibox example.com + marker' buatan halaman tidak valid sebagai temuan.");
+  }).catch(e=>{log("fs","Fullscreen ditolak: "+e.message,"warn");});
+});
+$("exit-fs").addEventListener("click",()=>{if(document.fullscreenElement)document.exitFullscreen();});
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement)removeFake();});
+
+$("resetAll").addEventListener("click",()=>{
+  ["select","popover","dialog","vt"].forEach(s=>{setV(s,"","idle","Jalankan probe untuk verdict jujur.");$("log-"+s).innerHTML="";});
+  setV("fs","sim","Simulasi","Fake chrome in-page = by-design, bukan temuan.");
+});
+$("copyReport").addEventListener("click",async()=>{
+  const lines=["# Modern Surfaces Verification","Tanggal: "+new Date().toLocaleString("id-ID"),"Browser: "+navigator.userAgent,"Marker: "+marker(),""];
+  for(const k of ["select","popover","dialog","vt","fs"]){const v=verdicts[k]||{title:"idle",body:""};lines.push("## "+k+"\nVerdict: "+v.title+"\n"+v.body+"\n");}
+  lines.push("Catatan: hanya anomali pada TOOLBAR ASLI di build belum-patch yang merupakan temuan valid.");
+  const txt=lines.join("\n");
+  try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
+  log("select","Report disalin ke clipboard.","ok");
+});
+setV("fs","sim","Simulasi","Fake chrome in-page = by-design, bukan temuan.");
 </script>
 </body>
 </html>
