@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>T4 Simple — Omnibox Race Test</title>
+<title>T4 Spoof Verifier</title>
 <style>
 :root{
-  --bg:#0b1220;
-  --card:#121b2e;
-  --line:#26334d;
-  --text:#e7edf7;
-  --muted:#94a3b8;
+  --bg:#08111f;
+  --card:#101b2e;
+  --panel:#0b1525;
+  --line:#25344e;
+  --text:#e8eef8;
+  --muted:#95a5bd;
   --accent:#4f8cff;
+  --cyan:#22d3ee;
   --ok:#34d399;
   --warn:#fbbf24;
-  --bad:#f87171;
+  --bad:#fb7185;
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
@@ -25,152 +27,89 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  background:linear-gradient(160deg,#0b1220,#0e1a33 60%,#0b1220);
+  background:
+    radial-gradient(700px 400px at 10% 0%,rgba(79,140,255,.14),transparent 60%),
+    radial-gradient(600px 400px at 95% 100%,rgba(34,211,238,.10),transparent 60%),
+    var(--bg);
   color:var(--text);
   font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
 }
 .card{
-  width:min(760px,100%);
+  width:min(820px,100%);
   background:var(--card);
   border:1px solid var(--line);
-  border-radius:16px;
+  border-radius:18px;
   padding:28px;
-  box-shadow:0 20px 60px rgba(0,0,0,.4);
+  box-shadow:0 24px 70px rgba(0,0,0,.45);
 }
-header{
-  display:flex;
-  align-items:center;
-  gap:14px;
-  margin-bottom:14px;
-}
+header{display:flex;align-items:center;gap:14px;margin-bottom:16px}
 .badge{
-  width:44px;height:44px;
-  display:grid;place-items:center;
-  border-radius:12px;
-  background:linear-gradient(135deg,var(--accent),#22d3ee);
-  color:#06111f;
-  font:800 14px var(--mono);
+  width:46px;height:46px;display:grid;place-items:center;border-radius:13px;
+  background:linear-gradient(135deg,var(--accent),var(--cyan));
+  color:#06111f;font:800 14px var(--mono);
 }
-h1{margin:0;font-size:20px}
+h1{margin:0;font-size:21px}
 .sub{margin:0;color:var(--muted);font-size:12.5px}
 .status{
-  margin-left:auto;
-  padding:5px 11px;
-  border-radius:999px;
-  font:700 11px var(--mono);
-  letter-spacing:.05em;
-  text-transform:uppercase;
-  border:1px solid var(--line);
-  color:var(--muted);
+  margin-left:auto;padding:6px 12px;border-radius:999px;
+  font:700 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  border:1px solid var(--line);color:var(--muted);white-space:nowrap;
 }
 .status.running{color:var(--accent);border-color:rgba(79,140,255,.5)}
 .status.review{color:var(--warn);border-color:rgba(251,191,36,.5)}
 .status.secure{color:var(--ok);border-color:rgba(52,211,153,.5)}
-.status.blocked{color:var(--bad);border-color:rgba(248,113,113,.5)}
-.desc{color:var(--muted);font-size:14px;margin:0 0 18px}
-.grid{
-  display:grid;
-  grid-template-columns:1fr 110px 110px;
-  gap:12px;
-  margin-bottom:14px;
+.status.bad{color:var(--bad);border-color:rgba(251,113,133,.5)}
+.notice{
+  border:1px solid rgba(251,191,36,.35);
+  background:rgba(251,191,36,.07);
+  border-radius:12px;padding:12px 14px;margin-bottom:18px;
+  color:#fde68a;font-size:13px;
 }
-label{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  color:var(--muted);
-  font-size:12px;
-  font-weight:600;
+.notice b{color:var(--warn)}
+.grid{display:grid;grid-template-columns:1fr 110px 110px;gap:12px;margin-bottom:14px}
+label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px;font-weight:600}
+input,textarea{
+  background:var(--panel);border:1px solid var(--line);color:var(--text);
+  border-radius:9px;padding:10px 12px;font:13px var(--mono);
 }
-input{
-  background:#0b1220;
-  border:1px solid var(--line);
-  color:var(--text);
-  border-radius:9px;
-  padding:10px 12px;
-  font:13px var(--mono);
-}
-input:focus{
-  outline:none;
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(79,140,255,.2);
-}
-.actions{
-  display:flex;
-  flex-wrap:wrap;
-  gap:10px;
-  align-items:center;
-  margin-bottom:16px;
-}
+input:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.18)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
 button{
-  border:1px solid var(--line);
-  background:#18233a;
-  color:var(--text);
-  border-radius:9px;
-  padding:10px 16px;
-  font:600 13px system-ui;
-  cursor:pointer;
+  border:1px solid var(--line);background:#17233a;color:var(--text);
+  border-radius:9px;padding:10px 16px;font:600 13px system-ui;cursor:pointer;
 }
 button:hover{border-color:var(--accent)}
-button.primary{
-  background:var(--accent);
-  border-color:transparent;
-  color:#fff;
-}
+button.primary{background:var(--accent);border-color:transparent;color:#fff}
 button:disabled{opacity:.45;cursor:not-allowed}
-.counter{
-  margin-left:auto;
-  color:var(--muted);
-  font:12px var(--mono);
+.counter{margin-left:auto;color:var(--muted);font:12px var(--mono)}
+.verdict{
+  border-radius:12px;padding:14px 16px;margin-bottom:16px;
+  border:1px solid var(--line);background:var(--panel);font-size:13.5px;
 }
-.expect{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:16px;
-}
-.expect div{
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:10px 12px;
-  color:var(--muted);
-  font-size:12.5px;
-}
-.expect b{
-  display:block;
-  margin-bottom:4px;
-  font-size:11px;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-}
-.expect .ok b{color:var(--ok)}
-.expect .warn b{color:var(--warn)}
+.verdict .t{font:800 12px var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px}
+.verdict.ok{border-color:rgba(52,211,153,.4)} .verdict.ok .t{color:var(--ok)}
+.verdict.warn{border-color:rgba(251,191,36,.4)} .verdict.warn .t{color:var(--warn)}
+.verdict.bad{border-color:rgba(251,113,133,.4)} .verdict.bad .t{color:var(--bad)}
+.verdict.info{border-color:rgba(79,140,255,.4)} .verdict.info .t{color:var(--accent)}
 .log{
-  background:#070d19;
-  border:1px solid var(--line);
-  border-radius:10px;
-  padding:14px;
-  min-height:150px;
-  max-height:280px;
-  overflow:auto;
-  margin:0 0 14px;
-  color:var(--muted);
-  font:12.5px/1.7 var(--mono);
+  background:#060d18;border:1px solid var(--line);border-radius:10px;
+  padding:14px;min-height:150px;max-height:260px;overflow:auto;margin:0 0 16px;
+  color:var(--muted);font:12.5px/1.7 var(--mono);
 }
-.log div{margin:0}
-.log .ok{color:var(--ok)}
-.log .warn{color:var(--warn)}
-.log .bad{color:var(--bad)}
+.log .ok{color:var(--ok)} .log .warn{color:var(--warn)} .log .bad{color:var(--bad)} .log .info{color:var(--cyan)}
 .log::-webkit-scrollbar{width:8px}
-.log::-webkit-scrollbar-track{background:#070d19}
+.log::-webkit-scrollbar-track{background:#060d18}
 .log::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
 .log::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+h2{font-size:13px;margin:0 0 8px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+.check{margin:0 0 16px;padding-left:18px;color:var(--muted);font-size:13px}
+.check li{margin:4px 0}
+textarea{width:100%;min-height:120px;resize:vertical;margin-bottom:12px}
 footer{color:#64748b;font-size:11.5px}
 @media(max-width:640px){
   .card{padding:20px}
   .grid{grid-template-columns:1fr 1fr}
   .grid label:first-child{grid-column:1/-1}
-  .expect{grid-template-columns:1fr}
   .counter{width:100%;margin-left:0}
 }
 </style>
@@ -180,17 +119,19 @@ footer{color:#64748b;font-size:11.5px}
   <header>
     <div class="badge">T4</div>
     <div>
-      <h1>Omnibox Race Test</h1>
-      <p class="sub">document.write race · simple regression check</p>
+      <h1>T4 Spoof Verifier</h1>
+      <p class="sub">document.write race · real vs simulated omnibox check</p>
     </div>
     <span id="status" class="status">Idle</span>
   </header>
 
-  <p class="desc">
-    Klik <b>Jalankan</b>, izinkan popup bila diminta, lalu periksa tab baru.
-    Bila address bar menunjukkan URL target tetapi halaman menampilkan
-    <b>LAB MARKER</b>, catat sebagai temuan.
-  </p>
+  <div class="notice">
+    <b>Penting:</b> “browser frame / omnibox” yang digambar oleh halaman HTML adalah
+    <b>simulasi</b> dan <b>bukan temuan</b>. Temuan valid hanya bila
+    <b>toolbar asli browser</b> (di luar kendali halaman) menampilkan origin yang salah.
+    Pada browser yang sudah dipatch, race ini umumnya berakhir di <code>about:blank</code>,
+    bukan URL target.
+  </div>
 
   <div class="grid">
     <label>Target URL
@@ -208,25 +149,32 @@ footer{color:#64748b;font-size:11.5px}
     <button id="run" class="primary">Jalankan</button>
     <button id="stop" disabled>Stop</button>
     <button id="clear">Bersihkan Log</button>
+    <button id="copy">Copy Report</button>
     <span id="counter" class="counter"></span>
   </div>
 
-  <div class="expect">
-    <div class="ok">
-      <b>Aman</b>
-      Write ditolak (SecurityError), atau tab baru tetap di about:blank dengan URL jujur.
-    </div>
-    <div class="warn">
-      <b>Perlu Cek</b>
-      URL target tampil di address bar, tetapi konten LAB MARKER terlihat.
-    </div>
+  <div id="verdict" class="verdict info">
+    <div class="t">Menunggu</div>
+    Jalankan test, lalu verifikasi terhadap toolbar asli browser — bukan frame yang digambar halaman.
   </div>
 
   <div id="log" class="log" aria-live="polite"></div>
 
+  <h2>Evidence yang wajib untuk laporan valid</h2>
+  <ul class="check">
+    <li>Rekaman layar penuh yang memperlihatkan <b>toolbar asli browser</b> (bukan hanya area halaman).</li>
+    <li>Versi browser tepat + OS + channel (stable/dev/canary/fork).</li>
+    <li>Timing menang: interval, attempt ke-berapa, dan kondisi jaringan.</li>
+    <li>Bukti bahwa konten berasal dari opener (marker), bukan dari target.</li>
+    <li>Baseline: hasil yang sama di Chrome/Firefox stable terbaru (harusnya aman).</li>
+  </ul>
+
+  <h2>Report snippet (auto)</h2>
+  <textarea id="report" readonly></textarea>
+
   <footer>
-    Gunakan hanya pada browser/lab milik sendiri. Hasil aman/tidak aman ditentukan dari
-    kesesuaian URL bar dengan konten yang benar-benar tampil.
+    Gunakan hanya pada browser/lab milik sendiri. Jangan gunakan untuk meniru halaman login
+    atau mengumpulkan kredensial. Marker sengaja diberi label LAB agar jelas bukan halaman target.
   </footer>
 </main>
 
@@ -234,134 +182,202 @@ footer{color:#64748b;font-size:11.5px}
 "use strict";
 
 const $ = id => document.getElementById(id);
-const logEl = $("log");
-const statusEl = $("status");
-const runBtn = $("run");
-const stopBtn = $("stop");
-const counter = $("counter");
+const logEl = $("log"), statusEl = $("status"), verdictEl = $("verdict");
+const runBtn = $("run"), stopBtn = $("stop"), counter = $("counter"), reportEl = $("report");
 
-let timer = null;
-let child = null;
+let timer = null, child = null, recheck = null;
+let last = {verdict:"idle", detail:"", attempt:null, target:"", interval:null, max:null};
 
-function time(){
-  return new Date().toLocaleTimeString("id-ID",{hour12:false});
+function time(){ return new Date().toLocaleTimeString("id-ID",{hour12:false}); }
+function log(msg,type){
+  const d=document.createElement("div");
+  if(type) d.className=type;
+  d.textContent="["+time()+"] "+msg;
+  logEl.appendChild(d);
+  logEl.scrollTop=logEl.scrollHeight;
 }
-
-function log(msg, type){
-  const line = document.createElement("div");
-  if(type) line.className = type;
-  line.textContent = "[" + time() + "] " + msg;
-  logEl.appendChild(line);
-  logEl.scrollTop = logEl.scrollHeight;
+function setStatus(cls,label){ statusEl.className="status "+cls; statusEl.textContent=label; }
+function setVerdict(cls,title,body){
+  verdictEl.className="verdict "+cls;
+  verdictEl.innerHTML="<div class='t'>"+title+"</div>"+body;
+  last.verdict=title; last.detail=body.replace(/<[^>]*>/g,"");
+  buildReport();
 }
-
-function setStatus(cls, label){
-  statusEl.className = "status " + cls;
-  statusEl.textContent = label;
-}
-
-function resetButtons(){
-  runBtn.disabled = false;
-  stopBtn.disabled = true;
-}
-
-function stopTimer(){
-  if(timer){
-    clearInterval(timer);
-    timer = null;
-  }
-}
+function resetButtons(){ runBtn.disabled=false; stopBtn.disabled=true; }
+function stopTimer(){ if(timer){clearInterval(timer);timer=null;} if(recheck){clearTimeout(recheck);recheck=null;} }
 
 function buildMarker(){
   return [
-    "<!doctype html>",
-    "<meta charset='utf-8'>",
-    "<title>T4 Lab Marker</title>",
-    "<body style='font-family:system-ui;max-width:620px;margin:60px auto;padding:0 20px;color:#111'>",
+    "<!doctype html><meta charset='utf-8'><title>T4 Lab Marker</title>",
+    "<body style='font-family:system-ui;max-width:640px;margin:60px auto;padding:0 20px;color:#111'>",
     "<h1>T4 — LAB MARKER</h1>",
     "<p>Konten ini ditulis oleh opener melalui <code>document.write()</code>.</p>",
-    "<p>Jika address bar menampilkan <b>URL target</b> sementara konten ini terlihat, catat sebagai temuan.</p>",
+    "<p>Jika <b>toolbar asli browser</b> menampilkan URL target sementara marker ini terlihat,",
+    "rekam layar penuh dan verifikasi sebelum melaporkan.</p>",
     "<p style='color:#666;font-size:13px'>Halaman uji lokal — bukan halaman target.</p>",
     "</body>"
   ].join("");
 }
 
-$("run").addEventListener("click", () => {
-  const target = $("url").value.trim();
+function readChildState(){
+  if(!child || child.closed) return {state:"closed", href:""};
+  try{
+    const href = child.location.href;
+    return {state:"readable", href};
+  }catch(e){
+    return {state:"cross-origin", href:""};
+  }
+}
 
-  if(!/^https?:\/\//i.test(target)){
-    log("URL harus diawali http:// atau https://", "bad");
+function evaluate(){
+  const s = readChildState();
+  if(s.state==="closed"){
+    log("Tab target ditutup.","warn");
+    setVerdict("warn","Ditutup","Tab ditutup sebelum verifikasi selesai.");
+    setStatus("review","Closed");
     return;
   }
+  if(s.state==="readable"){
+    if(/^about:blank/i.test(s.href)){
+      log("child.location = about:blank → URL jujur, bukan spoof.","ok");
+      setVerdict("ok","Bukan Spoof",
+        "Write menang sebelum navigasi commit, tetapi tab tetap di <code>about:blank</code>. " +
+        "Toolbar asli menunjukkan about:blank, bukan URL target. Ini bukan temuan yang bisa dilaporkan.");
+      setStatus("secure","About:blank");
+    }else{
+      log("child.location = "+s.href,"info");
+      setVerdict("info","Readable",
+        "child.location masih readable: <code>"+s.href+"</code>. Cocokkan dengan toolbar asli browser.");
+      setStatus("review","Verify");
+    }
+  }else{
+    log("child.location cross-origin (tidak readable).","warn");
+    setVerdict("warn","Anomali — Verifikasi",
+      "child.location tidak readable (cross-origin). Jika <b>toolbar asli</b> menunjukkan URL target " +
+      "dan marker opener masih terlihat, rekam layar penuh sebagai bukti. Jika yang terlihat hanya " +
+      "frame yang digambar halaman, itu simulasi dan tidak valid.");
+    setStatus("review","Verify");
+  }
+}
 
-  const interval = Math.min(500, Math.max(5, Number($("interval").value) || 25));
-  const max = Math.min(500, Math.max(1, Number($("attempts").value) || 120));
+function buildReport(){
+  const txt = [
+    "# T4 Spoof Verification",
+    "",
+    "Tanggal: " + new Date().toLocaleString("id-ID"),
+    "Browser: " + navigator.userAgent,
+    "Platform: " + navigator.platform,
+    "Target: " + (last.target || "-"),
+    "Interval: " + (last.interval ?? "-") + " ms",
+    "Max attempts: " + (last.max ?? "-"),
+    "Winning attempt: " + (last.attempt ?? "-"),
+    "Verdict: " + last.verdict,
+    "Detail: " + last.detail,
+    "",
+    "Evidence checklist:",
+    "- [ ] Rekaman layar penuh termasuk toolbar asli browser",
+    "- [ ] Versi browser + OS + channel",
+    "- [ ] Timing menang (interval / attempt / jaringan)",
+    "- [ ] Baseline Chrome/Firefox stable terbaru",
+    "- [ ] Konfirmasi ini bukan fake chrome yang digambar halaman",
+    "",
+    "Catatan: pada browser terpatch, race ini umumnya berakhir di about:blank (bukan spoof)."
+  ].join("\n");
+  reportEl.value = txt;
+}
+
+$("run").addEventListener("click", () => {
+  const target = $("url").value.trim();
+  if(!/^https?:\/\//i.test(target)){
+    log("URL harus diawali http:// atau https://","bad");
+    return;
+  }
+  const interval = Math.min(500,Math.max(5,Number($("interval").value)||25));
+  const max = Math.min(500,Math.max(1,Number($("attempts").value)||120));
 
   stopTimer();
-  setStatus("running", "Running");
-  runBtn.disabled = true;
-  stopBtn.disabled = false;
-  counter.textContent = "0 / " + max;
+  last = {verdict:"running", detail:"", attempt:null, target, interval, max};
+  buildReport();
+  setStatus("running","Running");
+  setVerdict("info","Running","Membuka target dan mencoba race…");
+  runBtn.disabled=true; stopBtn.disabled=false;
+  counter.textContent="0 / "+max;
+  log("Membuka target: "+target);
 
-  log("Membuka target: " + target);
-  child = window.open(target, "_blank");
-
+  child = window.open(target,"_blank");
   if(!child){
-    log("Popup diblokir. Izinkan popup untuk halaman ini lalu ulangi.", "bad");
-    setStatus("blocked", "Blocked");
+    log("Popup diblokir. Izinkan popup lalu ulangi.","bad");
+    setVerdict("bad","Blocked","Popup diblokir sehingga test tidak berjalan.");
+    setStatus("bad","Blocked");
     resetButtons();
     return;
   }
 
-  let i = 0;
-
-  timer = setInterval(() => {
+  let i=0;
+  timer=setInterval(()=>{
     i++;
-    counter.textContent = i + " / " + max;
-
+    counter.textContent=i+" / "+max;
     if(child.closed){
       stopTimer();
-      log("Tab target ditutup.", "warn");
-      setStatus("", "Idle");
+      log("Tab target ditutup.","warn");
+      setVerdict("warn","Ditutup","Tab ditutup sebelum race selesai.");
+      setStatus("review","Closed");
       resetButtons();
       return;
     }
-
     try{
       child.document.open();
       child.document.write(buildMarker());
       child.document.close();
-
       stopTimer();
-      log("document.write berhasil setelah " + i + " percobaan.", "warn");
-      log("Periksa tab baru: URL target + LAB MARKER = perlu investigasi. about:blank + marker = aman.", "warn");
-      setStatus("review", "Perlu Cek");
-      resetButtons();
+      last.attempt=i;
+      log("document.write berhasil setelah "+i+" percobaan.","warn");
+      setStatus("review","Verify");
+      evaluate();
+      recheck=setTimeout(()=>{
+        log("Re-check 1.5s kemudian…","info");
+        evaluate();
+      },1500);
     }catch(e){
-      if(i >= max){
+      if(i>=max){
         stopTimer();
-        log("Semua " + max + " percobaan ditolak (" + e.name + "). Perilaku aman.", "ok");
-        setStatus("secure", "Secure");
+        log("Semua "+max+" percobaan ditolak ("+e.name+").","ok");
+        setVerdict("ok","Secure","Semua write cross-origin ditolak. Perilaku aman.");
+        setStatus("secure","Secure");
         resetButtons();
       }
     }
-  }, interval);
+  },interval);
 });
 
 $("stop").addEventListener("click", () => {
   stopTimer();
   log("Test dihentikan manual.");
-  setStatus("", "Idle");
-  counter.textContent = "";
+  setVerdict("info","Stopped","Test dihentikan sebelum verdict final.");
+  setStatus("","Idle");
+  counter.textContent="";
   resetButtons();
 });
 
 $("clear").addEventListener("click", () => {
-  logEl.innerHTML = "";
-  counter.textContent = "";
+  logEl.innerHTML="";
+  counter.textContent="";
   log("Log dibersihkan.");
 });
 
+$("copy").addEventListener("click", async () => {
+  buildReport();
+  try{
+    await navigator.clipboard.writeText(reportEl.value);
+    log("Report disalin ke clipboard.","ok");
+  }catch(e){
+    reportEl.select();
+    document.execCommand("copy");
+    log("Report disalin (fallback).","ok");
+  }
+});
+
+buildReport();
 log("Siap. Izinkan popup, lalu klik Jalankan.");
 </script>
 </body>
