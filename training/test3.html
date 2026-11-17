@@ -1,257 +1,826 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SPOOF//LAB — Modern Surfaces Verifier</title>
-<style>
-:root{
-  --bg:#08111f;--card:#101b2e;--panel:#0b1525;--line:#25344e;
-  --text:#e8eef8;--muted:#95a5bd;--accent:#4f8cff;--cyan:#22d3ee;
-  --ok:#34d399;--warn:#fbbf24;--bad:#fb7185;--violet:#a78bfa;
-  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-}
-*{box-sizing:border-box}
-body{margin:0;min-height:100vh;padding:24px;background:
-  radial-gradient(700px 400px at 10% 0%,rgba(79,140,255,.14),transparent 60%),
-  radial-gradient(600px 400px at 95% 100%,rgba(34,211,238,.10),transparent 60%),var(--bg);
-  color:var(--text);font:15px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-.wrap{width:min(960px,100%);margin:0 auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:26px;box-shadow:0 24px 70px rgba(0,0,0,.45)}
-header{display:flex;align-items:center;gap:14px;margin-bottom:14px;flex-wrap:wrap}
-.badge{width:46px;height:46px;display:grid;place-items:center;border-radius:13px;background:linear-gradient(135deg,var(--accent),var(--cyan));color:#06111f;font:800 12px var(--mono)}
-h1{margin:0;font-size:21px}
-.sub{margin:0;color:var(--muted);font-size:12.5px}
-.chip{margin-left:auto;padding:6px 12px;border-radius:999px;font:700 11px var(--mono);border:1px solid var(--line);color:var(--cyan)}
-.notice{border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.07);border-radius:12px;padding:12px 14px;margin-bottom:16px;color:#fde68a;font-size:13px}
-.notice b{color:var(--warn)}
-.markerrow{display:flex;gap:12px;align-items:end;margin-bottom:16px;flex-wrap:wrap}
-.markerrow label{flex:1;min-width:220px;display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px;font-weight:600}
-input,select{background:var(--panel);border:1px solid var(--line);color:var(--text);border-radius:9px;padding:10px 12px;font:13px var(--mono)}
-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,140,255,.18)}
-.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
-.tab{border:1px solid var(--line);background:var(--panel);color:var(--muted);border-radius:999px;padding:8px 14px;font:600 12.5px system-ui;cursor:pointer}
-.tab.active{background:linear-gradient(120deg,var(--accent),var(--cyan));color:#06111f;border-color:transparent}
-.panel{display:none}
-.panel.active{display:block}
-.phead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.phead h2{margin:0;font-size:16px}
-.vtag{font:700 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
-.vtag.ok{color:var(--ok);border-color:rgba(52,211,153,.4)}
-.vtag.warn{color:var(--warn);border-color:rgba(251,191,36,.4)}
-.vtag.sim{color:var(--violet);border-color:rgba(167,139,250,.4)}
-.desc{color:var(--muted);font-size:13.5px;margin:0 0 12px}
-.expect{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.expect div{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:12.5px;color:var(--muted)}
-.expect b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
-.expect .a b{color:var(--ok)}.expect .f b{color:var(--warn)}
-.ctrls{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:12px}
-.ctrls label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:11.5px;font-weight:600}
-.ctrls input[type=range]{width:160px}
-button{border:1px solid var(--line);background:#17233a;color:var(--text);border-radius:9px;padding:10px 16px;font:600 13px system-ui;cursor:pointer}
-button:hover{border-color:var(--accent)}
-button.primary{background:var(--accent);border-color:transparent;color:#fff}
-.log{background:#060d18;border:1px solid var(--line);border-radius:10px;padding:12px;min-height:110px;max-height:200px;overflow:auto;margin:12px 0;color:var(--muted);font:12.5px/1.7 var(--mono)}
-.log .ok{color:var(--ok)}.log .warn{color:var(--warn)}.log .sim{color:var(--violet)}.log .info{color:var(--cyan)}
-.log::-webkit-scrollbar{width:8px}.log::-webkit-scrollbar-track{background:#060d18}
-.log::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
-.verdict{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px;font-size:13px;margin-bottom:8px}
-.verdict .t{font:800 11px var(--mono);letter-spacing:.07em;text-transform:uppercase;margin-bottom:4px}
-footer{color:#64748b;font-size:11.5px;margin-top:16px}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
-#fakebar{position:fixed;top:0;left:0;right:0;height:52px;z-index:2147483647;background:#dee1e6;color:#202124;display:flex;align-items:center;gap:10px;padding:0 16px;font:14px system-ui}
-#fakebar .url{background:#fff;border-radius:20px;padding:7px 15px;flex:1;max-width:640px}
-#fakebar .tag{font:800 11px var(--mono);color:#c5221f;background:rgba(197,34,31,.12);padding:4px 9px;border-radius:6px}
-@media(max-width:680px){.expect{grid-template-columns:1fr}.card{padding:20px}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deep Window.open Empty URL Test</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+      font-size: 28px;
+    }
+
+    h2 {
+      margin-top: 0;
+      font-size: 20px;
+    }
+
+    .note,
+    .warning,
+    .info {
+      padding: 14px;
+      border-radius: 8px;
+      margin: 14px 0;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .note {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+    }
+
+    .warning {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+    }
+
+    .info {
+      background: #f0fdf4;
+      border: 1px solid #bbf7d0;
+    }
+
+    .card {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 16px;
+      margin: 16px 0;
+      background: #fafafa;
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 12px 0;
+    }
+
+    button {
+      border: none;
+      border-radius: 8px;
+      padding: 10px 14px;
+      cursor: pointer;
+      background: #2563eb;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    button:hover {
+      opacity: 0.92;
+    }
+
+    button.red {
+      background: #dc2626;
+    }
+
+    button.green {
+      background: #16a34a;
+    }
+
+    button.gray {
+      background: #4b5563;
+    }
+
+    input,
+    select {
+      padding: 9px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    input {
+      min-width: 360px;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: Consolas, monospace;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #e5e7eb;
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #f9fafb;
+      font-weight: 700;
+    }
+
+    .result {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #eef2ff;
+      min-height: 42px;
+      font-size: 14px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #4b5563;
+    }
+
+    .status-safe {
+      color: #166534;
+      font-weight: 700;
+    }
+
+    .status-risk {
+      color: #b91c1c;
+      font-weight: 700;
+    }
+
+    .status-check {
+      color: #a16207;
+      font-weight: 700;
+    }
+  </style>
 </head>
 <body>
-<div class="wrap">
-<main class="card">
-  <header>
-    <div class="badge">S//L</div>
-    <div><h1>Modern Surfaces Verifier</h1><p class="sub">cara unik di luar race kuno · jujur & terverifikasi</p></div>
-    <span class="chip" id="ua">browser</span>
-  </header>
+  <div class="wrap">
+    <h1>Deep Test: window.open Empty URL / location=no</h1>
 
-  <div class="notice">
-    <b>Realita:</b> tidak ada trik universal yang membuat <b>toolbar asli</b> menampilkan
-    <code>example.com</code> di atas konten attacker pada browser terpatch. Surface modern di bawah
-    (picker geometry, top-layer, view-transition, fullscreen) adalah <b>kelas bug versi-spesifik</b>.
-    Hasil “simulasi / by-design” <b>bukan temuan</b>; hanya anomali pada toolbar asli di build belum-patch yang valid.
-  </div>
-
-  <div class="markerrow">
-    <label>Marker text (lab)
-      <input id="marker" type="text" value="INJECTION SUCCESS" spellcheck="false">
-    </label>
-    <button id="copyReport">Copy Report</button>
-  </div>
-
-  <div class="tabs" id="tabs">
-    <button class="tab active" data-s="select">Select Picker</button>
-    <button class="tab" data-s="popover">Popover / Anchor</button>
-    <button class="tab" data-s="dialog">Dialog Top-layer</button>
-    <button class="tab" data-s="vt">View Transition</button>
-    <button class="tab" data-s="fs">Fullscreen (simulasi)</button>
-  </div>
-
-  <section class="panel active" id="p-select">
-    <div class="phead"><h2>Native Select Picker Geometry</h2><span class="vtag" id="v-select">idle</span></div>
-    <p class="desc">Kelas CVE-2026-14077: anchor rect picker tidak di-clip ke viewport sehingga popup native bisa menutupi toolbar. Di browser terpatch, popup terpotong di area halaman.</p>
-    <div class="expect"><div class="a"><b>Aman / patched</b>Popup picker ter-clip di viewport, tidak menutupi toolbar asli.</div><div class="f"><b>Finding (build lama)</b>Popup native muncul di atas toolbar asli dan menutupi omnibox.</div></div>
-    <div class="ctrls">
-      <label>Top offset <input type="range" id="sel-top" min="-200" max="100" value="-35"></label>
-      <label>Height <input type="range" id="sel-h" min="200" max="12000" step="100" value="10000"></label>
-      <button class="primary" id="run-select">Run picker</button>
+    <div class="warning">
+      <strong>Internal testing only.</strong>
+      File ini untuk memvalidasi perilaku browser internal tim kamu, khususnya apakah
+      <code>window.open()</code> dengan parameter lama seperti <code>location=no</code>
+      masih bisa menyembunyikan address bar atau menghasilkan URL kosong tanpa indikator keamanan.
     </div>
-    <div class="log" id="log-select"></div>
-    <div class="verdict" id="ver-select"><div class="t">Menunggu</div>Jalankan dan amati popup terhadap toolbar asli.</div>
-  </section>
 
-  <section class="panel" id="p-popover">
-    <div class="phead"><h2>Popover + Anchor Negative Offset</h2><span class="vtag" id="v-popover">idle</span></div>
-    <p class="desc">Top-layer (Popover API + CSS anchor) dengan margin negatif. Elemen top-layer tetap di dalam viewport halaman; ia tidak bisa menutupi toolbar asli. Bila terlihat “di atas halaman”, itu hanya menggambar dalam halaman = simulasi.</p>
-    <div class="expect"><div class="a"><b>Aman / by-design</b>Popover ter-clip di viewport; chrome browser tak tersentuh.</div><div class="f"><b>Finding</b>Hanya bila elemen benar-benar menutupi toolbar asli (tidak mungkin in-page pada browser sehat).</div></div>
-    <div class="ctrls">
-      <label>Negative margin <input type="range" id="pop-m" min="-160" max="0" value="-80"></label>
-      <button class="primary" id="run-popover">Show popover</button>
+    <div class="note">
+      <strong>Catatan penting:</strong>
+      Browser modern umumnya akan menormalisasi URL kosong ke <code>about:blank</code>,
+      menampilkan URL sumber, atau memblokir perilaku berisiko.
+      Jika browser internal kamu membiarkan URL benar-benar kosong tanpa security indicator,
+      itu perlu direview sebagai potensi UI spoofing / address bar manipulation.
     </div>
-    <div class="log" id="log-popover"></div>
-    <div class="verdict" id="ver-popover"><div class="t">Menunggu</div>Jalankan untuk melihat batas top-layer.</div>
-  </section>
 
-  <section class="panel" id="p-dialog">
-    <div class="phead"><h2>Dialog showModal Negative Inset</h2><span class="vtag" id="v-dialog">idle</span></div>
-    <p class="desc">&lt;dialog&gt; modal + backdrop berada di top-layer.Inset/transform negatif menguji apakah dialog bisa lolos ke chrome. Pada browser sehat, dialog tetap di viewport.</p>
-    <div class="expect"><div class="a"><b>Aman / by-design</b>Dialog + backdrop hanya menutup halaman.</div><div class="f"><b>Finding</b>Dialog/backdrop menelan toolbar asli (versi-spesifik).</div></div>
-    <div class="ctrls"><button class="primary" id="run-dialog">showModal escape</button></div>
-    <div class="log" id="log-dialog"></div>
-    <div class="verdict" id="ver-dialog"><div class="t">Menunggu</div>Jalankan untuk menguji inset negatif.</div>
-  </section>
+    <div class="card">
+      <h2>1. Konfigurasi Features</h2>
 
-  <section class="panel" id="p-vt">
-    <div class="phead"><h2>View Transition Snapshot vs URL</h2><span class="vtag" id="v-vt">idle</span></div>
-    <p class="desc">Ubah URL (hash) lalu tahan callback transisi agar snapshot lama tampil lebih lama. Ini jendela animasi by-design yang singkat, bukan spoof toolbar asli. Di file:// pakai hash; di http(s) bisa path.</p>
-    <div class="expect"><div class="a"><b>Aman / by-design</b>Jendela snapshot singkat dan konsisten dengan commit URL.</div><div class="f"><b>Finding</b>Mismatch URL vs konten yang bisa diperpanjang sewenang-wenang di toolbar asli.</div></div>
-    <div class="ctrls"><button class="primary" id="run-vt">Run transition</button></div>
-    <div class="log" id="log-vt"></div>
-    <div class="verdict" id="ver-vt"><div class="t">Menunggu</div>Jalankan untuk mengamati jendela snapshot.</div>
-  </section>
+      <div class="row">
+        <label for="preset">Preset:</label>
+        <select id="preset">
+          <option value="location">location=no only</option>
+          <option value="all">all UI suppressed</option>
+          <option value="baseline">baseline / no suppression</option>
+          <option value="custom">custom</option>
+        </select>
 
-  <section class="panel" id="p-fs">
-    <div class="phead"><h2>Fullscreen Fake Chrome</h2><span class="vtag sim" id="v-fs">simulasi</span></div>
-    <p class="desc">Halaman bebas menggambar “browser frame” palsu. Ini <b>simulasi</b> dan bukan temuan — browser sehat menampilkan indikator fullscreen sendiri. Ini menjelaskan kenapa screenshot “omnibox example.com + marker” yang digambar halaman tidak valid.</p>
-    <div class="expect"><div class="a"><b>Aman</b>Browser menampilkan indikator fullscreen sendiri; fake bar jelas berlabel LAB.</div><div class="f"><b>Bukan finding</b>Fake chrome in-page tidak pernah menjadi temuan spoof toolbar asli.</div></div>
-    <div class="ctrls"><button class="primary" id="run-fs">Masuk fullscreen</button><button id="exit-fs">Keluar</button></div>
-    <div class="log" id="log-fs"></div>
-    <div class="verdict" id="ver-fs"><div class="t">Simulasi</div>Fake chrome in-page = by-design, bukan temuan.</div>
-  </section>
+        <input
+          id="customFeatures"
+          placeholder="custom features, contoh: location=no,menubar=no,width=900,height=600"
+        />
+      </div>
 
-  <div class="actions">
-    <button id="resetAll">Reset semua verdict</button>
+      <div class="small">
+        Features aktif:
+        <code id="featuresPreview">-</code>
+      </div>
+
+      <div class="row">
+        <button onclick="runVariant('empty')">Run Empty URL ('')</button>
+        <button onclick="runVariant('undefined')">Run undefined</button>
+        <button onclick="runVariant('whitespace')">Run whitespace (' ')</button>
+        <button onclick="runVariant('about')">Run about:blank</button>
+        <button onclick="runVariant('blob')">Run blob empty</button>
+        <button onclick="runVariant('data')">Run data empty</button>
+      </div>
+
+      <div class="row">
+        <button class="red" onclick="runMatrix()">Run Deep Matrix</button>
+        <button class="green" onclick="closeAll()">Close All Popups</button>
+        <button class="gray" onclick="clearResults()">Clear Results</button>
+        <button onclick="copyReport()">Copy Report</button>
+      </div>
+
+      <div id="mainResult" class="result">
+        Siap. Jalankan salah satu variant atau Run Deep Matrix.
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2. Hasil Otomatis</h2>
+      <p class="small">
+        Kolom Actual URL diisi dari <code>popup.location.href</code> jika dapat diakses.
+        Beberapa status perlu dikonfirmasi manual oleh tester.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Variant</th>
+            <th>Requested</th>
+            <th>Actual URL</th>
+            <th>Title</th>
+            <th>Auto Status</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>3. Checklist Manual Deep</h2>
+      <p class="small">
+        Gunakan checklist ini saat popup terbuka. Fokusnya bukan cuma “URL kosong”,
+        tapi apakah user masih bisa membedakan UI browser asli dan konten web.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Expected Aman</th>
+            <th>Berisiko</th>
+            <th>Actual</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Address bar terlihat?</td>
+            <td>Ya, tetap terlihat meski halaman meminta <code>location=no</code>.</td>
+            <td>Address bar hilang / disembunyikan oleh web content.</td>
+            <td><input type="text" style="width:100%" /></td>
+            <td>
+              <select>
+                <option>PASS</option>
+                <option>FAIL</option>
+                <option>NEED REVIEW</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>URL kosong?</td>
+            <td>
+              Untuk web umum: sebaiknya tidak kosong. Normal ke <code>about:blank</code>
+              atau tunjukkan origin/sumber.
+            </td>
+            <td>
+              URL kosong tanpa indikator keamanan jelas, sehingga user tidak tahu halaman berasal dari mana.
+            </td>
+            <td><input type="text" style="width:100%" /></td>
+            <td>
+              <select>
+                <option>PASS</option>
+                <option>FAIL</option>
+                <option>NEED REVIEW</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Parameter <code>location=no</code> diabaikan?</td>
+            <td>Ya, browser mengabaikan parameter deprecated tersebut.</td>
+            <td>Browser menuruti <code>location=no</code> dan menyembunyikan address bar.</td>
+            <td><input type="text" style="width:100%" /></td>
+            <td>
+              <select>
+                <option>PASS</option>
+                <option>FAIL</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Security indicator jelas?</td>
+            <td>Ada tanda jelas bahwa ini konten web, bukan UI browser asli.</td>
+            <td>Halaman bisa tampak seperti UI browser asli.</td>
+            <td><input type="text" style="width:100%" /></td>
+            <td>
+              <select>
+                <option>PASS</option>
+                <option>FAIL</option>
+                <option>NEED REVIEW</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Tab/title tidak menyesatkan?</td>
+            <td>Title tidak menyerupai label sistem browser.</td>
+            <td>Title/ikon membuat user mengira itu UI browser.</td>
+            <td><input type="text" style="width:100%" /></td>
+            <td>
+              <select>
+                <option>PASS</option>
+                <option>FAIL</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td>Bisa ditutup / ESC berfungsi?</td>
+            <td>User bisa keluar atau menutup popup dengan jelas.</td>
+            <td>Popup sulit ditutup atau tetap menempel di atas UI.</td>
+            <td><input type="text" style="width:100%" /></td>
+            <td>
+              <select>
+                <option>PASS</option>
+                <option>FAIL</option>
+              </select>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>4. Interpretasi Status</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Arti</th>
+            <th>Tindakan</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>EMPTY_URL_ALLOWED</code></td>
+            <td>Browser mengizinkan <code>popup.location.href</code> benar-benar kosong.</td>
+            <td>
+              Review keamanan. Untuk web content tidak trusted, ini berisiko.
+              Jika ini mode internal/app khusus, pastikan ada indikator browser yang jelas.
+            </td>
+          </tr>
+          <tr>
+            <td><code>ABOUT_BLANK_NORMALIZED</code></td>
+            <td>Browser menormalisasi URL kosong menjadi <code>about:blank</code>.</td>
+            <td>
+              Umumnya lebih aman daripada URL kosong. Tetap cek apakah address bar terlihat
+              dan <code>location=no</code> diabaikan.
+            </td>
+          </tr>
+          <tr>
+            <td><code>INHERITED_CURRENT_URL</code></td>
+            <td>Popup mewarisi URL halaman induk.</td>
+            <td>
+              Cek apakah ini sesuai desain browser. Bisa berisiko jika user mengira popup
+              berasal dari domain berbeda.
+            </td>
+          </tr>
+          <tr>
+            <td><code>BLOCKED</code></td>
+            <td>Popup diblokir popup blocker / policy browser.</td>
+            <td>
+              Untuk test internal, izinkan popup untuk domain test atau jalankan variant satu per satu.
+            </td>
+          </tr>
+          <tr>
+            <td><code>CROSS_ORIGIN_OR_BLOCKED</code></td>
+            <td>Script tidak bisa membaca <code>popup.location.href</code>.</td>
+            <td>
+              Bisa normal jika popup cross-origin/sandboxed. Validasi manual address bar.
+            </td>
+          </tr>
+          <tr>
+            <td><code>WRITE_DENIED</code></td>
+            <td>Popup terbuka tetapi halaman tidak bisa menulis konten.</td>
+            <td>
+              Cek policy browser, sandbox, atau origin popup.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="info">
+      <strong>Rekomendasi untuk tim browser internal:</strong>
+      Jika kebutuhan produk adalah “window app tanpa address bar”, jangan implementasikan lewat
+      web page yang memanggil <code>window.open(location=no)</code>. Gunakan mode native/trusted browser,
+      misalnya app window/kiosk mode, dengan kebijakan eksplisit:
+      origin jelas, security indicator, title tidak bisa meniru UI browser, dan user tahu sedang berada
+      di mode khusus.
+    </div>
   </div>
 
-  <footer>
-    Gunakan hanya pada browser/lab milik sendiri. Untuk temuan nyata: uji build belum-patch/fork lama,
-    rekam layar penuh termasuk toolbar asli, catat versi + timing, dan bandingkan dengan stable terbaru.
-    Jangan meniru halaman login atau mengumpulkan kredensial.
-  </footer>
-</main>
-</div>
+  <script>
+    const popups = [];
+    const reportByRow = {};
+    let rowCount = 0;
 
-<script>
-"use strict";
-const $=id=>document.getElementById(id);
-const UA=(()=>{const u=navigator.userAgent;let m;if(m=u.match(/Edg\/(\d+)/))return"Edge "+m[1];if(m=u.match(/Firefox\/(\d+)/))return"Firefox "+m[1];if(m=u.match(/Chrome\/(\d+)/))return"Chrome "+m[1];if(m=u.match(/Version\/(\d+).*Safari/))return"Safari "+m[1];return"Browser";})();
-$("ua").textContent=UA;
-const verdicts={};
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function marker(){return esc($("marker").value.trim()||"INJECTION SUCCESS");}
-function log(s,m,t){const el=$("log-"+s);const d=document.createElement("div");if(t)d.className=t;d.textContent="["+new Date().toLocaleTimeString("id-ID",{hour12:false})+"] "+m;el.appendChild(d);el.scrollTop=el.scrollHeight;}
-function setV(s,cls,title,body){verdicts[s]={cls,title,body};const tag=$("v-"+s);tag.className="vtag "+cls;tag.textContent=title;const v=$("ver-"+s);v.innerHTML="<div class='t'>"+title+"</div>"+body;}
-$("tabs").addEventListener("click",e=>{const b=e.target.closest(".tab");if(!b)return;document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("active",t===b));document.querySelectorAll(".panel").forEach(p=>p.classList.toggle("active",p.id==="p-"+b.dataset.s));});
+    const baseFeatures = "popup=yes,width=980,height=650,left=60,top=60";
 
-$("run-select").addEventListener("click",()=>{
-  const old=$("t4sel");if(old)old.remove();
-  const s=document.createElement("select");s.id="t4sel";
-  s.style.cssText="position:fixed;left:120px;top:"+$("sel-top").value+"px;width:1500px;height:"+$("sel-h").value+"px;opacity:.01;pointer-events:none;z-index:9990";
-  s.innerHTML="<option>&nbsp;&nbsp;&nbsp;LAB · "+marker()+" · fake marker</option>";
-  document.body.appendChild(s);
-  log("select","Membuka picker (top="+$("sel-top").value+", h="+$("sel-h").value+").","info");
-  if(typeof s.showPicker!=="function"){log("select","showPicker tidak didukung.","warn");setV("select","warn","Unsupported","Browser ini tidak mendukung showPicker().");s.remove();return;}
-  try{s.selectedIndex=-1;s.focus();s.showPicker();
-    log("select","Picker terbuka. Amati: apakah popup menutupi TOOLBAR ASLI?","warn");
-    setV("select","warn","Verify","Pada browser terpatch popup ter-clip di viewport (aman). Hanya bila popup native menutupi toolbar asli di build lama = finding. Esc untuk menutup.");
-  }catch(e){log("select","showPicker ditolak: "+e.name,"ok");setV("select","ok","Patched","showPicker ditolak/di-clip; perilaku aman.");}
-  setTimeout(()=>s.remove(),4000);
-});
+    const tbody = document.getElementById("tbody");
+    const mainResult = document.getElementById("mainResult");
+    const presetEl = document.getElementById("preset");
+    const customFeaturesEl = document.getElementById("customFeatures");
+    const featuresPreviewEl = document.getElementById("featuresPreview");
 
-$("run-popover").addEventListener("click",()=>{
-  const old=$("t4pop");if(old)old.remove();
-  const p=document.createElement("div");p.id="t4pop";p.setAttribute("popover","manual");
-  p.style.cssText="position:fixed;top:0;left:0;right:0;margin:0;margin-top:"+$("pop-m").value+"px;background:#dee1e6;color:#202124;padding:10px 16px;font:14px system-ui;z-index:2147483646;border:0";
-  p.textContent="LAB · "+marker()+" · top-layer (in-page)";
-  document.body.appendChild(p);
-  if(!("showPopover" in p)){log("popover","Popover API tidak didukung.","warn");setV("popover","warn","Unsupported","Popover API tidak tersedia.");p.remove();return;}
-  try{p.showPopover();log("popover","Popover tampil dengan margin "+$("pop-m").value+"px. Ia tetap di dalam viewport halaman.","sim");
-    setV("popover","sim","By-design","Top-layer in-page tidak bisa menutupi toolbar asli. Bila terlihat 'di atas halaman', itu simulasi, bukan finding.");
-  }catch(e){log("popover","showPopover gagal: "+e.message,"warn");}
-  setTimeout(()=>{try{p.hidePopover()}catch(e){}p.remove();},2500);
-});
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
 
-$("run-dialog").addEventListener("click",()=>{
-  const old=$("t4dlg");if(old)old.remove();
-  const d=document.createElement("dialog");d.id="t4dlg";
-  d.style.cssText="position:fixed;top:-60px;margin-top:-120px;transform:translateY(-80px);background:#dee1e6;color:#202124;border:0;border-radius:12px;padding:14px 18px;font:14px system-ui";
-  d.innerHTML="LAB · "+marker()+" · dialog top-layer <form method='dialog' style='margin-top:8px'><button>Tutup</button></form>";
-  document.body.appendChild(d);
-  if(typeof d.showModal!=="function"){log("dialog","showModal tidak didukung.","warn");setV("dialog","warn","Unsupported","showModal tidak tersedia.");d.remove();return;}
-  try{d.showModal();log("dialog","Dialog modal inset-negatif tampil; tetap di viewport halaman.","sim");
-    setV("dialog","sim","By-design","Dialog + backdrop hanya menutup halaman. Tidak menutupi toolbar asli pada browser sehat.");
-  }catch(e){log("dialog","showModal gagal: "+e.message,"warn");}
-  setTimeout(()=>{try{d.close()}catch(e){}d.remove();},2500);
-});
+    function currentFeatures() {
+      const preset = presetEl.value;
+      const custom = customFeaturesEl.value.trim();
 
-$("run-vt").addEventListener("click",()=>{
-  if(!document.startViewTransition){log("vt","View Transitions tidak didukung.","warn");setV("vt","warn","Unsupported","View Transitions API tidak tersedia.");return;}
-  const saved=location.hash;
-  try{history.pushState({},"",location.pathname+"#/example.com/"+marker().replace(/\s+/g,"-"));}catch(e){location.hash="#/example.com";}
-  log("vt","URL diubah; menahan callback 1.5s agar snapshot lama tampil.","info");
-  const vt=document.startViewTransition(()=>{const end=performance.now()+1500;while(performance.now()<end){}});
-  vt.finished.then(()=>{log("vt","Transisi selesai. Jendela snapshot singkat = by-design, bukan spoof toolbar asli.","sim");
-    setV("vt","sim","By-design","Jendela snapshot view-transition singkat dan konsisten dengan commit URL; bukan temuan spoof toolbar asli.");
-    try{history.pushState({},"",location.pathname+saved);}catch(e){location.hash=saved;}
-  }).catch(()=>{setV("vt","warn","Skipped","Transisi dilewati/tidak selesai.");});
-});
+      if (preset === "custom") {
+        return custom || baseFeatures;
+      }
 
-function removeFake(){const f=$("fakebar");if(f)f.remove();}
-$("run-fs").addEventListener("click",()=>{
-  if(!document.documentElement.requestFullscreen){log("fs","Fullscreen tidak didukung.","warn");return;}
-  document.documentElement.requestFullscreen().then(()=>{
-    removeFake();const b=document.createElement("div");b.id="fakebar";
-    b.innerHTML="<div class='url'>https://example.com/ · "+marker()+"</div><span class='tag'>SIMULASI — BUKAN TEMUAN</span>";
-    document.body.appendChild(b);
-    log("fs","Fullscreen + fake bar berlabel SIMULASI. Browser sehat menampilkan indikator fullscreen sendiri.","sim");
-    setV("fs","sim","Simulasi","Fake chrome in-page = by-design. Ini menjelaskan kenapa screenshot 'omnibox example.com + marker' buatan halaman tidak valid sebagai temuan.");
-  }).catch(e=>{log("fs","Fullscreen ditolak: "+e.message,"warn");});
-});
-$("exit-fs").addEventListener("click",()=>{if(document.fullscreenElement)document.exitFullscreen();});
-document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement)removeFake();});
+      if (preset === "location") {
+        return baseFeatures + ",location=no";
+      }
 
-$("resetAll").addEventListener("click",()=>{
-  ["select","popover","dialog","vt"].forEach(s=>{setV(s,"","idle","Jalankan probe untuk verdict jujur.");$("log-"+s).innerHTML="";});
-  setV("fs","sim","Simulasi","Fake chrome in-page = by-design, bukan temuan.");
-});
-$("copyReport").addEventListener("click",async()=>{
-  const lines=["# Modern Surfaces Verification","Tanggal: "+new Date().toLocaleString("id-ID"),"Browser: "+navigator.userAgent,"Marker: "+marker(),""];
-  for(const k of ["select","popover","dialog","vt","fs"]){const v=verdicts[k]||{title:"idle",body:""};lines.push("## "+k+"\nVerdict: "+v.title+"\n"+v.body+"\n");}
-  lines.push("Catatan: hanya anomali pada TOOLBAR ASLI di build belum-patch yang merupakan temuan valid.");
-  const txt=lines.join("\n");
-  try{await navigator.clipboard.writeText(txt);}catch(e){const ta=document.createElement("textarea");ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand("copy");ta.remove();}
-  log("select","Report disalin ke clipboard.","ok");
-});
-setV("fs","sim","Simulasi","Fake chrome in-page = by-design, bukan temuan.");
-</script>
+      if (preset === "all") {
+        return baseFeatures + ",location=no,menubar=no,toolbar=no,status=no";
+      }
+
+      return baseFeatures;
+    }
+
+    function updatePreview() {
+      featuresPreviewEl.textContent = currentFeatures();
+    }
+
+    presetEl.addEventListener("change", updatePreview);
+    customFeaturesEl.addEventListener("input", updatePreview);
+    updatePreview();
+
+    function addRow(variant, requested, features) {
+      rowCount++;
+
+      const id = "row_" + rowCount;
+      const tr = document.createElement("tr");
+      tr.id = id;
+
+      tr.innerHTML =
+        "<td>" + rowCount + "</td>" +
+        "<td>" + escapeHtml(variant) + "</td>" +
+        "<td><code>" + escapeHtml(requested) + "</code></td>" +
+        "<td class=\"actual\">pending</td>" +
+        "<td class=\"title\">-</td>" +
+        "<td class=\"status\">OPENING</td>" +
+        "<td class=\"note\">" + escapeHtml(features) + "</td>";
+
+      tbody.appendChild(tr);
+
+      reportByRow[id] = {
+        id: id,
+        index: rowCount,
+        variant: variant,
+        requested: requested,
+        actual: "pending",
+        title: "-",
+        status: "OPENING",
+        note: features,
+        time: new Date().toISOString()
+      };
+
+      return id;
+    }
+
+    function updateRow(id, data) {
+      const tr = document.getElementById(id);
+      if (!tr) return;
+
+      if (data.actual !== undefined) {
+        tr.querySelector(".actual").textContent = data.actual;
+      }
+
+      if (data.title !== undefined) {
+        tr.querySelector(".title").textContent = data.title;
+      }
+
+      if (data.status !== undefined) {
+        tr.querySelector(".status").textContent = data.status;
+      }
+
+      if (data.note !== undefined) {
+        tr.querySelector(".note").textContent = data.note;
+      }
+
+      const old = reportByRow[id] || {};
+      reportByRow[id] = Object.assign({}, old, data, {
+        id: id,
+        time: new Date().toISOString()
+      });
+    }
+
+    function safeHref(win) {
+      try {
+        return win.location.href;
+      } catch (e) {
+        return "ACCESS_DENIED";
+      }
+    }
+
+    function createBlobUrl() {
+      const html =
+        "<!doctype html>" +
+        "<html>" +
+        "<head><title>Blob Empty Test</title></head>" +
+        "<body style=\"margin:24px;font-family:Arial\">" +
+        "<h2>Blob Empty Test</h2>" +
+        "<p>Internal blank test page.</p>" +
+        "</body>" +
+        "</html>";
+
+      const blob = new Blob([html], { type: "text/html" });
+      return URL.createObjectURL(blob);
+    }
+
+    function createDataUrl() {
+      const html =
+        "<!doctype html>" +
+        "<html>" +
+        "<head><title>Data Empty Test</title></head>" +
+        "<body style=\"margin:24px;font-family:Arial\">" +
+        "<h2>Data Empty Test</h2>" +
+        "<p>Internal blank test page.</p>" +
+        "</body>" +
+        "</html>";
+
+      return "data:text/html;charset=utf-8," + encodeURIComponent(html);
+    }
+
+    function buildPopupHtml(variant, requested, features) {
+      return (
+        "<!doctype html>" +
+        "<html>" +
+        "<head><title>Deep " + escapeHtml(variant) + "</title></head>" +
+        "<body style=\"margin:24px;font-family:Arial\">" +
+        "<h2>Deep " + escapeHtml(variant) + "</h2>" +
+        "<p><strong>Requested:</strong> " + escapeHtml(requested) + "</p>" +
+        "<p><strong>Features:</strong> " + escapeHtml(features) + "</p>" +
+        "<p>Ini halaman kosong untuk pengujian internal browser.</p>" +
+        "<p>Jika address bar hilang atau URL kosong tanpa indikator jelas, tandai sebagai risiko.</p>" +
+        "</body>" +
+        "</html>"
+      );
+    }
+
+    function runVariant(type) {
+      const features = currentFeatures();
+
+      let urlForOpen;
+      let requested;
+
+      if (type === "empty") {
+        urlForOpen = "";
+        requested = "'' empty string";
+      } else if (type === "undefined") {
+        urlForOpen = undefined;
+        requested = "undefined default";
+      } else if (type === "whitespace") {
+        urlForOpen = " ";
+        requested = "' ' whitespace";
+      } else if (type === "about") {
+        urlForOpen = "about:blank";
+        requested = "about:blank";
+      } else if (type === "blob") {
+        urlForOpen = createBlobUrl();
+        requested = "blob: empty HTML";
+      } else if (type === "data") {
+        urlForOpen = createDataUrl();
+        requested = "data:text/html empty-ish";
+      } else {
+        urlForOpen = "";
+        requested = "fallback empty";
+      }
+
+      const name = "deep_" + type + "_" + Date.now();
+      const rowId = addRow(type, requested, features);
+
+      let win = null;
+
+      try {
+        if (type === "undefined") {
+          win = window.open(undefined, name, features);
+        } else {
+          win = window.open(urlForOpen, name, features);
+        }
+      } catch (e) {
+        updateRow(rowId, {
+          actual: "error",
+          title: "-",
+          status: "ERROR",
+          note: e.message
+        });
+        return;
+      }
+
+      if (!win) {
+        updateRow(rowId, {
+          actual: "blocked",
+          title: "-",
+          status: "BLOCKED",
+          note: "Popup diblokir. Izinkan popup untuk domain test atau jalankan variant satu per satu."
+        });
+        return;
+      }
+
+      popups.push({
+        rowId: rowId,
+        name: name,
+        win: win,
+        type: type,
+        objectUrl: type === "blob" ? urlForOpen : null
+      });
+
+      try {
+        const html = buildPopupHtml(type, requested, features);
+        win.document.open();
+        win.document.write(html);
+        win.document.close();
+      } catch (e) {
+        updateRow(rowId, {
+          actual: safeHref(win),
+          title: "write denied",
+          status: "WRITE_DENIED",
+          note: e.message
+        });
+      }
+
+      setTimeout(function () {
+        inspect(rowId, win, features);
+      }, 800);
+
+      setTimeout(function () {
+        inspect(rowId, win, features);
+      }, 2200);
+
+      mainResult.textContent =
+        "Variant " + type + " dijalankan. Cek popup dan tabel hasil.";
+    }
+
+    function inspect(rowId, win, features) {
+      if (!win || win.closed) {
+        updateRow(rowId, {
+          actual: "closed",
+          title: "-",
+          status: "CLOSED",
+          note: "Popup sudah ditutup."
+        });
+        return;
+      }
+
+      let actual = "ACCESS_DENIED";
+      let title = "-";
+      let status = "CHECK";
+      let note = "";
+
+      try {
+        actual = win.location.href;
+        title = win.document.title || "-";
+
+        if (actual === "") {
+          status = "EMPTY_URL_ALLOWED";
+          note = "URL kosong. Validasi manual: apakah ada security indicator jelas?";
+        } else if (actual.indexOf("about:blank") === 0) {
+          status = "ABOUT_BLANK_NORMALIZED";
+          note = "Browser menormalisasi ke about:blank. Cek address bar tetap terlihat.";
+        } else if (actual === window.location.href) {
+          status = "INHERITED_CURRENT_URL";
+          note = "Popup memakai URL halaman induk. Cek apakah ini sesuai desain browser.";
+        } else if (actual.indexOf("blob:") === 0) {
+          status = "BLOB_URL";
+          note = "URL blob terlihat. Cek location=no tidak menyembunyikan address bar.";
+        } else if (actual.indexOf("data:") === 0) {
+          status = "DATA_URL";
+          note = "URL data terlihat. Cek truncation dan security indicator.";
+        } else {
+          status = "OTHER_URL";
+          note = "Periksa manual address bar dan origin.";
+        }
+      } catch (e) {
+        status = "CROSS_ORIGIN_OR_BLOCKED";
+        note = e.message;
+      }
+
+      updateRow(rowId, {
+        actual: actual,
+        title: title,
+        status: status,
+        note: note + " | features: " + features
+      });
+    }
+
+    function runMatrix() {
+      const variants = ["empty", "undefined", "whitespace", "about", "blob", "data"];
+      let index = 0;
+
+      mainResult.textContent =
+        "Running deep matrix. Jika popup diblokir, izinkan popup untuk test atau jalankan manual satu per satu.";
+
+      const timer = setInterval(function () {
+        if (index >= variants.length) {
+          clearInterval(timer);
+          mainResult.textContent = "Deep matrix selesai. Cek tabel hasil dan lakukan checklist manual.";
+          return;
+        }
+
+        runVariant(variants[index]);
+        index++;
+      }, 1500);
+    }
+
+    function closeAll() {
+      popups.forEach(function (item) {
+        try {
+          if (item.objectUrl) {
+            URL.revokeObjectURL(item.objectUrl);
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        try {
+          if (item.win && !item.win.closed) {
+            item.win.close();
+          }
+        } catch (e) {
+          // ignore
+        }
+      });
+
+      mainResult.textContent = "Semua popup ditutup.";
+    }
+
+    function clearResults() {
+      tbody.innerHTML = "";
+      Object.keys(reportByRow).forEach(function (key) {
+        delete reportByRow[key];
+      });
+      rowCount = 0;
+      mainResult.textContent = "Hasil dibersihkan.";
+    }
+
+    function copyReport() {
+      const rows = Object.values(reportByRow);
+
+      if (!rows.length) {
+        mainResult.textContent = "Belum ada hasil untuk disalin.";
+        return;
+      }
+
+      const text = rows.map(function (r) {
+        return (
+          "[" + r.time + "] #" + r.index + " " + r.variant + "\n" +
+          "Requested: " + r.requested + "\n" +
+          "Actual URL: " + r.actual + "\n" +
+          "Title: " + r.title + "\n" +
+          "Status: " + r.status + "\n" +
+          "Note: " + r.note + "\n" +
+          "---"
+        );
+      }).join("\n");
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+          .then(function () {
+            mainResult.textContent = "Report disalin ke clipboard.";
+          })
+          .catch(function () {
+            window.prompt("Salin report manually:", text);
+          });
+      } else {
+        window.prompt("Salin report manually:", text);
+      }
+    }
+
+    window.addEventListener("beforeunload", closeAll);
+  </script>
 </body>
 </html>
