@@ -3,53 +3,169 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>03 window.open whitespace</title>
+  <title>08 Storage Quota Error Display</title>
   <style>
     body { font-family: Arial, sans-serif; margin: 24px; background: #0f172a; color: #e5e7eb; }
-    button { padding: 10px 14px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
-    pre { background: #020617; border: 1px solid #334155; padding: 14px; border-radius: 10px; white-space: pre-wrap; margin-top: 16px; }
-    .empty { color: #f87171; font-weight: 700; }
-    .ok { color: #4ade80; font-weight: 700; }
+    button { padding: 10px 14px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; margin: 4px; }
+    pre { background: #020617; border: 1px solid #334155; padding: 14px; border-radius: 10px; white-space: pre-wrap; margin-top: 16px; font-size: 12px; }
+    small { color: #94a3b8; }
   </style>
 </head>
 <body>
-  <h2>03 — window.open whitespace</h2>
-  <p>Teknik: probe URL berupa spasi <code>" "</code> untuk melihat normalisasi parser.</p>
-  <button onclick="run()">Run</button>
+  <h2>08 — Storage Quota / Error Page Origin Display</h2>
+  <small>Probe: apakah error state (quota, network, crash) tetap menampilkan origin/security indicator.</small><br><br>
+  <button onclick="fillQuota()">Step 1: Fill Storage Quota</button>
+  <button onclick="triggerNavAfterQuota()">Step 2: Navigate After Quota</button>
+  <button onclick="testNetworkError()">Step 3: Network Error Display</button>
+  <button onclick="testCrashRecovery()">Step 4: Crash / Recovery Display</button>
   <pre id="out">Ready.</pre>
 
   <script>
-    async function run() {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const base = location.href.split("#")[0].split("?")[0];
+    let quotaFilled = false;
+
+    async function fillQuota() {
       const out = document.getElementById("out");
-      out.textContent = "Running...";
+      out.textContent = "Filling IndexedDB quota...";
 
-      const w = window.open(" ", "_blank", "location=no,width=900,height=600");
+      try {
+        const db = await new Promise((resolve, reject) => {
+          const req = indexedDB.open("quotaProbe", 1);
+          req.onupgradeneeded = () => { req.result.createObjectStore("data"); };
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
 
-      await new Promise(r => setTimeout(r, 300));
+        const tx = db.transaction("data", "readwrite");
+        const store = tx.objectStore("data");
 
-      if (!w) {
-        out.textContent = "Result: popup blocked / null reference.\nStatus: BLOCKED";
+        // Write large chunks until quota exceeded
+        const chunk = new ArrayBuffer(1024 * 1024); // 1MB
+        let written = 0;
+        let error = null;
+
+        for (let i = 0; i < 200; i++) {
+          try {
+            store.put(chunk, "key_" + i);
+            written++;
+          } catch (e) {
+            error = e;
+            break;
+          }
+        }
+
+        await new Promise(r => { tx.oncomplete = r; tx.onerror = r; });
+
+        // Check estimate
+        const est = await navigator.storage.estimate();
+
+        quotaFilled = true;
+        out.textContent = JSON.stringify({
+          written,
+          error: error ? error.message : null,
+          estimate: est,
+          quotaUsage: est.usage / est.quota,
+          time: new Date().toISOString()
+        }, null, 2) + "\n\nQuota state captured. Lanjut Step 2.";
+
+        db.close();
+      } catch (e) {
+        out.textContent = "IndexedDB error: " + e.message;
+      }
+    }
+
+    async function triggerNavAfterQuota() {
+      const out = document.getElementById("out");
+      if (!quotaFilled) {
+        out.textContent = "Jalankan Step 1 dulu.";
         return;
       }
 
-      try {
-        const href = w.location.href;
-        const isEmpty = href === "";
+      const url = base + "?probe=08nav&t=" + Date.now();
+      const w = window.open(url, "quotaNav", "width=900,height=600");
 
-        out.innerHTML =
-          "href=" + href + "\n" +
-          "empty=" + isEmpty + "\n" +
-          "status=" + (isEmpty ? "EMPTY_URL_OBSERVED" : "NORMALIZED_OR_SECURE") + "\n\n" +
-          "Manual check:\n" +
-          "- Apakah spasi di-trim?\n" +
-          "- Apakah jadi about:blank?\n" +
-          "- Apakah address bar menampilkan URL aneh?";
+      await sleep(1000);
 
-        if (isEmpty) out.innerHTML += "\n\n" + '<span class="empty">ESCALATE: empty URL observed.</span>';
-        else out.innerHTML += "\n\n" + '<span class="ok">Looks normalized / secure from JS perspective.</span>';
-      } catch (e) {
-        out.textContent = "ACCESS_DENIED: " + e.message;
+      if (w) {
+        try {
+          out.textContent = JSON.stringify({
+            popupHref: w.location.href,
+            popupTitle: w.document.title,
+            readyState: w.document.readyState,
+            note: "Navigate after quota fill. Cek apakah error/quota page punya origin jelas."
+          }, null, 2);
+        } catch(e) {
+          out.textContent = "Access denied: " + e.message;
+        }
+        try { w.close(); } catch(e) {}
+      } else {
+        out.textContent = "Popup blocked after quota.";
       }
+    }
+
+    async function testNetworkError() {
+      const out = document.getElementById("out");
+      // Navigate to non-existent host to trigger error page
+      const badUrl = "https://this-host-does-not-exist-" + Date.now() + ".invalid/";
+      const w = window.open(badUrl, "netErr", "width=900,height=600");
+
+      await sleep(3000);
+
+      if (w) {
+        try {
+          out.textContent = JSON.stringify({
+            targetUrl: badUrl,
+            popupHref: w.location.href,
+            popupTitle: w.document.title,
+            note: "Network error page. Cek: apakah origin/host ditampilkan? Apakah chromeless? Apakah user bisa distinguish error page dari real page?"
+          }, null, 2);
+        } catch(e) {
+          out.textContent = "Error page ACCESS_DENIED (expected for error pages).\n\nManual: cek apakah error page punya address bar dengan host asli.";
+        }
+        try { w.close(); } catch(e) {}
+      }
+    }
+
+    async function testCrashRecovery() {
+      const out = document.getElementById("out");
+      // Simulate renderer stress: infinite loop in popup
+      const url = base + "?probe=08crash&t=" + Date.now();
+      const w = window.open(url, "crashProbe", "width=900,height=600");
+
+      await sleep(500);
+
+      if (w) {
+        try {
+          // Force heavy computation to potentially trigger unresponsive state
+          w.eval("while(true){}");
+        } catch(e) {}
+
+        await sleep(5000);
+
+        out.textContent = JSON.stringify({
+          note: "Popup forced into infinite loop. After 5s, check:",
+          popupStillExists: !w.closed,
+          manual: [
+            "Apakah browser menampilkan 'Page Unresponsive' dialog?",
+            "Apakah dialog punya origin/host jelas?",
+            "Apakah address bar tetap terlihat di belakang dialog?",
+            "Apakah user bisa close/kill tab dengan jelas?",
+            "Setelah recover, apakah security state intact?"
+          ]
+        }, null, 2);
+
+        try { w.close(); } catch(e) {}
+      }
+    }
+
+    // Crash target handler
+    const params = new URLSearchParams(location.search);
+    if (params.get("probe") === "08crash") {
+      document.body.innerHTML = "<h2>Crash Target</h2><p>If you see this, popup didn't crash.</p>";
+    }
+    if (params.get("probe") === "08nav") {
+      document.body.innerHTML = "<h2>Post-Quota Navigation Target</h2><p>Origin: " + location.origin + "</p>";
     }
   </script>
 </body>
