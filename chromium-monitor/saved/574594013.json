@@ -1,0 +1,18 @@
+{
+  "saved_at": "2026-11-26T15:31:50.572Z",
+  "issue_url": "https://issues.chromium.org/issues/574594013",
+  "category": "Fix Autofill / Password Manager",
+  "issue": {
+    "id": "574594013",
+    "priority": "P2",
+    "type": "Vulnerability",
+    "title": "Autofill data leak via Activity-shared Android keyboard accessory sheets",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "5",
+    "modified": "Nov 21, 2026 07:58AM",
+    "reporter": "vm...@google.com",
+    "reward": "",
+    "url": "https://issues.chromium.org/issues/574594013"
+  }
+}
