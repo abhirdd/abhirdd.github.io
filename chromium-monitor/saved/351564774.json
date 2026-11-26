@@ -1,0 +1,16 @@
+{
+  "saved_at": "2026-11-26T14:34:04.431Z",
+  "issue_url": "https://issues.chromium.org/issues/351564774",
+  "category": "Bug Reward Tertinggi (Top)",
+  "issue": {
+    "id": "351564774",
+    "priority": "P2",
+    "type": "Vulnerability",
+    "title": "The PWA's installation dialog isn't being dismissed after redirects, which allows an attacker to sho",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "2",
+    "modified": "Nov 14, 2025 09:48AM",
+    "reward": "$500"
+  }
+}
