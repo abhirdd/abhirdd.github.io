@@ -1,0 +1,16 @@
+{
+  "saved_at": "2026-11-26T14:48:33.101Z",
+  "issue_url": "https://issues.chromium.org/issues/577706948",
+  "category": "Bug Berhadiah (VRP Reward)",
+  "issue": {
+    "id": "577706948",
+    "priority": "P3",
+    "type": "Vulnerability",
+    "title": "Unsandboxed crash handler performs a renderer-chosen out-of-bounds read via an unvalidated GWP-ASan metadata count",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "17",
+    "modified": "Nov 26, 2026 02:58PM",
+    "reward": "—"
+  }
+}
