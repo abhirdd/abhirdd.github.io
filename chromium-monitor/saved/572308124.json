@@ -1,0 +1,16 @@
+{
+  "saved_at": "2026-11-26T14:34:50.274Z",
+  "issue_url": "https://issues.chromium.org/issues/572308124",
+  "category": "Bug Spoofing Fixed",
+  "issue": {
+    "id": "572308124",
+    "priority": "P1",
+    "type": "Vulnerability",
+    "title": "Any web page can give its HLS playlist a victim origin and then read credentialed cross-origin responses byte for byte",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "14",
+    "modified": "Nov 26, 2026 02:30AM",
+    "reward": "—"
+  }
+}
