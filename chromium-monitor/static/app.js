@@ -152,15 +152,6 @@ function renderOverview(data) {
     '<div class="stat"><div class="num">' + totalIssues + '</div><div class="lbl">Total isu (terhitung)</div></div>' +
     '</div>';
 
-  const emailPanel = '<div class="panel">' +
-    '<div class="panel-head"><strong>Email reporter pribadi</strong>' +
-    '<small>Dipakai untuk kategori "Laporan By Mail". Masukkan emailmu untuk memantau laporan yang kamu kirim.</small></div>' +
-    '<form id="email-form" class="inline-form" autocomplete="off">' +
-    '<input id="email-input" type="email" placeholder="kamu@email.com" spellcheck="false">' +
-    '<button type="submit">Terapkan</button>' +
-    '<span id="email-status" class="form-status" role="status"></span>' +
-    '</form></div>';
-
   const rows = defs.map(d => {
     const c = cats[String(d.id)];
     return '<a class="cat-row" data-action="opencat" data-id="' + d.id + '">' +
@@ -170,7 +161,7 @@ function renderOverview(data) {
       '<span class="cat-arrow">&#8250;</span></a>';
   }).join('');
 
-  return stats + emailPanel + '<div class="cat-list">' + rows + '</div>';
+  return stats + '<div class="cat-list">' + rows + '</div>';
 }
 
 function renderCustomView(data) {
@@ -305,35 +296,6 @@ async function loadSavedIds() {
   } catch (e) {}
 }
 
-async function applyEmail() {
-  toast('Mode statis: ubah email tidak tersedia.', 'err');
-  return;
-  const email = document.getElementById('email-input').value.trim();
-  const status = document.getElementById('email-status');
-  if (!email) { status.textContent = 'Email kosong.'; status.className = 'form-status err'; return; }
-  status.textContent = 'Menyimpan…'; status.className = 'form-status';
-  try {
-    const r = await fetch('/api/settings', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
-    const d = await r.json();
-    if (r.ok && d.ok) {
-      currentEmail = d.email;
-      status.textContent = 'Tersimpan · mengambil data…'; status.className = 'form-status ok';
-      toast('Email disimpan: ' + d.email);
-      setTimeout(() => { status.textContent = ''; status.className = 'form-status'; }, 5000);
-      setTimeout(load, 800);
-      setTimeout(load, 5000);
-    } else {
-      status.textContent = d.error || 'Gagal menyimpan.'; status.className = 'form-status err';
-      toast(d.error || 'Gagal menyimpan email.', 'err');
-    }
-  } catch (e) {
-    status.textContent = 'Jaringan error.'; status.className = 'form-status err';
-  }
-}
-
 function runCustomSearch() {
   const q = document.getElementById('custom-input').value.trim();
   const status = document.getElementById('custom-status');
@@ -464,8 +426,7 @@ document.addEventListener('click', (ev) => {
 });
 
 document.addEventListener('submit', (ev) => {
-  if (ev.target && ev.target.id === 'email-form') { ev.preventDefault(); applyEmail(); }
-  else if (ev.target && ev.target.id === 'custom-form') { ev.preventDefault(); runCustomSearch(); }
+  if (ev.target && ev.target.id === 'custom-form') { ev.preventDefault(); runCustomSearch(); }
 });
 
 document.getElementById('menu-filter').addEventListener('input', () => { if (lastData) renderMenu(lastData); });
