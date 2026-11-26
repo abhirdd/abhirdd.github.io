@@ -380,8 +380,8 @@ async function saveCategory(id) {
   if (!token) { toast('Dibatalkan: token tidak diisi.', 'err'); return; }
   const cat = lastData && lastData.categories ? lastData.categories[String(id)] : null;
   if (!cat) { toast('Kategori tidak ditemukan.', 'err'); return; }
-  const fname = 'cat_' + id + '_' + tsStr() + '.json';
-  const payload = { saved_at: new Date().toISOString(), id: String(id), category: cat };
+  const fname = tsStr() + '.json';
+  const payload = { saved_at: new Date().toISOString(), category: cat };
   const path = GH_SAVE_DIR + '/' + fname;
   const url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + path;
   try {
