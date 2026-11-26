@@ -1,0 +1,16 @@
+{
+  "saved_at": "2026-11-26T14:34:19.719Z",
+  "issue_url": "https://issues.chromium.org/issues/574642315",
+  "category": "Bug Spoofing Fixed",
+  "issue": {
+    "id": "574642315",
+    "priority": "P2",
+    "type": "Vulnerability",
+    "title": "Cross-app tab injection in Custom Tabs via unassociated TabModel SessionID aliasing",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "12",
+    "modified": "Nov 22, 2026 02:53PM",
+    "reward": "—"
+  }
+}
