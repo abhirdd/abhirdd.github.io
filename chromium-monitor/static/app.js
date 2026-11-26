@@ -29,6 +29,7 @@ let currentView = 'overview';   // 'overview' | 'custom' | 'cat:<id>'
 let currentEmail = '';
 let configList = [];
 let favs = new Set(JSON.parse(localStorage.getItem('favs') || '[]'));
+let savedIds = new Set();
 
 function persistFavs() { localStorage.setItem('favs', JSON.stringify([...favs])); }
 function sortDefs(defs) {
@@ -62,6 +63,7 @@ function renderCard(c, isCustom) {
       const prio = esc(it.priority);
       const st = esc(it.status);
       const rep = it.reporter || '';
+      const saved = savedIds.has(String(it.id));
       const rwd = it.reward;
       const rwdTxt = (rwd === undefined || rwd === '') ? '<span class="muted">…</span>'
         : (rwd === '—' ? '<span class="muted">—</span>' : '<span class="reward">' + esc(rwd) + '</span>');
@@ -73,7 +75,7 @@ function renderCard(c, isCustom) {
         '<td class="rep" title="' + esc(rep) + '">' + (rep ? esc(rep) : '<span class="muted">-</span>') + '</td>' +
         '<td class="rwd">' + rwdTxt + '</td>' +
         '<td class="mod">' + esc(it.modified || '') + '</td>' +
-        '<td class="act"><button class="act-btn" data-action="save-issue" data-id="' + esc(it.id) + '" title="Simpan temuan ini">&#128190;</button></td>' +
+        '<td class="act"><button class="act-btn' + (saved ? ' saved-on' : '') + '" data-action="save-issue" data-id="' + esc(it.id) + '" title="' + (saved ? 'Sudah disimpan (klik untuk simpan ulang)' : 'Simpan temuan ini') + '">' + (saved ? '&#10003;' : '&#128190;') + '</button></td>' +
         '</tr>';
     }).join('');
     body = '<div class="table-wrap"><table>' +
@@ -285,6 +287,21 @@ async function loadConfig() {
   } catch (e) {}
 }
 
+async function loadSavedIds() {
+  try {
+    const r = await fetch('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + GH_SAVE_DIR, { cache: 'no-store' });
+    if (!r.ok) return;
+    const files = await r.json();
+    if (Array.isArray(files)) {
+      files.forEach(f => {
+        if (f.type === 'file' && f.name.endsWith('.json') && f.name !== 'index.html') {
+          savedIds.add(f.name.replace(/\.json$/, ''));
+        }
+      });
+    }
+  } catch (e) {}
+}
+
 async function applyEmail() {
   toast('Mode statis: ubah email tidak tersedia.', 'err');
   return;
@@ -417,7 +434,11 @@ async function saveIssue(issueId) {
     const r = await fetch(apiBase + '/contents/' + path, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
     const d = await r.json();
     if (r.status === 401) { localStorage.removeItem('gh_save_token'); toast('Token salah/kedaluwarsa. Coba lagi.', 'err'); return; }
-    if (r.ok) { toast('Tersimpan: saved/' + fname); }
+    if (r.ok) {
+      savedIds.add(String(issueId));
+      toast('Tersimpan: saved/' + fname);
+      if (lastData) render(lastData);
+    }
     else { toast((d && d.message) || 'Gagal menyimpan.', 'err'); }
   } catch (e) {
     toast('Gagal terhubung ke GitHub.', 'err');
@@ -462,6 +483,7 @@ document.getElementById('refresh').addEventListener('click', async () => {
 (async function init() {
   await loadSettings();
   await loadConfig();
+  await loadSavedIds();
   await load();
   setInterval(load, 8000);
 })();
