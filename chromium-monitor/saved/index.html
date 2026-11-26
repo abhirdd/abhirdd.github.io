@@ -8,17 +8,25 @@
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
   body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #0f1115; color: #e6e6e6; }
-  .wrap { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
   h1 { font-size: 20px; margin: 0 0 4px; }
-  .sub { color: #9aa0a6; font-size: 13px; margin: 0 0 20px; }
+  .sub { color: #9aa0a6; font-size: 13px; margin: 0 0 16px; }
   a { color: #8ab4f8; text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .item { background: #171a21; border: 1px solid #262a33; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
-  .item .title { font-size: 15px; font-weight: 600; line-height: 1.35; }
+  .filters { background: #171a21; border: 1px solid #262a33; border-radius: 10px; padding: 12px 14px; margin-bottom: 16px; display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+  .filters .f { display: flex; flex-direction: column; gap: 3px; }
+  .filters label { font-size: 11px; color: #9aa0a6; }
+  .filters select, .filters input { background: #0f1115; color: #e6e6e6; border: 1px solid #262a33; border-radius: 6px; padding: 6px 8px; font-size: 13px; }
+  .clear { background: none; border: 1px solid #262a33; color: #9aa0a6; border-radius: 6px; padding: 6px 12px; font-size: 12px; cursor: pointer; }
+  .clear:hover { border-color: #8ab4f8; color: #8ab4f8; }
+  .item { background: #171a21; border: 1px solid #262a33; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; position: relative; }
+  .item .title { font-size: 15px; font-weight: 600; line-height: 1.35; padding-right: 70px; }
   .item .meta { color: #9aa0a6; font-size: 12px; margin-top: 4px; }
   .item .links { margin-top: 8px; font-size: 12px; }
   .item .links a { margin-right: 16px; }
   .badge { display: inline-block; background: #1f2937; color: #8ab4f8; border-radius: 20px; padding: 2px 10px; font-size: 11px; margin-left: 8px; vertical-align: middle; }
+  .del { position: absolute; top: 12px; right: 14px; background: none; border: 1px solid #3a2a2a; color: #f28b82; border-radius: 6px; padding: 5px 10px; font-size: 12px; cursor: pointer; }
+  .del:hover { border-color: #f28b82; }
   #info { color: #9aa0a6; font-size: 14px; }
   .empty { color: #9aa0a6; padding: 30px 0; }
 </style>
@@ -27,6 +35,20 @@
 <div class="wrap">
   <h1>&#128190; Saved Temuan</h1>
   <p class="sub">Daftar temuan yang sudah kamu simpan &middot; <a href="../">&#8592; kembali ke dashboard</a></p>
+
+  <div class="filters">
+    <span class="f"><label for="f-cat">Kategori</label>
+      <select id="f-cat"><option value="">Semua kategori</option></select>
+    </span>
+    <span class="f"><label for="f-from">Dari tanggal</label>
+      <input type="date" id="f-from">
+    </span>
+    <span class="f"><label for="f-to">Sampai tanggal</label>
+      <input type="date" id="f-to">
+    </span>
+    <button class="clear" id="f-clear" type="button">Reset filter</button>
+  </div>
+
   <p id="info">Memuat&hellip;</p>
   <div id="list"></div>
 </div>
@@ -34,6 +56,7 @@
 var OWNER = 'abhirdd';
 var REPO = 'abhirdd.github.io';
 var DIR = 'chromium-monitor/saved';
+var allItems = [];
 
 function esc(s) {
   return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -41,67 +64,134 @@ function esc(s) {
   });
 }
 
-(function () {
-  var info = document.getElementById('info');
-  var list = document.getElementById('list');
+function fmtDate(s) {
+  if (!s) return '';
+  var d = new Date(s);
+  if (isNaN(d.getTime())) return s;
+  try { return d.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' }); }
+  catch (e) { return s; }
+}
 
+function getToken() {
+  var t = localStorage.getItem('gh_save_token');
+  if (!t) {
+    t = prompt('Masukkan GitHub Fine-grained PAT (hanya repo abhirdd.github.io, izin Contents: Read/Write):');
+    if (!t) return null;
+    t = t.trim();
+    localStorage.setItem('gh_save_token', t);
+  }
+  return t;
+}
+
+function currentFilters() {
+  return {
+    cat: document.getElementById('f-cat').value,
+    from: document.getElementById('f-from').value,
+    to: document.getElementById('f-to').value
+  };
+}
+
+function matchesFilters(item) {
+  var f = currentFilters();
+  if (f.cat && item.category !== f.cat) return false;
+  var d = item.saved_at ? new Date(item.saved_at) : null;
+  if (f.from && (!d || d < new Date(f.from))) return false;
+  if (f.to && (!d || d > new Date(f.to + 'T23:59:59'))) return false;
+  return true;
+}
+
+function renderList() {
+  var list = document.getElementById('list');
+  var info = document.getElementById('info');
+  var filtered = allItems.filter(matchesFilters);
+  filtered.sort(function (a, b) { return String(b.saved_at || '').localeCompare(String(a.saved_at || '')); });
+
+  if (!allItems.length) { info.textContent = ''; list.innerHTML = '<div class="empty">Belum ada temuan tersimpan.</div>'; return; }
+  info.textContent = filtered.length + ' dari ' + allItems.length + ' temuan tampil.';
+  if (!filtered.length) { list.innerHTML = '<div class="empty">Tidak ada temuan yang cocok dengan filter.</div>'; return; }
+
+  list.innerHTML = filtered.map(function (x) {
+    return '<div class="item" data-id="' + esc(x.id) + '">' +
+      '<button class="del" data-del="' + esc(x.id) + '" title="Hapus dari saved">Hapus</button>' +
+      '<div class="title"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.title) + '</a><span class="badge">#' + esc(x.id) + '</span></div>' +
+      '<div class="meta">' + (x.category ? esc(x.category) + ' &middot; ' : '') + (x.saved_at ? 'disimpan ' + esc(fmtDate(x.saved_at)) : '') + '</div>' +
+      '<div class="links"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">Lihat di Issue Tracker &nearr;</a><a href="' + esc(x.json) + '" target="_blank" rel="noopener">JSON</a></div>' +
+      '</div>';
+  }).join('');
+}
+
+function populateCategoryFilter() {
+  var sel = document.getElementById('f-cat');
+  var cats = [];
+  allItems.forEach(function (x) { if (x.category && cats.indexOf(x.category) === -1) cats.push(x.category); });
+  cats.sort();
+  cats.forEach(function (c) {
+    var o = document.createElement('option');
+    o.value = c;
+    o.textContent = c;
+    sel.appendChild(o);
+  });
+}
+
+function load() {
+  var info = document.getElementById('info');
   fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + DIR, { cache: 'no-store' })
-    .then(function (r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function (files) {
       var items = (Array.isArray(files) ? files : []).filter(function (f) {
         return f.type === 'file' && f.name.indexOf('.json') > -1 && f.name !== 'index.html';
       });
-      if (!items.length) {
-        info.textContent = '';
-        list.innerHTML = '<div class="empty">Belum ada temuan tersimpan.</div>';
-        return;
-      }
-      info.textContent = items.length + ' temuan tersimpan (terbaru di atas).';
-
       return Promise.all(items.map(function (f) {
         var id = f.name.replace(/\.json$/, '');
-        return fetch(f.download_url)
-          .then(function (fr) { return fr.json(); })
-          .then(function (d) {
-            var iss = (d && d.issue) || {};
-            return {
-              id: id,
-              title: iss.title || '(tanpa judul)',
-              saved_at: (d && d.saved_at) || '',
-              category: (d && d.category) || '',
-              json: f.download_url,
-              url: (d && d.issue_url) || iss.url || ('https://issues.chromium.org/issues/' + id)
-            };
-          })
-          .catch(function () {
-            return {
-              id: id,
-              title: '(gagal membaca file)',
-              saved_at: '',
-              category: '',
-              json: f.download_url,
-              url: 'https://issues.chromium.org/issues/' + id
-            };
-          });
+        return fetch(f.download_url).then(function (fr) { return fr.json(); }).then(function (d) {
+          var iss = (d && d.issue) || {};
+          return { id: id, title: iss.title || '(tanpa judul)', saved_at: (d && d.saved_at) || '', category: (d && d.category) || '', json: f.download_url, path: f.path, sha: f.sha, url: (d && d.issue_url) || iss.url || ('https://issues.chromium.org/issues/' + id) };
+        }).catch(function () {
+          return { id: id, title: '(gagal membaca file)', saved_at: '', category: '', json: f.download_url, path: f.path, sha: f.sha, url: 'https://issues.chromium.org/issues/' + id };
+        });
       }));
     })
-    .then(function (rows) {
-      rows.sort(function (a, b) { return String(b.saved_at || '').localeCompare(String(a.saved_at || '')); });
-      list.innerHTML = rows.map(function (x) {
-        return '<div class="item">' +
-          '<div class="title"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.title) + '</a><span class="badge">#' + esc(x.id) + '</span></div>' +
-          '<div class="meta">' + (x.category ? esc(x.category) + ' &middot; ' : '') + (x.saved_at ? 'disimpan ' + esc(x.saved_at) : '') + '</div>' +
-          '<div class="links"><a href="' + esc(x.url) + '" target="_blank" rel="noopener">Lihat di Issue Tracker &nearr;</a><a href="' + esc(x.json) + '" target="_blank" rel="noopener">JSON</a></div>' +
-          '</div>';
-      }).join('');
+    .then(function (rows) { allItems = rows; populateCategoryFilter(); renderList(); })
+    .catch(function (e) { info.textContent = 'Gagal memuat daftar: ' + e.message; });
+}
+
+function deleteItem(id) {
+  var item = null;
+  for (var i = 0; i < allItems.length; i++) if (allItems[i].id === id) item = allItems[i];
+  if (!item) return;
+  var token = getToken();
+  if (!token) return;
+  if (!confirm('Hapus temuan #' + id + ' dari saved?')) return;
+  fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + item.path, {
+    method: 'DELETE',
+    headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' },
+    body: JSON.stringify({ message: 'Hapus temuan ' + id, sha: item.sha })
+  })
+    .then(function (r) {
+      if (r.status === 401) { localStorage.removeItem('gh_save_token'); alert('Token salah/kedaluwarsa. Muat ulang & coba lagi.'); return; }
+      return r.json().then(function (d) {
+        if (r.ok) { allItems = allItems.filter(function (x) { return x.id !== id; }); renderList(); }
+        else { alert((d && d.message) || 'Gagal menghapus.'); }
+      });
     })
-    .catch(function (e) {
-      info.textContent = 'Gagal memuat daftar: ' + e.message;
-    });
-})();
+    .catch(function (e) { alert('Gagal terhubung ke GitHub.'); });
+}
+
+document.getElementById('f-cat').addEventListener('change', renderList);
+document.getElementById('f-from').addEventListener('change', renderList);
+document.getElementById('f-to').addEventListener('change', renderList);
+document.getElementById('f-clear').addEventListener('click', function () {
+  document.getElementById('f-cat').value = '';
+  document.getElementById('f-from').value = '';
+  document.getElementById('f-to').value = '';
+  renderList();
+});
+document.getElementById('list').addEventListener('click', function (ev) {
+  var b = ev.target.closest('[data-del]');
+  if (b) deleteItem(b.getAttribute('data-del'));
+});
+
+load();
 </script>
 </body>
 </html>
