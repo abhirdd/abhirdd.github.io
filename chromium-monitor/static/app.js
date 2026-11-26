@@ -121,6 +121,8 @@ function renderMenu(data) {
       '<span class="mi-icon">&#9776;</span><span>Ringkasan</span></a>' +
     '<a class="menu-item' + (currentView === 'custom' ? ' active' : '') + '" data-action="menu" data-view="custom">' +
       '<span class="mi-icon">&#9733;</span><span>Pencarian Kustom</span></a>' +
+    '<a class="menu-item" href="saved/">' +
+      '<span class="mi-icon">&#128190;</span><span>Saved</span></a>' +
     '</div>';
 
   html += '<div class="menu-group-label">Kategori (' + filtered.length + ')</div>';
