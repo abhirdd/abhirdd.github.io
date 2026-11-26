@@ -470,39 +470,7 @@ document.addEventListener('submit', (ev) => {
 
 document.getElementById('menu-filter').addEventListener('input', () => { if (lastData) renderMenu(lastData); });
 
-document.getElementById('refresh').addEventListener('click', async () => {
-  const btn = document.getElementById('refresh');
-  btn.disabled = true;
-  toast('Memuat status auto-update…');
-  const fallback = 'Auto-update aktif · jadwal tiap 12 jam (00:00 & 12:00 UTC)';
-  const pad = n => String(n).padStart(2, '0');
-  try {
-    const wf = await fetch('https://api.github.com/repos/abhirdd/abhirdd.github.io/actions/workflows', { cache: 'no-store' });
-    const wfd = await wf.json();
-    const target = (wfd.workflows || []).find(w => (w.path || '').indexOf('update.yml') > -1);
-    const wid = target ? target.id : 431762596;
-    const rr = await fetch('https://api.github.com/repos/abhirdd/abhirdd.github.io/actions/workflows/' + wid + '/runs?per_page=1', { cache: 'no-store' });
-    const rd = await rr.json();
-    const run = (rd.workflow_runs || [])[0];
-    let msg = fallback;
-    if (run) {
-      const w = new Date(run.created_at);
-      const last = isNaN(w.getTime()) ? '' : (pad(w.getDate()) + '/' + pad(w.getMonth() + 1) + ' ' + pad(w.getHours()) + ':' + pad(w.getMinutes()));
-      const st = run.status === 'completed' ? (run.conclusion || 'selesai') : run.status;
-      const n = new Date();
-      const next = new Date(n);
-      next.setUTCMinutes(0, 0, 0);
-      if (n.getUTCHours() < 12) next.setUTCHours(12);
-      else { next.setUTCDate(next.getUTCDate() + 1); next.setUTCHours(0); }
-      const nxt = pad(next.getUTCDate()) + '/' + pad(next.getUTCMonth() + 1) + ' ' + pad(next.getUTCHours()) + ':00';
-      msg = 'Auto-update: ' + st + (last ? ' · ' + last : '') + ' · next ' + nxt + ' UTC';
-    }
-    toast(msg);
-  } catch (e) {
-    toast(fallback);
-  }
-  setTimeout(() => { btn.disabled = false; }, 800);
-});
+// Info auto-update ditampilkan di footer sidebar
 
 (async function init() {
   await loadSettings();
