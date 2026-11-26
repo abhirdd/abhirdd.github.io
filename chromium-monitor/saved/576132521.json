@@ -1,0 +1,18 @@
+{
+  "saved_at": "2026-11-26T15:44:33.430Z",
+  "issue_url": "https://issues.chromium.org/issues/576132521",
+  "category": "Fix V8 / JavaScript Engine",
+  "issue": {
+    "id": "576132521",
+    "priority": "P1",
+    "type": "Vulnerability",
+    "title": "UAF in CueTimeline::TimeMarchesOn via unpinned -webkit-user-modify on video::cue",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "4",
+    "modified": "Nov 26, 2026 07:58AM",
+    "reporter": "vm...@google.com",
+    "reward": "",
+    "url": "https://issues.chromium.org/issues/576132521"
+  }
+}
