@@ -334,32 +334,15 @@ async function applyEmail() {
   }
 }
 
-async function runCustomSearch() {
-  toast('Mode statis: pencarian kustom tidak tersedia.', 'err');
-  return;
+function runCustomSearch() {
   const q = document.getElementById('custom-input').value.trim();
   const status = document.getElementById('custom-status');
   if (!q) { status.textContent = 'Query kosong.'; status.className = 'form-status err'; return; }
-  status.textContent = 'Mencari…'; status.className = 'form-status';
-  try {
-    const r = await fetch('/api/search', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query: q })
-    });
-    const d = await r.json();
-    if (r.ok && d.ok) {
-      toast('Mencari: ' + q);
-      setTimeout(() => { status.textContent = ''; status.className = 'form-status'; }, 9000);
-      setTimeout(load, 500);
-      setTimeout(load, 3000);
-      setTimeout(load, 8000);
-    } else {
-      status.textContent = d.error || 'Gagal.'; status.className = 'form-status err';
-      toast(d.error || 'Gagal mencari.', 'err');
-    }
-  } catch (e) {
-    status.textContent = 'Jaringan error.'; status.className = 'form-status err';
-  }
+  const url = 'https://issues.chromium.org/issues?q=' + encodeURIComponent(q);
+  window.open(url, '_blank', 'noopener');
+  status.textContent = '';
+  status.className = 'form-status';
+  toast('Membuka Issue Tracker…');
 }
 
 function toggleFav(id) {
