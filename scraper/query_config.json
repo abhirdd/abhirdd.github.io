@@ -1,5 +1,5 @@
 [
-{"id":1,"title":"Laporan By Mail (Personal Tracker)","description":"Kerentanan yang kamu laporkan dan berstatus Fixed. Email bisa diganti di halaman Ringkasan.","email_based":true,"query":"reporter:frozzipies@gmail.com type:vulnerability status:fixed"},
+{"id":1,"title":"Laporan By Mail (Personal Tracker)","description":"Kerentanan yang kamu laporkan dan berstatus Fixed. Email bisa diganti di halaman Ringkasan.","email_based":true,"query":"reporter:REDACTED type:vulnerability status:fixed"},
 {"id":2,"title":"Bug Spoofing Fixed","description":"Kerentanan spoofing / UI deception yang sudah diperbaiki.","query":"type:vulnerability status:fixed spoof"},
 {"id":3,"title":"Bug Berhadiah (VRP Reward)","description":"Kerentanan fixed terkait reward Google VRP (perkiraan full-text).","query":"type:vulnerability status:fixed reward"},
 {"id":4,"title":"Bug Reward Tertinggi (Top)","description":"Kerentanan reward tingkat tertinggi (> $10k) - perkiraan.","query":"type:vulnerability status:fixed \"reward top\""},
