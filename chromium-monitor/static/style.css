@@ -263,6 +263,7 @@ td.ttl { min-width: 200px; }
 }
 .act-btn:hover { border-color: var(--accent); }
 .act-btn.fav-on { color: #e3b341; }
+.act-btn.saved-on { color: #2ecc71; }
 .fav-star { color: #e3b341; }
 .reward { color: var(--green); font-weight: 600; white-space: nowrap; }
 td.rep { font-family: var(--mono); font-size: 11.5px; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
