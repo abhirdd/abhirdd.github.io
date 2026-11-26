@@ -1,0 +1,16 @@
+{
+  "saved_at": "2026-11-26T14:34:42.831Z",
+  "issue_url": "https://issues.chromium.org/issues/568999538",
+  "category": "Bug Spoofing Fixed",
+  "issue": {
+    "id": "568999538",
+    "priority": "P2",
+    "type": "Vulnerability",
+    "title": "PiP VC controls and capture state hijack via cross-origin MediaSession",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "1",
+    "modified": "Nov 9, 2026 02:56PM",
+    "reward": "—"
+  }
+}
