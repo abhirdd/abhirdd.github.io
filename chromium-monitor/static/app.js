@@ -75,7 +75,7 @@ function renderCard(c, isCustom) {
         '<td class="rep" title="' + esc(rep) + '">' + (rep ? esc(rep) : '<span class="muted">-</span>') + '</td>' +
         '<td class="rwd">' + rwdTxt + '</td>' +
         '<td class="mod">' + esc(it.modified || '') + '</td>' +
-        '<td class="act"><button class="act-btn' + (saved ? ' saved-on' : '') + '" data-action="save-issue" data-id="' + esc(it.id) + '" title="' + (saved ? 'Sudah disimpan (klik untuk simpan ulang)' : 'Simpan temuan ini') + '">' + (saved ? '&#10003;' : '&#128190;') + '</button></td>' +
+        '<td class="act"><button class="act-btn' + (saved ? ' saved-on' : '') + '" data-action="save-issue" data-id="' + esc(it.id) + '" title="' + (saved ? 'Hapus dari saved' : 'Simpan temuan ini') + '">' + (saved ? '&#10003;' : '&#128190;') + '</button></td>' +
         '</tr>';
     }).join('');
     body = '<div class="table-wrap"><table>' +
@@ -389,25 +389,18 @@ function findIssue(issueId) {
   return null;
 }
 
-async function saveIssue(issueId) {
+async function toggleSaveIssue(issueId) {
   const token = saveToken();
   if (!token) { toast('Dibatalkan: token tidak diisi.', 'err'); return; }
-  const res = findIssue(issueId);
-  if (!res) { toast('Temuan tidak ditemukan.', 'err'); return; }
   const fname = issueId + '.json';
   const path = GH_SAVE_DIR + '/' + fname;
   const apiBase = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO;
-  const payload = {
-    saved_at: new Date().toISOString(),
-    issue_url: issueUrl(issueId),
-    category: res.category.title || '',
-    issue: res.issue
-  };
   const headers = {
     'Authorization': 'Bearer ' + token,
     'Content-Type': 'application/json',
     'Accept': 'application/vnd.github+json'
   };
+  const isSaved = savedIds.has(String(issueId));
   try {
     let sha = null;
     try {
@@ -415,17 +408,35 @@ async function saveIssue(issueId) {
       if (g.status === 401) { localStorage.removeItem('gh_save_token'); toast('Token salah/kedaluwarsa. Coba lagi.', 'err'); return; }
       if (g.ok) { const gd = await g.json(); sha = gd && gd.sha; }
     } catch (e) {}
-    const body = { message: 'Simpan temuan ' + issueId, content: b64(JSON.stringify(payload, null, 2)) };
-    if (sha) body.sha = sha;
-    const r = await fetch(apiBase + '/contents/' + path, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
-    const d = await r.json();
+
+    let r, d;
+    if (isSaved) {
+      if (!sha) { savedIds.delete(String(issueId)); toast('Sudah tidak ada di saved.'); if (lastData) render(lastData); return; }
+      r = await fetch(apiBase + '/contents/' + path, { method: 'DELETE', headers: headers, body: JSON.stringify({ message: 'Hapus temuan ' + issueId, sha: sha }) });
+      d = await r.json();
+    } else {
+      const res = findIssue(issueId);
+      if (!res) { toast('Temuan tidak ditemukan.', 'err'); return; }
+      const payload = {
+        saved_at: new Date().toISOString(),
+        issue_url: issueUrl(issueId),
+        category: res.category.title || '',
+        issue: res.issue
+      };
+      const body = { message: 'Simpan temuan ' + issueId, content: b64(JSON.stringify(payload, null, 2)) };
+      if (sha) body.sha = sha;
+      r = await fetch(apiBase + '/contents/' + path, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
+      d = await r.json();
+    }
+
     if (r.status === 401) { localStorage.removeItem('gh_save_token'); toast('Token salah/kedaluwarsa. Coba lagi.', 'err'); return; }
     if (r.ok) {
-      savedIds.add(String(issueId));
-      toast('Tersimpan: saved/' + fname);
+      if (isSaved) { savedIds.delete(String(issueId)); toast('Dihapus dari saved: #' + issueId); }
+      else { savedIds.add(String(issueId)); toast('Tersimpan: saved/' + fname); }
       if (lastData) render(lastData);
+    } else {
+      toast((d && d.message) || 'Gagal.', 'err');
     }
-    else { toast((d && d.message) || 'Gagal menyimpan.', 'err'); }
   } catch (e) {
     toast('Gagal terhubung ke GitHub.', 'err');
   }
@@ -448,7 +459,7 @@ document.addEventListener('click', (ev) => {
   } else if (action === 'fav') {
     toggleFav(el.getAttribute('data-id'));
   } else if (action === 'save-issue') {
-    saveIssue(el.getAttribute('data-id'));
+    toggleSaveIssue(el.getAttribute('data-id'));
   }
 });
 
