@@ -347,8 +347,60 @@ function toggleFav(id) {
   if (lastData) render(lastData);
 }
 
+const GH_OWNER = 'abhirdd';
+const GH_REPO = 'abhirdd.github.io';
+const GH_SAVE_DIR = 'chromium-monitor/saved';
+
+function saveToken() {
+  let t = localStorage.getItem('gh_save_token');
+  if (!t) {
+    t = prompt('Masukkan GitHub Fine-grained PAT (hanya repo abhirdd.github.io, izin Contents: Read/Write):');
+    if (!t) return null;
+    t = t.trim();
+    localStorage.setItem('gh_save_token', t);
+  }
+  return t;
+}
+
+function b64(s) {
+  const bytes = new TextEncoder().encode(s);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function tsStr() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
+}
+
 async function saveCategory(id) {
-  toast('Mode statis: simpan ke file tidak tersedia.', 'err');
+  const token = saveToken();
+  if (!token) { toast('Dibatalkan: token tidak diisi.', 'err'); return; }
+  const cat = lastData && lastData.categories ? lastData.categories[String(id)] : null;
+  if (!cat) { toast('Kategori tidak ditemukan.', 'err'); return; }
+  const fname = 'cat_' + id + '_' + tsStr() + '.json';
+  const payload = { saved_at: new Date().toISOString(), id: String(id), category: cat };
+  const path = GH_SAVE_DIR + '/' + fname;
+  const url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + path;
+  try {
+    const r = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+        'Accept': 'application/vnd.github+json'
+      },
+      body: JSON.stringify({ message: 'Simpan snapshot kategori ' + id, content: b64(JSON.stringify(payload, null, 2)) })
+    });
+    const d = await r.json();
+    if (r.status === 401) { localStorage.removeItem('gh_save_token'); toast('Token salah/kedaluwarsa. Coba lagi.', 'err'); return; }
+    if (r.ok) { toast('Tersimpan: saved/' + fname); }
+    else { toast((d && d.message) || 'Gagal menyimpan.', 'err'); }
+  } catch (e) {
+    toast('Gagal terhubung ke GitHub.', 'err');
+  }
 }
 
 function triggerRewards(catId) {
