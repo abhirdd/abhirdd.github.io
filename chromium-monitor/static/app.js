@@ -289,7 +289,10 @@ async function loadConfig() {
 
 async function loadSavedIds() {
   try {
-    const r = await fetch('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + GH_SAVE_DIR, { cache: 'no-store' });
+    const tk = localStorage.getItem('gh_save_token') || '';
+    const opts = { cache: 'no-store' };
+    if (tk) opts.headers = { 'Authorization': 'Bearer ' + tk };
+    const r = await fetch('https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + GH_SAVE_DIR, opts);
     if (!r.ok) return;
     const files = await r.json();
     if (Array.isArray(files)) {
