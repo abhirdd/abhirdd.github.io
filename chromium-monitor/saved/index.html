@@ -135,7 +135,10 @@ function populateCategoryFilter() {
 
 function load() {
   var info = document.getElementById('info');
-  fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + DIR, { cache: 'no-store' })
+  var token = localStorage.getItem('gh_save_token') || '';
+  var opts = { cache: 'no-store' };
+  if (token) opts.headers = { 'Authorization': 'Bearer ' + token };
+  fetch('https://api.github.com/repos/' + OWNER + '/' + REPO + '/contents/' + DIR, opts)
     .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(function (files) {
       var items = (Array.isArray(files) ? files : []).filter(function (f) {
