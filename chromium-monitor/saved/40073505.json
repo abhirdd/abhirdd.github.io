@@ -1,0 +1,18 @@
+{
+  "saved_at": "2026-11-26T15:42:59.228Z",
+  "issue_url": "https://issues.chromium.org/issues/40073505",
+  "category": "Fix Critical (90 Hari)",
+  "issue": {
+    "id": "40073505",
+    "priority": "P0",
+    "type": "Vulnerability",
+    "title": "Security: heap-use-after-free on RenderFrameHostImpl::Init",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "13",
+    "modified": "Nov 23, 2026 08:35PM",
+    "reporter": "18...@gmail.com",
+    "reward": "$20,000",
+    "url": "https://issues.chromium.org/issues/40073505"
+  }
+}
