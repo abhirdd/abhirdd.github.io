@@ -73,10 +73,11 @@ function renderCard(c, isCustom) {
         '<td class="rep" title="' + esc(rep) + '">' + (rep ? esc(rep) : '<span class="muted">-</span>') + '</td>' +
         '<td class="rwd">' + rwdTxt + '</td>' +
         '<td class="mod">' + esc(it.modified || '') + '</td>' +
+        '<td class="act"><button class="act-btn" data-action="save-issue" data-id="' + esc(it.id) + '" title="Simpan temuan ini">&#128190;</button></td>' +
         '</tr>';
     }).join('');
     body = '<div class="table-wrap"><table>' +
-      '<thead><tr><th class="id">ID</th><th>Judul</th><th>Status</th><th>Pri</th><th>Reporter</th><th>Bounty</th><th class="mod">Modified</th></tr></thead>' +
+      '<thead><tr><th class="id">ID</th><th>Judul</th><th>Status</th><th>Pri</th><th>Reporter</th><th>Bounty</th><th class="mod">Modified</th><th class="act"></th></tr></thead>' +
       '<tbody>' + rows + '</tbody></table></div>';
   }
 
@@ -95,7 +96,6 @@ function renderCard(c, isCustom) {
     '<div class="query-line">' + esc(c.query) + '</div>' +
     '<div class="card-actions">' +
       '<a class="open" href="' + esc(c.url) + '" target="_blank" rel="noopener">Lihat di Issue Tracker &#8599;</a>' +
-      '<button class="act-btn" data-action="save" data-id="' + esc(c.id) + '" title="Simpan laporan ke /saved">&#128190;</button>' +
       '<button class="act-btn' + (favs.has(String(c.id)) ? ' fav-on' : '') + '" data-action="fav" data-id="' + esc(c.id) + '" title="Favorit (pin ke atas)">' + (favs.has(String(c.id)) ? '&#9733;' : '&#9734;') + '</button>' +
     '</div>' +
     body +
@@ -375,25 +375,44 @@ function tsStr() {
   return '' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes()) + p(d.getSeconds());
 }
 
-async function saveCategory(id) {
+function findIssue(issueId) {
+  const cats = (lastData && lastData.categories) || {};
+  for (const c of Object.values(cats)) {
+    const found = (c.issues || []).find(it => String(it.id) === String(issueId));
+    if (found) return { issue: found, category: c };
+  }
+  return null;
+}
+
+async function saveIssue(issueId) {
   const token = saveToken();
   if (!token) { toast('Dibatalkan: token tidak diisi.', 'err'); return; }
-  const cat = lastData && lastData.categories ? lastData.categories[String(id)] : null;
-  if (!cat) { toast('Kategori tidak ditemukan.', 'err'); return; }
-  const fname = tsStr() + '.json';
-  const payload = { saved_at: new Date().toISOString(), category: cat };
+  const res = findIssue(issueId);
+  if (!res) { toast('Temuan tidak ditemukan.', 'err'); return; }
+  const fname = issueId + '.json';
   const path = GH_SAVE_DIR + '/' + fname;
-  const url = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO + '/contents/' + path;
+  const apiBase = 'https://api.github.com/repos/' + GH_OWNER + '/' + GH_REPO;
+  const payload = {
+    saved_at: new Date().toISOString(),
+    issue_url: issueUrl(issueId),
+    category: res.category.title || '',
+    issue: res.issue
+  };
+  const headers = {
+    'Authorization': 'Bearer ' + token,
+    'Content-Type': 'application/json',
+    'Accept': 'application/vnd.github+json'
+  };
   try {
-    const r = await fetch(url, {
-      method: 'PUT',
-      headers: {
-        'Authorization': 'Bearer ' + token,
-        'Content-Type': 'application/json',
-        'Accept': 'application/vnd.github+json'
-      },
-      body: JSON.stringify({ message: 'Simpan snapshot kategori ' + id, content: b64(JSON.stringify(payload, null, 2)) })
-    });
+    let sha = null;
+    try {
+      const g = await fetch(apiBase + '/contents/' + path, { headers: headers });
+      if (g.status === 401) { localStorage.removeItem('gh_save_token'); toast('Token salah/kedaluwarsa. Coba lagi.', 'err'); return; }
+      if (g.ok) { const gd = await g.json(); sha = gd && gd.sha; }
+    } catch (e) {}
+    const body = { message: 'Simpan temuan ' + issueId, content: b64(JSON.stringify(payload, null, 2)) };
+    if (sha) body.sha = sha;
+    const r = await fetch(apiBase + '/contents/' + path, { method: 'PUT', headers: headers, body: JSON.stringify(body) });
     const d = await r.json();
     if (r.status === 401) { localStorage.removeItem('gh_save_token'); toast('Token salah/kedaluwarsa. Coba lagi.', 'err'); return; }
     if (r.ok) { toast('Tersimpan: saved/' + fname); }
@@ -419,8 +438,8 @@ document.addEventListener('click', (ev) => {
     if (lastData) render(lastData);
   } else if (action === 'fav') {
     toggleFav(el.getAttribute('data-id'));
-  } else if (action === 'save') {
-    saveCategory(el.getAttribute('data-id'));
+  } else if (action === 'save-issue') {
+    saveIssue(el.getAttribute('data-id'));
   }
 });
 
