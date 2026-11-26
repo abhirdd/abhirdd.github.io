@@ -1,0 +1,16 @@
+{
+  "saved_at": "2026-11-26T14:34:36.405Z",
+  "issue_url": "https://issues.chromium.org/issues/576136358",
+  "category": "Bug Spoofing Fixed",
+  "issue": {
+    "id": "576136358",
+    "priority": "P2",
+    "type": "Vulnerability",
+    "title": "IWA update metadata forgery via cross-process Service Worker claim",
+    "assignee": "",
+    "status": "Fixed",
+    "views": "0",
+    "modified": "Nov 26, 2026 02:58PM",
+    "reward": "—"
+  }
+}
