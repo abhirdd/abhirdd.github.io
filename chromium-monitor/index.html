@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chromium Vulnerability Monitor</title>
+<link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2.5l8 3.1v5.2c0 5.1-3.4 8.7-8 10.2-4.6-1.5-8-5.1-8-10.2V5.6l8-3.1z"></path>
+        <path d="M8.8 12l2.2 2.2 4.2-4.4"></path>
+      </svg>
+      <div class="brand-text">
+        <h1>Chromium Vuln Monitor</h1>
+        <p>Pantau kerentanan Chromium</p>
+      </div>
+    </div>
+
+    <div class="menu-search">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+      <input id="menu-filter" type="search" placeholder="Filter kategori…">
+    </div>
+
+    <nav class="menu" id="menu"></nav>
+
+    <div class="sidebar-foot">
+      <span id="lastupdate" class="muted"></span>
+      <button id="refresh" type="button" title="Ambil ulang semua data">&#8635; Refresh</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="mainbar">
+      <div class="mainbar-title">
+        <h2 id="view-title">Ringkasan</h2>
+        <p id="view-subtitle" class="muted"></p>
+      </div>
+      <div class="mainbar-actions">
+        <span id="status" class="pill idle"><span class="dot"></span>memuat…</span>
+      </div>
+    </header>
+    <div id="content" class="content"></div>
+  </main>
+</div>
+<div id="toast" class="toast" role="status"></div>
+<script src="static/app.js"></script>
+</body>
+</html>
